@@ -23,14 +23,10 @@
                 <div><dt class="text-xs text-brand-300">Nomor telepon</dt><dd class="mt-1 font-semibold">{{ $user->phone ?: 'Belum diisi' }}</dd></div>
                 <div><dt class="text-xs text-brand-300">Bergabung</dt><dd class="mt-1 font-semibold">{{ $user->created_at->translatedFormat('d F Y') }}</dd></div>
             </dl>
-            <div class="mt-6 pt-6 border-t border-white/10 flex flex-col gap-2.5">
+            <div class="mt-6 pt-6 border-t border-white/10">
                 <a href="{{ route('settings.index') }}" class="inline-flex items-center gap-2 text-xs font-bold text-brand-200 hover:text-white transition">
-                    <span class="material-symbols-outlined text-[16px]">photo_camera</span>
-                    Ubah Foto Profil (1080x1080)
-                </a>
-                <a href="{{ route('settings.index') }}" class="inline-flex items-center gap-2 text-xs font-bold text-brand-200 hover:text-white transition">
-                    <span class="material-symbols-outlined text-[16px]">tune</span>
-                    Ubah Username &amp; Pengaturan
+                    <span class="material-symbols-outlined text-[17px]">settings</span>
+                    Pengaturan
                 </a>
             </div>
         </aside>

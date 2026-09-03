@@ -28,3 +28,68 @@
     </div>
     <div class="mt-8">{{ $jobs->links() }}</div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('q');
+        if (searchInput && !searchInput.value.trim()) {
+            const suggestions = [
+                'Kasir, barista, Bandung...',
+                'Staff admin, Surabaya...',
+                'Desain grafis, Jakarta...',
+                'Barista kedai kopi, Yogyakarta...',
+                'Video editor, Bandung...',
+                'Pramuniaga toko, Semarang...'
+            ];
+            let sIdx = 0;
+            let sChar = suggestions[0].length;
+            let sDeleting = false;
+            let isFocused = false;
+
+            function stepSearchType() {
+                if (isFocused || searchInput.value.trim().length > 0) {
+                    setTimeout(stepSearchType, 1000);
+                    return;
+                }
+
+                const text = suggestions[sIdx];
+                if (sDeleting) {
+                    sChar--;
+                    searchInput.setAttribute('placeholder', text.substring(0, sChar));
+                } else {
+                    sChar++;
+                    searchInput.setAttribute('placeholder', text.substring(0, sChar));
+                }
+
+                let delay = sDeleting ? 30 : 65;
+
+                if (!sDeleting && sChar === text.length) {
+                    delay = 2200;
+                    sDeleting = true;
+                } else if (sDeleting && sChar === 0) {
+                    sDeleting = false;
+                    sIdx = (sIdx + 1) % suggestions.length;
+                    delay = 400;
+                }
+
+                setTimeout(stepSearchType, delay);
+            }
+
+            searchInput.addEventListener('focus', () => { isFocused = true; });
+            searchInput.addEventListener('blur', () => {
+                isFocused = false;
+                if (!searchInput.value.trim()) {
+                    sChar = 0;
+                    sDeleting = false;
+                }
+            });
+
+            setTimeout(() => {
+                sDeleting = true;
+                stepSearchType();
+            }, 2000);
+        }
+    });
+</script>
+@endpush

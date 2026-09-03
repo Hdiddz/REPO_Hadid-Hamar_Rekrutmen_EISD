@@ -38,6 +38,140 @@
         </div>
     </section>
     <div class="mt-6">{{ $jobs->links() }}</div>
+
+    {{-- Bagian: Daftar Peserta / Tenaga Kerja yang Diterima --}}
+    <section class="mt-8 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900" data-reveal>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
+            <div class="flex items-center gap-3">
+                <div class="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 shrink-0">
+                    <span class="material-symbols-outlined text-[22px]">how_to_reg</span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-base sm:text-lg font-bold text-slate-950 dark:text-white">Peserta &amp; Tenaga Kerja Diterima</h2>
+                        <span class="rounded-lg bg-emerald-100 px-2 py-0.5 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                            {{ $acceptedWorkers->count() }} Orang
+                        </span>
+                    </div>
+                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Pencari kerja yang telah lolos seleksi dan resmi bergabung di UMKM Anda.</p>
+                </div>
+            </div>
+            <a href="{{ route('employer.applications.index', ['status' => 'accepted']) }}" class="portal-button-secondary !py-1.5 !px-3 text-xs font-semibold gap-1.5 self-start sm:self-auto">
+                <span class="material-symbols-outlined text-[16px]">groups</span>
+                Semua Data Pelamar
+            </a>
+        </div>
+
+        <div class="divide-y divide-slate-100 dark:divide-slate-800">
+            @forelse($acceptedWorkers as $worker)
+                <div class="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition hover:bg-slate-50/70 dark:hover:bg-slate-950/40">
+                    <div class="flex items-start gap-4 min-w-0">
+                        <!-- Avatar -->
+                        <div class="relative h-12 w-12 rounded-2xl overflow-hidden ring-2 ring-emerald-500/20 bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center">
+                            @if($worker->user->avatar_url)
+                                <img src="{{ $worker->user->avatar_url }}" alt="{{ $worker->user->name }}" class="h-full w-full object-cover">
+                            @else
+                                <span class="text-base font-bold text-slate-700 dark:text-slate-200">
+                                    {{ strtoupper(substr($worker->user->name, 0, 2)) }}
+                                </span>
+                            @endif
+                        </div>
+
+                        <!-- Worker Info -->
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white truncate">
+                                    {{ $worker->user->name }}
+                                </h3>
+                                <span class="font-mono text-xs text-brand-700 dark:text-brand-300 font-semibold">
+                                    @<span>{{ $worker->user->username ?? '-' }}</span>
+                                </span>
+                                @if($worker->resignation_status === 'pending')
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-rose-100 dark:bg-rose-950/60 px-2.5 py-0.5 text-[11px] font-bold text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 animate-pulse">
+                                        <span class="material-symbols-outlined text-[13px]">exit_to_app</span>
+                                        Pengajuan Resign Masuk
+                                    </span>
+                                @elseif($worker->resignation_status === 'approved')
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-bold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                        <span class="material-symbols-outlined text-[13px]">check</span>
+                                        Resign Disetujui
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                        <span class="material-symbols-outlined text-[13px]">check_circle</span>
+                                        Diterima Bekerja
+                                    </span>
+                                @endif
+                            </div>
+
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Posisi: <strong class="text-slate-700 dark:text-slate-200">{{ $worker->job->title }}</strong> · {{ $worker->job->location }}
+                            </p>
+
+                            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                                <span class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[15px] text-slate-400">payments</span>
+                                    Rp {{ number_format($worker->job->salary_amount, 0, ',', '.') }} / {{ $worker->job->salary_type === 'monthly' ? 'bulan' : 'hari' }}
+                                </span>
+                                @if($worker->user->phone)
+                                    <a href="tel:{{ $worker->user->phone }}" class="flex items-center gap-1 hover:text-brand-600 transition">
+                                        <span class="material-symbols-outlined text-[15px] text-slate-400">call</span>
+                                        {{ $worker->user->phone }}
+                                    </a>
+                                @endif
+                                <a href="mailto:{{ $worker->user->email }}" class="flex items-center gap-1 hover:text-brand-600 transition">
+                                    <span class="material-symbols-outlined text-[15px] text-slate-400">mail</span>
+                                    {{ $worker->user->email }}
+                                </a>
+                                <span class="flex items-center gap-1 text-[11px] text-slate-400">
+                                    <span class="material-symbols-outlined text-[15px]">event_available</span>
+                                    Bergabung: {{ $worker->updated_at->translatedFormat('d M Y') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-2 self-end sm:self-center shrink-0 flex-wrap">
+                        @if($worker->resignation_status === 'pending')
+                            <button type="button" 
+                                    onclick="openResignDecisionModal({ applicationId: '{{ $worker->id }}', decision: 'approved', candidateName: '{{ addslashes($worker->user->name) }}', jobTitle: '{{ addslashes($worker->job->title) }}', employerName: '{{ addslashes(auth()->user()->business_name ?: auth()->user()->name) }}' })"
+                                    class="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition cursor-pointer" title="Setujui permohonan resign">
+                                <span class="material-symbols-outlined text-[16px]">check</span>
+                                Setujui Resign
+                            </button>
+                            <button type="button" 
+                                    onclick="openResignDecisionModal({ applicationId: '{{ $worker->id }}', decision: 'rejected', candidateName: '{{ addslashes($worker->user->name) }}', jobTitle: '{{ addslashes($worker->job->title) }}', employerName: '{{ addslashes(auth()->user()->business_name ?: auth()->user()->name) }}' })"
+                                    class="inline-flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition cursor-pointer" title="Tolak permohonan resign">
+                                <span class="material-symbols-outlined text-[16px]">close</span>
+                                Tolak
+                            </button>
+                        @endif
+                        <a href="{{ route('chat.index', ['user' => $worker->user_id]) }}" class="portal-button-primary !py-2 !px-3 text-xs font-bold gap-1.5" title="Kirim pesan langsung ke peserta">
+                            <span class="material-symbols-outlined text-[17px]">chat</span>
+                            Chat Peserta
+                        </a>
+                        <button type="button" onclick="openPdfViewer('{{ route('employer.applications.resume.preview', $worker) }}', '{{ addslashes($worker->user->name) }}', '{{ route('employer.applications.resume', $worker) }}')" class="portal-button-secondary !py-2 !px-3 text-xs font-semibold gap-1.5 cursor-pointer" title="Lihat resume PDF">
+                            <span class="material-symbols-outlined text-[17px]">visibility</span>
+                            Resume
+                        </button>
+                    </div>
+                </div>
+            @empty
+                <div class="p-10 text-center">
+                    <span class="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 block mb-2">person_search</span>
+                    <h3 class="font-bold text-sm text-slate-700 dark:text-slate-300">Belum ada peserta yang diterima</h3>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                        Ketika Anda menerima pelamar pada menu <a href="{{ route('employer.applications.index') }}" class="text-brand-600 font-semibold underline">Pelamar Masuk</a>, data peserta akan otomatis tercatat dan tampil di daftar ini.
+                    </p>
+                </div>
+            @endforelse
+        </div>
+    </section>
+@endsection
+
+@section('portal_modals')
+    <x-resign-decision-modal />
 @endsection
 
 @push('scripts')

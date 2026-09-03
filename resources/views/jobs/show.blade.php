@@ -4,6 +4,30 @@
 
 @section('content')
     <a href="{{ route('jobs.index') }}" class="mb-5 inline-flex items-center gap-1 text-sm font-bold text-brand-700 hover:underline dark:text-brand-300"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Kembali ke daftar lowongan</a>
+
+    @if($hasApplied && $application?->status === 'accepted' && $application?->resignation_status !== 'approved')
+        <div class="mb-6 rounded-3xl bg-emerald-500/15 border border-emerald-500/30 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-emerald-950 dark:text-emerald-100 shadow-sm" data-reveal>
+            <div class="flex items-center gap-3.5">
+                <div class="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-600 text-white shrink-0 shadow-sm">
+                    <span class="material-symbols-outlined text-[26px]">celebration</span>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-base sm:text-lg tracking-tight">Selamat! Anda Resmi Diterima untuk Posisi Ini 🎉</h3>
+                    <p class="text-xs sm:text-sm text-emerald-800 dark:text-emerald-300 mt-0.5 leading-relaxed">
+                        @if($application->start_date)
+                            Tanggal Mulai Bekerja: <strong>{{ $application->start_date->translatedFormat('l, d F Y') }}</strong> · 
+                        @endif
+                        Status Anda telah terdaftar sebagai Peserta Diterima Aktif Mitra UMKM.
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('chat.index', ['user' => $job->employer_id]) }}" class="portal-button-primary !bg-emerald-700 hover:!bg-emerald-800 text-xs sm:text-sm !py-2.5 !px-4 gap-1.5 shrink-0 w-fit">
+                <span class="material-symbols-outlined text-[18px]">chat</span>
+                Koordinasi Chat Mitra
+            </a>
+        </div>
+    @endif
+
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div class="space-y-5">
             <section class="rounded-3xl bg-brand-950 p-6 text-white sm:p-9" data-reveal>
@@ -38,50 +62,192 @@
                     <div class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300"><span class="material-symbols-outlined">login</span></div><h2 class="mt-5 text-xl font-bold">Masuk untuk melamar</h2><p class="mt-2 text-sm leading-6 text-slate-500">Buat akun pencari kerja untuk mengirim resume dan memantau status seleksi.</p><a href="{{ route('login') }}" class="portal-button-primary mt-6 w-full">Masuk</a><a href="{{ route('register') }}" class="portal-button-secondary mt-2 w-full">Daftar</a>
                 @elseif(auth()->user()->hasRole('jobseeker'))
                     @if($hasApplied)
-                        <div class="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                            <span class="material-symbols-outlined">task_alt</span>
-                        </div>
-                        <h2 class="mt-4 text-xl font-bold text-slate-950 dark:text-white">Lamaran Sudah Terkirim</h2>
-                        
-                        @php
-                            $appStatus = match($application?->status) {
-                                'accepted' => ['Diterima', 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900', 'task_alt'],
-                                'rejected' => ['Belum sesuai', 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900', 'cancel'],
-                                'interview' => ['Tahap Wawancara', 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900', 'forum'],
-                                default => ['Menunggu Tinjauan', 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900', 'hourglass_top'],
-                            };
-                        @endphp
-                        
-                        <div class="mt-3 p-3.5 rounded-2xl border bg-slate-50 dark:bg-slate-950/60 border-slate-200/80 dark:border-slate-800 space-y-2">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs text-slate-500">Status Seleksi:</span>
-                                <span class="inline-flex items-center gap-1 rounded-lg border px-2.5 py-0.5 text-xs font-bold {{ $appStatus[1] }}">
-                                    <span class="material-symbols-outlined text-[15px]">{{ $appStatus[2] }}</span>
-                                    {{ $appStatus[0] }}
-                                </span>
+                        @if($application?->status === 'resigned' || $application?->resignation_status === 'approved')
+                            <div class="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 ring-4 ring-slate-100 dark:ring-slate-800">
+                                <span class="material-symbols-outlined text-[26px]">person_cancel</span>
                             </div>
-                            @if($application?->created_at)
-                                <div class="flex items-center justify-between text-xs text-slate-500">
-                                    <span>Terkirim pada:</span>
-                                    <span class="font-semibold text-slate-700 dark:text-slate-300">{{ $application->created_at->translatedFormat('d M Y, H:i') }} WIB</span>
+                            <h2 class="mt-4 text-xl font-bold text-slate-950 dark:text-white flex items-center gap-1.5">
+                                Telah Resign
+                            </h2>
+                            <p class="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                Kerja sama Anda untuk posisi ini telah berakhir secara resmi setelah permohonan pengunduran diri disetujui.
+                            </p>
+
+                            <div class="mt-4 p-4 rounded-2xl border bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Status Seleksi:</span>
+                                    <span class="inline-flex items-center gap-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 font-bold text-slate-700 dark:text-slate-300">
+                                        <span class="material-symbols-outlined text-[15px]">check_circle</span>
+                                        Resign Disetujui
+                                    </span>
                                 </div>
-                            @endif
-                        </div>
+                                @if($application->resignation_date)
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Tanggal Efektif:</span>
+                                        <strong class="font-bold text-slate-800 dark:text-slate-200">
+                                            {{ $application->resignation_date->translatedFormat('d F Y') }}
+                                        </strong>
+                                    </div>
+                                @endif
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Jam Kerja:</span>
+                                    <span class="font-semibold text-slate-800 dark:text-slate-200">
+                                        {{ $job->work_hours_per_day }} jam / hari
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Upah Kerja:</span>
+                                    <span class="font-bold text-slate-800 dark:text-slate-200">
+                                        Rp {{ number_format($job->salary_amount, 0, ',', '.') }} / {{ $job->salary_type === 'monthly' ? 'bulan' : 'hari' }}
+                                    </span>
+                                </div>
+                            </div>
 
-                        <p class="mt-3 text-xs leading-relaxed text-slate-500">
-                            Anda tetap dapat memantau rincian tugas, upah, dan kriteria lowongan ini kapan saja selama proses seleksi berlangsung.
-                        </p>
+                            <div class="mt-5 space-y-2">
+                                <a href="{{ route('applications.index', ['status' => 'resigned']) }}" class="portal-button-primary !bg-slate-800 hover:!bg-slate-900 w-full justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">history_edu</span>
+                                    Lihat Riwayat Resign
+                                </a>
+                                <a href="{{ route('chat.index', ['user' => $job->employer_id]) }}" class="portal-button-secondary w-full justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">chat</span>
+                                    Riwayat Chat Mitra
+                                </a>
+                            </div>
+                        @elseif($application?->status === 'accepted')
+                            <div class="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 ring-4 ring-emerald-50 dark:ring-emerald-900/40">
+                                <span class="material-symbols-outlined text-[26px]">how_to_reg</span>
+                            </div>
+                            <h2 class="mt-4 text-xl font-bold text-slate-950 dark:text-white flex items-center gap-1.5">
+                                Selamat, Anda Diterima! 🎉
+                            </h2>
+                            <p class="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                Lamaran Anda telah disetujui. Anda resmi menjadi bagian dari mitra <strong>{{ $job->employer->business_name }}</strong>.
+                            </p>
 
-                        <div class="mt-5 space-y-2">
-                            <a href="{{ route('applications.index') }}" class="portal-button-primary w-full justify-center gap-2">
-                                <span class="material-symbols-outlined text-[18px]">history_edu</span>
-                                Cek Riwayat Lamaran
-                            </a>
-                            <a href="{{ route('chat.index', ['user' => $job->employer_id]) }}" class="portal-button-secondary w-full justify-center gap-2">
-                                <span class="material-symbols-outlined text-[18px]">chat</span>
-                                Hubungi Mitra Terkait
-                            </a>
-                            @if($application)
+                            <div class="mt-4 p-4 rounded-2xl border bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-200/80 dark:border-emerald-800/80 space-y-2.5 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Status Seleksi:</span>
+                                    <span class="inline-flex items-center gap-1 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-100/70 dark:bg-emerald-900/60 px-2.5 py-0.5 font-bold text-emerald-800 dark:text-emerald-200">
+                                        <span class="material-symbols-outlined text-[15px]">task_alt</span>
+                                        Resmi Diterima
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Mulai Kerja:</span>
+                                    <strong class="font-bold text-emerald-800 dark:text-emerald-200 text-right">
+                                        {{ $application->start_date ? $application->start_date->translatedFormat('l, d F Y') : 'Sesuai kesepakatan' }}
+                                    </strong>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Jam Kerja:</span>
+                                    <span class="font-semibold text-slate-800 dark:text-slate-200">
+                                        {{ $job->work_hours_per_day }} jam / hari
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Upah Kerja:</span>
+                                    <span class="font-bold text-slate-800 dark:text-slate-200">
+                                        Rp {{ number_format($job->salary_amount, 0, ',', '.') }} / {{ $job->salary_type === 'monthly' ? 'bulan' : 'hari' }}
+                                    </span>
+                                </div>
+
+                                @if($application->acceptance_notes)
+                                    <div class="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60">
+                                        <span class="block font-bold text-emerald-900 dark:text-emerald-200 mb-0.5">Catatan Masuk Kerja:</span>
+                                        <p class="text-slate-600 dark:text-slate-300 leading-relaxed italic">"{{ $application->acceptance_notes }}"</p>
+                                    </div>
+                                @endif
+
+                                @if($application?->created_at)
+                                    <div class="flex items-center justify-between pt-1 border-t border-emerald-100 dark:border-emerald-900 text-[11px] text-slate-400">
+                                        <span>Dilamar pada:</span>
+                                        <span>{{ $application->created_at->translatedFormat('d M Y, H:i') }} WIB</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="mt-5 space-y-2">
+                                <a href="{{ route('chat.index', ['user' => $job->employer_id]) }}" class="portal-button-primary !bg-emerald-700 hover:!bg-emerald-800 w-full justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">chat</span>
+                                    Hubungi Mitra Terkait
+                                </a>
+                                <a href="{{ route('applications.index') }}" class="portal-button-secondary w-full justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">history_edu</span>
+                                    Cek Riwayat Lamaran
+                                </a>
+                            </div>
+                        @elseif($application?->status === 'interview')
+                            <div class="grid h-12 w-12 place-items-center rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 ring-4 ring-indigo-50 dark:ring-indigo-900/40">
+                                <span class="material-symbols-outlined text-[26px]">event</span>
+                            </div>
+                            <h2 class="mt-4 text-xl font-bold text-slate-950 dark:text-white flex items-center gap-1.5">
+                                Undangan Wawancara 📅
+                            </h2>
+                            <p class="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                Mitra <strong>{{ $job->employer->business_name }}</strong> mengundang Anda untuk sesi wawancara.
+                            </p>
+
+                            <div class="mt-4 p-4 rounded-2xl border bg-indigo-50/50 dark:bg-indigo-950/30 border-indigo-200/80 dark:border-indigo-800/80 space-y-2.5 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Status Seleksi:</span>
+                                    <span class="inline-flex items-center gap-1 rounded-lg border border-indigo-200 dark:border-indigo-900 bg-indigo-100/70 dark:bg-indigo-900/60 px-2.5 py-0.5 font-bold text-indigo-800 dark:text-indigo-200">
+                                        <span class="material-symbols-outlined text-[15px]">forum</span>
+                                        Tahap Wawancara
+                                    </span>
+                                </div>
+
+                                @if($application->interview_date)
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Hari & Tanggal:</span>
+                                        <strong class="font-bold text-indigo-800 dark:text-indigo-200 text-right">
+                                            {{ $application->interview_date->translatedFormat('l, d F Y') }}
+                                        </strong>
+                                    </div>
+                                @endif
+
+                                @if($application->interview_time)
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Waktu:</span>
+                                        <span class="font-semibold text-slate-800 dark:text-slate-200">
+                                            {{ $application->interview_time }} WIB
+                                        </span>
+                                    </div>
+                                @endif
+
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Metode:</span>
+                                    <span class="font-semibold text-slate-800 dark:text-slate-200">
+                                        {{ $application->interview_type ?? 'Wawancara Langsung' }}
+                                    </span>
+                                </div>
+
+                                @if($application->interview_location)
+                                    <div class="pt-1">
+                                        <span class="block text-slate-500 dark:text-slate-400 mb-0.5">Lokasi / Tautan:</span>
+                                        <p class="font-medium text-slate-800 dark:text-slate-200 break-all">{{ $application->interview_location }}</p>
+                                    </div>
+                                @endif
+
+                                @if($application->interview_notes)
+                                    <div class="pt-2 border-t border-indigo-200/60 dark:border-indigo-800/60">
+                                        <span class="block font-bold text-indigo-900 dark:text-indigo-200 mb-0.5">Catatan Mitra:</span>
+                                        <p class="text-slate-600 dark:text-slate-300 leading-relaxed italic">"{{ $application->interview_notes }}"</p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="mt-5 space-y-2">
+                                <a href="{{ route('chat.index', ['user' => $job->employer_id]) }}" class="portal-button-primary !bg-indigo-700 hover:!bg-indigo-800 w-full justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">chat</span>
+                                    Konfirmasi di Chat
+                                </a>
+                                <a href="{{ route('applications.index') }}" class="portal-button-secondary w-full justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">history_edu</span>
+                                    Cek Riwayat Lamaran
+                                </a>
                                 <form id="cancelApplicationForm-{{ $application->id }}" action="{{ route('applications.destroy', $application) }}" method="POST" class="pt-1">
                                     @csrf
                                     @method('DELETE')
@@ -90,8 +256,69 @@
                                         Batalkan Lamaran
                                     </button>
                                 </form>
-                            @endif
-                        </div>
+                            </div>
+                        @else
+                            <div class="grid h-12 w-12 place-items-center rounded-2xl {{ $application?->status === 'rejected' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' }}">
+                                <span class="material-symbols-outlined text-[24px]">{{ $application?->status === 'rejected' ? 'cancel' : 'task_alt' }}</span>
+                            </div>
+                            <h2 class="mt-4 text-xl font-bold text-slate-950 dark:text-white">
+                                {{ $application?->status === 'rejected' ? 'Proses Seleksi Selesai' : 'Lamaran Sudah Terkirim' }}
+                            </h2>
+
+                            @php
+                                $appStatus = match($application?->status) {
+                                    'rejected' => ['Belum sesuai', 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900', 'cancel'],
+                                    default => ['Menunggu Tinjauan', 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900', 'hourglass_top'],
+                                };
+                            @endphp
+
+                            <div class="mt-3 p-3.5 rounded-2xl border bg-slate-50 dark:bg-slate-950/60 border-slate-200/80 dark:border-slate-800 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-slate-500">Status Seleksi:</span>
+                                    <span class="inline-flex items-center gap-1 rounded-lg border px-2.5 py-0.5 text-xs font-bold {{ $appStatus[1] }}">
+                                        <span class="material-symbols-outlined text-[15px]">{{ $appStatus[2] }}</span>
+                                        {{ $appStatus[0] }}
+                                    </span>
+                                </div>
+                                @if($application?->created_at)
+                                    <div class="flex items-center justify-between text-xs text-slate-500">
+                                        <span>Terkirim pada:</span>
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300">{{ $application->created_at->translatedFormat('d M Y, H:i') }} WIB</span>
+                                    </div>
+                                @endif
+                                @if($application?->status === 'rejected' && $application->rejection_reason)
+                                    <div class="pt-1 text-xs text-rose-700 dark:text-rose-300">
+                                        <span class="font-bold block mb-0.5">Alasan evaluasi:</span>
+                                        <p>{{ $application->rejection_reason }}</p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <p class="mt-3 text-xs leading-relaxed text-slate-500">
+                                {{ $application?->status === 'rejected' ? 'Terima kasih atas partisipasi Anda. Jangan berkecil hati dan tetap semangat melamar peluang lainnya.' : 'Anda tetap dapat memantau rincian tugas, upah, dan kriteria lowongan ini kapan saja selama proses seleksi berlangsung.' }}
+                            </p>
+
+                            <div class="mt-5 space-y-2">
+                                <a href="{{ route('applications.index') }}" class="portal-button-primary w-full justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">history_edu</span>
+                                    Cek Riwayat Lamaran
+                                </a>
+                                <a href="{{ route('chat.index', ['user' => $job->employer_id]) }}" class="portal-button-secondary w-full justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">chat</span>
+                                    Hubungi Mitra Terkait
+                                </a>
+                                @if($application && $application->status === 'pending')
+                                    <form id="cancelApplicationForm-{{ $application->id }}" action="{{ route('applications.destroy', $application) }}" method="POST" class="pt-1">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="button" onclick="confirmCancelJobApplication('{{ $application->id }}', '{{ addslashes($job->title) }}')" class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/70 py-2.5 px-3 text-xs font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50 transition cursor-pointer">
+                                            <span class="material-symbols-outlined text-[17px]">cancel</span>
+                                            Batalkan Lamaran
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        @endif
                     @elseif($job->status === 'open')
                         <h2 class="text-xl font-bold">Ajukan lamaran</h2><p class="mt-1 text-sm text-slate-500">Resume disimpan privat dan hanya dapat diunduh mitra pemilik lowongan serta admin.</p>
                         <form action="{{ route('applications.store', $job) }}" method="POST" enctype="multipart/form-data" class="mt-6 space-y-5">@csrf
@@ -202,14 +429,33 @@
                     </p>
                 </div>
 
-                {{-- Laporkan Lowongan Button --}}
+                {{-- Laporkan Lowongan Button & Ajukan Resign --}}
                 @auth
                     @if(auth()->user()->id !== $job->employer_id && !auth()->user()->hasRole('admin'))
-                        <div class="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
-                            <button type="button" onclick="openReportModal()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400">
+                        <div class="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800 flex flex-col gap-2.5">
+                            <button type="button" onclick="openReportModal()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 cursor-pointer">
                                 <span class="material-symbols-outlined text-[16px]">flag</span>
                                 Laporkan Lowongan Ini
                             </button>
+
+                            @if($hasApplied && $application?->status === 'accepted')
+                                @if($application->resignation_status === 'pending')
+                                    <div class="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60">
+                                        <span class="material-symbols-outlined text-[16px] text-amber-600">pending_actions</span>
+                                        <span>Pengajuan resign sedang ditinjau</span>
+                                    </div>
+                                @elseif($application->resignation_status === 'approved')
+                                    <div class="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                                        <span class="material-symbols-outlined text-[16px] text-slate-500">check_circle</span>
+                                        <span>Resmi mengundurkan diri (Resigned)</span>
+                                    </div>
+                                @else
+                                    <button type="button" onclick="openResignModal()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline dark:text-rose-400 cursor-pointer">
+                                        <span class="material-symbols-outlined text-[16px]">exit_to_app</span>
+                                        <span>Ajukan Resign</span>
+                                    </button>
+                                @endif
+                            @endif
                         </div>
                     @endif
                 @else
@@ -282,6 +528,75 @@
                 </form>
             </div>
         </div>
+
+        @if($hasApplied && $application?->status === 'accepted')
+            <!-- Modal Pengajuan Resign -->
+            <div id="resignJobModal" class="fixed inset-0 z-[100] hidden bg-slate-950/60 backdrop-blur-sm p-4 overflow-y-auto flex items-center justify-center" onclick="if(event.target === this) closeResignModal()">
+                <div class="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl shadow-slate-950/20 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop">
+                    <div class="flex items-start justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-11 h-11 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[24px]">exit_to_app</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-950 dark:text-white">Ajukan Pengunduran Diri (Resign)</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $job->employer->business_name }} · {{ $job->title }}</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeResignModal()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition cursor-pointer">
+                            <span class="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                    </div>
+
+                    <form action="{{ route('applications.resign', $application) }}" method="POST" class="mt-5 space-y-4">
+                        @csrf
+                        <div class="rounded-2xl bg-rose-50/80 dark:bg-rose-950/40 p-3.5 border border-rose-200/80 dark:border-rose-900/60 text-xs text-rose-900 dark:text-rose-200 leading-relaxed">
+                            <strong>Perhatian:</strong> Pengajuan pengunduran diri akan disampaikan secara resmi kepada Mitra UMKM melalui sistem dan notifikasi kerja sama.
+                        </div>
+
+                        <div>
+                            <label for="resignation_date" class="portal-label text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                Tanggal Efektif Resign <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="date" id="resignation_date" name="resignation_date" required value="{{ now()->addDays(7)->format('Y-m-d') }}" min="{{ now()->format('Y-m-d') }}" class="portal-input mt-1">
+                            <p class="mt-1 text-[11px] text-slate-400">Pilih tanggal hari kerja terakhir Anda.</p>
+                        </div>
+
+                        <div>
+                            <label for="resignation_reason" class="portal-label text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                Alasan Pengunduran Diri <span class="text-rose-500">*</span>
+                            </label>
+                            <select id="resignation_reason" name="resignation_reason" required class="portal-input mt-1">
+                                <option value="" disabled selected>-- Pilih Alasan Resign --</option>
+                                <option value="Melanjutkan Studi / Pendidikan">Melanjutkan Studi / Pendidikan</option>
+                                <option value="Pindah Tempat Tinggal / Domisili">Pindah Tempat Tinggal / Domisili</option>
+                                <option value="Mendapatkan Peluang Karier Lain">Mendapatkan Peluang Karier Lain</option>
+                                <option value="Alasan Kesehatan Pribadi">Alasan Kesehatan Pribadi</option>
+                                <option value="Kebutuhan Mendesak Keluarga">Kebutuhan Mendesak Keluarga</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="resignation_notes" class="portal-label text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                Catatan / Pesan Pengunduran Diri
+                            </label>
+                            <textarea id="resignation_notes" name="resignation_notes" rows="3" placeholder="Sampaikan pesan ucapan terima kasih atau keterangan tambahan bagi mitra UMKM..." class="portal-input mt-1"></textarea>
+                        </div>
+
+                        <div class="pt-4 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
+                            <button type="button" onclick="closeResignModal()" class="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition">
+                                Batal
+                            </button>
+                            <button type="submit" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-5 text-xs sm:text-sm font-semibold text-white shadow-sm shadow-rose-600/25 hover:bg-rose-700 active:translate-y-px transition">
+                                <span class="material-symbols-outlined text-[18px]">send</span>
+                                Kirim Pengajuan Resign
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
     @endauth
 @endpush
 
@@ -333,9 +648,26 @@
         }
     }
 
+    function openResignModal() {
+        const modal = document.getElementById('resignJobModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeResignModal() {
+        const modal = document.getElementById('resignJobModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeReportModal();
+            closeResignModal();
         }
     });
 

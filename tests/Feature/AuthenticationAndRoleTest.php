@@ -114,7 +114,7 @@ class AuthenticationAndRoleTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_deleted_or_non_existent_account_receives_account_not_found_session(): void
+    public function test_deleted_or_non_existent_account_shows_inline_warning_without_popup(): void
     {
         $response = $this->post(route('login'), [
             'email' => 'deleted_account@example.test',
@@ -122,7 +122,45 @@ class AuthenticationAndRoleTest extends TestCase
         ]);
 
         $response->assertRedirect(route('login'));
-        $response->assertSessionHas('account_not_found');
+        $response->assertSessionHasErrors(['email' => 'Akun tidak ditemukan. Akun ini belum terdaftar atau telah dihapus dari sistem.']);
+        $response->assertSessionMissing('account_not_found');
         $this->assertGuest();
+    }
+
+    public function test_wrong_password_shows_generic_credential_warning(): void
+    {
+        $user = User::factory()->jobseeker()->create([
+            'email' => 'user@example.test',
+            'password' => Hash::make('correct_password'),
+        ]);
+
+        $response = $this->post(route('login'), [
+            'email' => 'user@example.test',
+            'password' => 'wrong_password',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors([
+            'password' => 'Email, nama pengguna, atau kata sandi yang Anda masukkan salah.',
+        ]);
+        $this->assertGuest();
+    }
+
+    public function test_authenticated_jobseeker_is_redirected_to_jobs_page_from_home(): void
+    {
+        $jobseeker = User::factory()->jobseeker()->create();
+
+        $response = $this->actingAs($jobseeker)->get(route('home'));
+
+        $response->assertRedirect(route('jobs.index'));
+    }
+
+    public function test_authenticated_employer_is_redirected_to_dashboard_from_home(): void
+    {
+        $employer = User::factory()->employer()->create();
+
+        $response = $this->actingAs($employer)->get(route('home'));
+
+        $response->assertRedirect(route('employer.dashboard'));
     }
 }

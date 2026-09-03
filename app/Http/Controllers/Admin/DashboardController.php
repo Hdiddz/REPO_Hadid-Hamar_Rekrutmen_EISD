@@ -23,7 +23,9 @@ class DashboardController extends Controller
     {
         $metrics = [
             'open_jobs' => Job::where('status', 'open')->count(),
-            'accepted_workers' => JobApplication::where('status', 'accepted')->count(),
+            'accepted_workers' => JobApplication::where('status', 'accepted')
+                ->where(fn ($q) => $q->whereNull('resignation_status')->orWhere('resignation_status', '!=', 'approved'))
+                ->count(),
             'employers' => User::where('role', 'employer')->count(),
             'jobseekers' => User::where('role', 'jobseeker')->count(),
             'pending_reports' => JobReport::where('status', 'pending')->count(),

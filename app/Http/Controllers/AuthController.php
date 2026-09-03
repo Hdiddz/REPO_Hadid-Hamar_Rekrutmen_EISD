@@ -48,13 +48,9 @@ class AuthController extends Controller
             ? User::where('email', $input)->first()
             : User::where('username', $input)->orWhere('name', $input)->first();
 
-        // 1. Kasus Akun Terhapus / Tidak Ditemukan
+        // 1. Kasus Akun Terhapus / Tidak Ditemukan (cukup warning di bawah kolom input, tanpa pop-up)
         if (! $user) {
             return redirect()->route('login')
-                ->with('account_not_found', [
-                    'input' => $input,
-                ])
-                ->with('error', 'Akun tidak ditemukan. Akun ini belum terdaftar atau telah dihapus dari sistem.')
                 ->withErrors(['email' => 'Akun tidak ditemukan. Akun ini belum terdaftar atau telah dihapus dari sistem.'])
                 ->onlyInput('email');
         }
@@ -87,7 +83,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'password' => 'Kata sandi yang Anda masukkan salah.',
+            'password' => 'Email, nama pengguna, atau kata sandi yang Anda masukkan salah.',
         ])->onlyInput('email');
     }
 

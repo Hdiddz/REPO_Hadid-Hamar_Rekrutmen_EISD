@@ -43,4 +43,68 @@ class AdminOversightTest extends TestCase
 
         $this->assertDatabaseHas('jobs', ['id' => $job->id, 'status' => 'closed']);
     }
+
+    public function test_admin_dashboard_maintains_clean_metrics_overview(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $employer = User::factory()->employer()->create(['business_name' => 'Kopi Nusantara']);
+        $job = Job::factory()->for($employer, 'employer')->create(['title' => 'Barista Senior']);
+        $worker = User::factory()->jobseeker()->create(['name' => 'Fajar Nugraha']);
+
+        JobApplication::factory()->for($job)->for($worker, 'user')->create([
+            'status' => 'resigned',
+            'resignation_status' => 'approved',
+            'resignation_reason' => 'Melanjutkan studi S2 ke luar kota',
+            'resigned_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+
+        $response->assertOk()
+            ->assertSee('Lowongan aktif')
+            ->assertSee('Pekerja diterima')
+            ->assertDontSee('Pemantauan Pengunduran Diri (Resign) Pekerja');
+    }
+
+    public function test_admin_can_see_resignation_details_on_job_and_user_pages(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $employer = User::factory()->employer()->create(['business_name' => 'Bengkel Mobil Maju']);
+        $job = Job::factory()->for($employer, 'employer')->create(['title' => 'Teknisi Mesin']);
+        $worker = User::factory()->jobseeker()->create(['name' => 'Rian Hidayat']);
+
+        $application = JobApplication::factory()->for($job)->for($worker, 'user')->create([
+            'status' => 'resigned',
+            'resignation_status' => 'approved',
+            'resignation_reason' => 'Mendapatkan tawaran wirausaha keluarga',
+            'resigned_at' => now(),
+        ]);
+
+        // Cek pada halaman detail lowongan admin (hanya melihat informasi & resume, tanpa kontrol ubah status)
+        $responseJob = $this->actingAs($admin)->get(route('admin.jobs.show', $job));
+        $responseJob->assertOk()
+            ->assertSee('Rian Hidayat')
+            ->assertSee('Telah Resign')
+            ->assertSee('Mendapatkan tawaran wirausaha keluarga')
+            ->assertDontSee('Ubah');
+
+        // Cek pada halaman profil pengguna admin
+        $responseUser = $this->actingAs($admin)->get(route('admin.users.show', $worker));
+        $responseUser->assertOk()
+            ->assertSee('Teknisi Mesin')
+            ->assertSee('Telah Resign')
+            ->assertSee('Mendapatkan tawaran wirausaha keluarga');
+
+        // Admin juga dapat mengupdate status lamaran ke resigned
+        $responseStatus = $this->actingAs($admin)->patch(route('admin.applications.status', $application), [
+            'status' => 'resigned',
+        ]);
+        $responseStatus->assertSessionHas('success');
+
+        $this->assertDatabaseHas('job_applications', [
+            'id' => $application->id,
+            'status' => 'resigned',
+            'resignation_status' => 'approved',
+        ]);
+    }
 }

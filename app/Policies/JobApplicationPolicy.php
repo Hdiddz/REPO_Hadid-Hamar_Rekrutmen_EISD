@@ -50,6 +50,10 @@ class JobApplicationPolicy
      */
     public function delete(User $user, JobApplication $jobApplication): bool
     {
+        if ($jobApplication->status === 'accepted') {
+            return false;
+        }
+
         return $jobApplication->user_id === $user->id;
     }
 

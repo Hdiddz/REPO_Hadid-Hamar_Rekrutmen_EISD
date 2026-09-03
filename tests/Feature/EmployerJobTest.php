@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\ChatMessage;
 use App\Models\Job;
+use App\Models\JobApplication;
 use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -138,5 +140,94 @@ class EmployerJobTest extends TestCase
             ->assertOk()
             ->assertSee('Buka Kembali Lowongan Ini')
             ->assertSee('Sedang Ditutup');
+    }
+
+    public function test_accepted_applicants_are_recorded_and_displayed_on_employer_dashboard(): void
+    {
+        $employer = User::factory()->employer()->create(['business_name' => 'Kedai Kopi Nusantara']);
+        $job = Job::factory()->for($employer, 'employer')->create(['title' => 'Barista Senior']);
+        $jobseeker = User::factory()->jobseeker()->create(['name' => 'Budi Santoso']);
+        $application = JobApplication::factory()->create([
+            'job_id' => $job->id,
+            'user_id' => $jobseeker->id,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($employer)->patch(route('employer.applications.update', $application), [
+            'status' => 'accepted',
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertSame('accepted', $application->fresh()->status);
+
+        $this->assertDatabaseHas('chat_messages', [
+            'sender_id' => $employer->id,
+            'receiver_id' => $jobseeker->id,
+        ]);
+
+        $dashboardResponse = $this->actingAs($employer)->get(route('employer.dashboard'));
+        $dashboardResponse->assertOk()
+            ->assertSee('Peserta &amp; Tenaga Kerja Diterima', false)
+            ->assertSee('Budi Santoso')
+            ->assertSee('Barista Senior')
+            ->assertSee('Diterima Bekerja')
+            ->assertSee('Chat Peserta');
+    }
+
+    public function test_employer_can_schedule_interview_with_custom_modal_fields(): void
+    {
+        $employer = User::factory()->employer()->create(['business_name' => 'Studio Foto Kreatif']);
+        $job = Job::factory()->for($employer, 'employer')->create(['title' => 'Videografer']);
+        $jobseeker = User::factory()->jobseeker()->create(['name' => 'Ahmad Fauzi']);
+        $application = JobApplication::factory()->create([
+            'job_id' => $job->id,
+            'user_id' => $jobseeker->id,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($employer)->patch(route('employer.applications.update', $application), [
+            'status' => 'interview',
+            'interview_date' => '2026-09-10',
+            'interview_time' => '14:00',
+            'interview_type' => 'Online via Google Meet',
+            'interview_location' => 'https://meet.google.com/abc-defg-hij',
+            'interview_notes' => 'Mohon siapkan laptop dan contoh karya video terbaru Anda.',
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertSame('interview', $application->fresh()->status);
+
+        // Verify candidate received chat invitation with schedule
+        $chat = ChatMessage::where('receiver_id', $jobseeker->id)->latest('id')->first();
+        $this->assertNotNull($chat);
+        $this->assertStringContainsString('Undangan Wawancara Kerja', $chat->message);
+        $this->assertStringContainsString('14:00 WIB', $chat->message);
+        $this->assertStringContainsString('meet.google.com', $chat->message);
+
+        // Verify notification was sent
+        $notif = $jobseeker->notifications()->first();
+        $this->assertNotNull($notif);
+        $this->assertSame('interview', $notif->data['status']);
+        $this->assertStringContainsString('wawancara', $notif->data['message']);
+    }
+
+    public function test_employer_applications_page_renders_specialized_status_modals(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $job = Job::factory()->for($employer, 'employer')->create();
+        $jobseeker = User::factory()->jobseeker()->create();
+        JobApplication::factory()->create([
+            'job_id' => $job->id,
+            'user_id' => $jobseeker->id,
+        ]);
+
+        $response = $this->actingAs($employer)->get(route('employer.applications.index'));
+
+        $response->assertOk()
+            ->assertSee('modalStatusInterview')
+            ->assertSee('modalStatusAccepted')
+            ->assertSee('modalStatusRejected')
+            ->assertSee('modalStatusPending')
+            ->assertSee('Atur & Perbarui Status', false);
     }
 }

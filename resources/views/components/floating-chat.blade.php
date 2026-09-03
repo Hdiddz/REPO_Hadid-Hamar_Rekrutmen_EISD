@@ -377,14 +377,16 @@
 
             if (data.messages.length === 0) {
                 stream.innerHTML = `
-                    <div class="p-6 text-center text-xs text-slate-400">
+                    <div data-chat-placeholder class="p-6 text-center text-xs text-slate-400">
                         Belum ada riwayat pesan. Kirim pesan pertama untuk memulai obrolan.
                     </div>
                 `;
                 return;
             }
 
-            const isPlaceholder = stream.querySelector('.text-slate-400');
+            const isPlaceholder = stream.querySelector('[data-chat-placeholder]');
+            const isNearBottom = (stream.scrollHeight - stream.scrollTop - stream.clientHeight) < 80;
+
             if (isPlaceholder || existingIds.size === 0) {
                 stream.innerHTML = '';
                 data.messages.forEach(msg => {
@@ -395,6 +397,7 @@
                 stream.scrollTop = stream.scrollHeight;
             } else {
                 let hasNew = false;
+                let hasMyNew = false;
                 data.messages.forEach(msg => {
                     if (!existingIds.has(msg.id)) {
                         const temp = document.createElement('div');
@@ -403,10 +406,13 @@
                         el.classList.add('animate-msg-popup');
                         stream.appendChild(el);
                         hasNew = true;
+                        if (msg.is_me) {
+                            hasMyNew = true;
+                        }
                     }
                 });
 
-                if (hasNew) {
+                if (hasNew && (isNearBottom || hasMyNew)) {
                     stream.scrollTo({ top: stream.scrollHeight, behavior: 'smooth' });
                 }
             }

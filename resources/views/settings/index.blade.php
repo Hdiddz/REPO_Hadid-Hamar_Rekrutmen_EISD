@@ -187,11 +187,6 @@
                             Pilih Foto (1080x1080)
                         </button>
 
-                        <button type="button" id="saveAvatarBtn" onclick="submitProcessedAvatar()" class="hidden portal-button-primary !bg-emerald-600 hover:!bg-emerald-700 !py-2 !px-4 text-xs font-bold gap-1.5 cursor-pointer">
-                            <span class="material-symbols-outlined text-[17px]">check_circle</span>
-                            Simpan Foto Profil
-                        </button>
-
                         @if($user->avatar)
                             <form id="deleteAvatarForm" action="{{ route('settings.avatar.destroy') }}" method="POST" class="inline">
                                 @csrf
@@ -205,7 +200,7 @@
                     </div>
 
                     <div id="avatarStatusNotice" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                        Pilih foto berformat JPG, PNG, atau WEBP. Sistem otomatis memotong area tengah (*center crop*) dan menyesuaikan rasio menjadi <strong>1080 × 1080 piksel</strong> untuk kejernihan maksimal.
+                        Pilih foto berformat JPG, PNG, atau WEBP. Anda dapat mempratinjau, memotong (*crop*), dan memperbesar (*resize*) secara interaktif dengan rasio 1:1 presisi <strong>1080 × 1080 piksel</strong> sebelum disimpan.
                     </div>
                 </div>
             </div>
@@ -314,6 +309,120 @@
             </button>
         </section>
     </div>
+
+    {{-- Modal Pratinjau, Cropping & Resizing Foto Profil (1080x1080) --}}
+    <div id="cropPhotoModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md transition-all duration-200" role="dialog" aria-modal="true" aria-labelledby="cropModalTitle">
+        <div class="relative w-full max-w-xl overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 animate-page-enter">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+                <div class="flex items-center gap-2.5">
+                    <span class="grid h-9 w-9 place-items-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300">
+                        <span class="material-symbols-outlined text-[20px]">crop</span>
+                    </span>
+                    <div>
+                        <h3 id="cropModalTitle" class="text-base font-bold text-slate-950 dark:text-white">Sesuaikan &amp; Potong Foto</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Geser dan atur perbesaran untuk hasil foto 1080 × 1080 piksel.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCropModal()" class="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition cursor-pointer" aria-label="Tutup">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-5">
+                <div class="flex flex-col md:flex-row items-center gap-6 justify-center">
+                    <!-- Canvas Stage with 1:1 Crop Area -->
+                    <div class="relative flex flex-col items-center">
+                        <div class="relative h-[300px] w-[300px] sm:h-[320px] sm:w-[320px] overflow-hidden rounded-2xl border-2 border-brand-500 bg-slate-950 shadow-inner select-none touch-none cursor-grab active:cursor-grabbing" id="cropCanvasContainer">
+                            <canvas id="cropCanvas" width="320" height="320" class="block h-full w-full"></canvas>
+
+                            <!-- Circular Crop Guide Overlay -->
+                            <div class="pointer-events-none absolute inset-0 rounded-full border-2 border-white/50 border-dashed shadow-[0_0_0_9999px_rgba(15,23,42,0.45)]"></div>
+                            <!-- Rule of Thirds Grid Lines -->
+                            <div class="pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-25">
+                                <div class="border-r border-b border-white"></div>
+                                <div class="border-r border-b border-white"></div>
+                                <div class="border-b border-white"></div>
+                                <div class="border-r border-b border-white"></div>
+                                <div class="border-r border-b border-white"></div>
+                                <div class="border-b border-white"></div>
+                                <div class="border-r border-white"></div>
+                                <div class="border-r border-white"></div>
+                                <div></div>
+                            </div>
+                        </div>
+                        <span class="mt-2 text-[11px] text-slate-400 flex items-center gap-1 font-medium">
+                            <span class="material-symbols-outlined text-[15px]">pan_tool</span>
+                            Klik &amp; geser foto untuk mengubah posisi
+                        </span>
+                    </div>
+
+                    <!-- Right Side Controls & Live Preview -->
+                    <div class="flex flex-col items-center md:items-start gap-4 w-full md:w-48">
+                        <div>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2 text-center md:text-left">
+                                Pratinjau Avatar
+                            </span>
+                            <!-- Live Mini Preview Canvas (Circular) -->
+                            <div class="mx-auto md:mx-0 relative h-20 w-20 overflow-hidden rounded-full ring-4 ring-brand-500/20 bg-slate-100 dark:bg-slate-800 shadow-md">
+                                <canvas id="miniPreviewCanvas" width="80" height="80" class="h-full w-full object-cover"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="w-full space-y-1.5">
+                            <span class="text-xs font-semibold text-slate-600 dark:text-slate-400 block">Perbesaran (Zoom)</span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="adjustZoom(-0.15)" class="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 cursor-pointer transition" title="Perkecil">
+                                    <span class="material-symbols-outlined text-[17px]">remove</span>
+                                </button>
+                                <input type="range" id="cropZoomRange" min="1" max="3" step="0.02" value="1" oninput="setCropZoom(this.value)" class="flex-1 accent-brand-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg dark:bg-slate-700">
+                                <button type="button" onclick="adjustZoom(0.15)" class="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 cursor-pointer transition" title="Perbesar">
+                                    <span class="material-symbols-outlined text-[17px]">add</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 w-full pt-1">
+                            <button type="button" onclick="rotateCropImage()" class="flex-1 portal-button-secondary !py-2 !px-2.5 text-xs font-semibold gap-1 justify-center cursor-pointer" title="Putar 90 derajat searah jarum jam">
+                                <span class="material-symbols-outlined text-[16px]">rotate_right</span>
+                                Putar
+                            </button>
+                            <button type="button" onclick="resetCropTransform()" class="portal-button-secondary !py-2 !px-2.5 text-xs font-semibold gap-1 justify-center cursor-pointer" title="Reset posisi dan zoom">
+                                <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                                Reset
+                            </button>
+                        </div>
+
+                        <div class="rounded-2xl bg-teal-50/70 p-3 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-900/40 w-full text-[11px] text-teal-900 dark:text-teal-200 leading-tight">
+                            <span class="font-bold flex items-center gap-1 mb-1 text-teal-800 dark:text-teal-300">
+                                <span class="material-symbols-outlined text-[15px]">verified</span>
+                                Output 1080 × 1080 px
+                            </span>
+                            Rasio 1:1 tajam &amp; beresolusi tinggi otomatis diekspor.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
+                <button type="button" onclick="document.getElementById('avatarFileInput').click()" class="portal-button-secondary !py-2 !px-3.5 text-xs font-semibold gap-1 cursor-pointer">
+                    <span class="material-symbols-outlined text-[16px]">add_photo_alternate</span>
+                    Ganti Berkas
+                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="closeCropModal()" class="portal-button-secondary !py-2 !px-4 text-xs font-semibold cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button" id="applyCropBtn" onclick="applyAndUploadCrop()" class="portal-button-primary !py-2 !px-5 text-xs font-bold gap-1.5 cursor-pointer">
+                        <span class="material-symbols-outlined text-[17px]">check_circle</span>
+                        Terapkan &amp; Simpan Foto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -347,7 +456,16 @@
         });
     });
 
-    let processedAvatarBlob = null;
+    let sourceImg = null;
+    let cropZoom = 1.0;
+    let cropRotation = 0;
+    let cropX = 0;
+    let cropY = 0;
+    let isDragging = false;
+    let startDragX = 0;
+    let startDragY = 0;
+    let canvasEventsBound = false;
+    const STAGE_SIZE = 320;
 
     function handleAvatarSelected(event) {
         const file = event.target.files?.[0];
@@ -367,56 +485,218 @@
         reader.onload = function(e) {
             const img = new Image();
             img.onload = function() {
-                const targetSize = 1080;
-                const canvas = document.createElement('canvas');
-                canvas.width = targetSize;
-                canvas.height = targetSize;
-                const ctx = canvas.getContext('2d');
-
-                const minDim = Math.min(img.width, img.height);
-                const sx = (img.width - minDim) / 2;
-                const sy = (img.height - minDim) / 2;
-
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
-
-                canvas.toBlob(function(blob) {
-                    processedAvatarBlob = blob;
-
-                    const previewImg = document.getElementById('avatarPreviewImg');
-                    const initials = document.getElementById('avatarInitialsPlaceholder');
-                    if (previewImg) {
-                        previewImg.src = URL.createObjectURL(blob);
-                        previewImg.classList.remove('hidden');
-                    }
-                    if (initials) initials.classList.add('hidden');
-
-                    const saveBtn = document.getElementById('saveAvatarBtn');
-                    if (saveBtn) saveBtn.classList.remove('hidden');
-
-                    const notice = document.getElementById('avatarStatusNotice');
-                    if (notice) {
-                        notice.innerHTML = `<span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">check_circle</span> Foto siap diunggah dalam resolusi presisi 1080 × 1080 piksel. Klik "Simpan Foto Profil" untuk menerapkan.</span>`;
-                    }
-                }, 'image/jpeg', 0.92);
+                sourceImg = img;
+                openCropModal();
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
 
-    function submitProcessedAvatar() {
-        if (!processedAvatarBlob) return;
+    function openCropModal() {
+        const modal = document.getElementById('cropPhotoModal');
+        if (!modal) return;
 
-        const fileInput = document.getElementById('avatarCroppedInput');
-        const file = new File([processedAvatarBlob], 'profile_1080x1080.jpg', { type: 'image/jpeg' });
+        cropZoom = 1.0;
+        cropRotation = 0;
+        cropX = 0;
+        cropY = 0;
+        const zoomRange = document.getElementById('cropZoomRange');
+        if (zoomRange) zoomRange.value = 1.0;
 
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        fileInput.files = dataTransfer.files;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
 
-        document.getElementById('avatarUploadForm').submit();
+        renderCrop();
+        initCanvasEvents();
+    }
+
+    function closeCropModal() {
+        const modal = document.getElementById('cropPhotoModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        document.body.style.overflow = '';
+        const fileInput = document.getElementById('avatarFileInput');
+        if (fileInput) fileInput.value = '';
+    }
+
+    function getBaseFitScale() {
+        if (!sourceImg) return 1;
+        const isRotated = (cropRotation % 180 !== 0);
+        const imgW = isRotated ? sourceImg.height : sourceImg.width;
+        const imgH = isRotated ? sourceImg.width : sourceImg.height;
+        return Math.max(STAGE_SIZE / imgW, STAGE_SIZE / imgH);
+    }
+
+    function clampOffsets() {
+        if (!sourceImg) return;
+        const isRotated = (cropRotation % 180 !== 0);
+        const imgW = isRotated ? sourceImg.height : sourceImg.width;
+        const imgH = isRotated ? sourceImg.width : sourceImg.height;
+
+        const currentW = imgW * getBaseFitScale() * cropZoom;
+        const currentH = imgH * getBaseFitScale() * cropZoom;
+
+        const maxOffsetX = Math.max(0, (currentW - STAGE_SIZE) / 2);
+        const maxOffsetY = Math.max(0, (currentH - STAGE_SIZE) / 2);
+
+        cropX = Math.max(-maxOffsetX, Math.min(maxOffsetX, cropX));
+        cropY = Math.max(-maxOffsetY, Math.min(maxOffsetY, cropY));
+    }
+
+    function renderCrop() {
+        if (!sourceImg) return;
+        const canvas = document.getElementById('cropCanvas');
+        const miniCanvas = document.getElementById('miniPreviewCanvas');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, STAGE_SIZE, STAGE_SIZE);
+
+        clampOffsets();
+
+        const scale = getBaseFitScale() * cropZoom;
+        const drawW = sourceImg.width * scale;
+        const drawH = sourceImg.height * scale;
+
+        ctx.save();
+        ctx.translate(STAGE_SIZE / 2, STAGE_SIZE / 2);
+        ctx.translate(cropX, cropY);
+        ctx.rotate((cropRotation * Math.PI) / 180);
+        ctx.drawImage(sourceImg, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+
+        if (miniCanvas) {
+            const mCtx = miniCanvas.getContext('2d');
+            mCtx.clearRect(0, 0, 80, 80);
+            mCtx.drawImage(canvas, 0, 0, STAGE_SIZE, STAGE_SIZE, 0, 0, 80, 80);
+        }
+    }
+
+    function setCropZoom(value) {
+        cropZoom = parseFloat(value);
+        renderCrop();
+    }
+
+    function adjustZoom(delta) {
+        const zoomRange = document.getElementById('cropZoomRange');
+        cropZoom = Math.max(1.0, Math.min(3.0, cropZoom + delta));
+        if (zoomRange) zoomRange.value = cropZoom.toFixed(2);
+        renderCrop();
+    }
+
+    function rotateCropImage() {
+        cropRotation = (cropRotation + 90) % 360;
+        cropX = 0;
+        cropY = 0;
+        renderCrop();
+    }
+
+    function resetCropTransform() {
+        cropZoom = 1.0;
+        cropRotation = 0;
+        cropX = 0;
+        cropY = 0;
+        const zoomRange = document.getElementById('cropZoomRange');
+        if (zoomRange) zoomRange.value = 1.0;
+        renderCrop();
+    }
+
+    function initCanvasEvents() {
+        if (canvasEventsBound) return;
+        canvasEventsBound = true;
+
+        const container = document.getElementById('cropCanvasContainer');
+        if (!container) return;
+
+        container.addEventListener('pointerdown', (e) => {
+            isDragging = true;
+            startDragX = e.clientX - cropX;
+            startDragY = e.clientY - cropY;
+            container.setPointerCapture(e.pointerId);
+        });
+
+        container.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            cropX = e.clientX - startDragX;
+            cropY = e.clientY - startDragY;
+            renderCrop();
+        });
+
+        const stopDrag = (e) => {
+            if (isDragging) {
+                isDragging = false;
+                try { container.releasePointerCapture(e.pointerId); } catch (_) {}
+            }
+        };
+
+        container.addEventListener('pointerup', stopDrag);
+        container.addEventListener('pointercancel', stopDrag);
+
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.08 : -0.08;
+            adjustZoom(delta);
+        }, { passive: false });
+    }
+
+    function applyAndUploadCrop() {
+        if (!sourceImg) return;
+        const applyBtn = document.getElementById('applyCropBtn');
+        if (applyBtn) {
+            applyBtn.disabled = true;
+            applyBtn.innerHTML = `
+                <svg class="h-4 w-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Menyimpan 1080x1080...</span>
+            `;
+        }
+
+        const TARGET_SIZE = 1080;
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = TARGET_SIZE;
+        exportCanvas.height = TARGET_SIZE;
+        const eCtx = exportCanvas.getContext('2d');
+        eCtx.imageSmoothingEnabled = true;
+        eCtx.imageSmoothingQuality = 'high';
+
+        const ratio = TARGET_SIZE / STAGE_SIZE;
+        const scale = getBaseFitScale() * cropZoom * ratio;
+        const drawW = sourceImg.width * scale;
+        const drawH = sourceImg.height * scale;
+
+        eCtx.save();
+        eCtx.translate(TARGET_SIZE / 2, TARGET_SIZE / 2);
+        eCtx.translate(cropX * ratio, cropY * ratio);
+        eCtx.rotate((cropRotation * Math.PI) / 180);
+        eCtx.drawImage(sourceImg, -drawW / 2, -drawH / 2, drawW, drawH);
+        eCtx.restore();
+
+        exportCanvas.toBlob(function(blob) {
+            if (!blob) return;
+
+            const file = new File([blob], 'avatar_1080x1080.jpg', { type: 'image/jpeg' });
+            const fileInput = document.getElementById('avatarCroppedInput');
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+
+            const previewImg = document.getElementById('avatarPreviewImg');
+            const initials = document.getElementById('avatarInitialsPlaceholder');
+            if (previewImg) {
+                previewImg.src = URL.createObjectURL(blob);
+                previewImg.classList.remove('hidden');
+            }
+            if (initials) initials.classList.add('hidden');
+
+            closeCropModal();
+            document.getElementById('avatarUploadForm').submit();
+        }, 'image/jpeg', 0.92);
     }
 
     async function confirmDeleteAvatar() {

@@ -119,6 +119,36 @@
                 </div>
             </div>
 
+            @if(Auth::user()?->role === 'employer')
+                <!-- Pending Resignation Banner for Employer -->
+                <div id="chatResignationBanner" class="hidden border-b border-rose-200 dark:border-rose-900/60 bg-rose-50/95 dark:bg-rose-950/50 p-3 sm:p-3.5 px-4 flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shrink-0 animate-page-enter">
+                    <div class="flex items-start sm:items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[18px]">exit_to_app</span>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <strong class="font-bold text-slate-900 dark:text-white" id="chatResignJobTitle">Pengajuan Resign Masuk</strong>
+                                <span class="rounded-md bg-rose-200/80 dark:bg-rose-900/80 px-1.5 py-0.2 text-[10px] font-bold text-rose-800 dark:text-rose-200">Perlu Tanggapan</span>
+                            </div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5" id="chatResignDetails">
+                                Efektif: - · Alasan: -
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button type="button" id="chatResignApproveBtn" class="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 active:translate-y-px transition cursor-pointer">
+                            <span class="material-symbols-outlined text-[15px]">check</span>
+                            Setujui Resign
+                        </button>
+                        <button type="button" id="chatResignRejectBtn" class="inline-flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-rose-700 active:translate-y-px transition cursor-pointer">
+                            <span class="material-symbols-outlined text-[15px]">close</span>
+                            Tolak
+                        </button>
+                    </div>
+                </div>
+            @endif
+
             <!-- Messages Scroll Area (Fixed & Independent Scroll) -->
             <div class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-3.5 bg-slate-50/40 dark:bg-slate-950/30" id="messageContainer">
                 <div class="h-full flex flex-col items-center justify-center text-slate-400 my-auto text-center p-8">
@@ -157,6 +187,10 @@
 
     </div>
 </div>
+
+@if(Auth::user()?->role === 'employer')
+    <x-resign-decision-modal />
+@endif
 @endsection
 
 @push('scripts')
@@ -167,6 +201,10 @@
     let pollMessagesTimer = null;
     let pollConversationsTimer = null;
     let currentReply = null;
+    let currentPendingResignation = null;
+    let currentOtherUser = null;
+    const isEmployer = {{ Auth::user()?->role === 'employer' ? 'true' : 'false' }};
+    const employerName = "{{ addslashes(Auth::user()?->business_name ?: Auth::user()?->name) }}";
     const currentUserInitials = "{{ $userInitials }}";
     const csrfToken = "{{ csrf_token() }}";
 
@@ -331,6 +369,22 @@
         const senderName = msg.is_me ? 'Anda' : otherUser.name;
         const safeSnippet = escapeJs(msg.message);
 
+        let resignActionBtns = '';
+        if (!msg.is_me && isEmployer && currentPendingResignation && msg.message.includes('[Pengajuan Pengunduran Diri (Resign)]')) {
+            resignActionBtns = `
+                <div class="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center gap-1.5 flex-wrap">
+                    <button type="button" onclick="handleResignInChat('approved')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-xs transition cursor-pointer">
+                        <span class="material-symbols-outlined text-[14px]">check</span>
+                        Setujui Resign
+                    </button>
+                    <button type="button" onclick="handleResignInChat('rejected')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold shadow-xs transition cursor-pointer">
+                        <span class="material-symbols-outlined text-[14px]">close</span>
+                        Tolak
+                    </button>
+                </div>
+            `;
+        }
+
         if (msg.is_me) {
             return `
                 <div data-msg-id="${msg.id}" class="group relative flex items-start justify-end gap-1.5 sm:gap-2 ml-auto max-w-xl">
@@ -361,6 +415,7 @@
                     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-sm p-3 sm:p-3.5 shadow-2xs text-xs space-y-1 text-left min-w-[90px]">
                         ${replyHtml}
                         <p class="text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-line">${escapeHtml(msg.message)}</p>
+                        ${resignActionBtns}
                         <span class="text-[9px] text-slate-400 block text-right">${msg.time}</span>
                     </div>
                     <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
@@ -376,6 +431,20 @@
         }
     }
 
+    window.handleResignInChat = function(decision) {
+        if (!currentPendingResignation || !currentOtherUser) return;
+        window.openResignDecisionModal({
+            applicationId: currentPendingResignation.application_id,
+            decision: decision,
+            candidateName: currentOtherUser.name,
+            jobTitle: currentPendingResignation.job_title,
+            employerName: employerName,
+            onSuccess: (res) => {
+                fetchMessages();
+            }
+        });
+    };
+
     async function fetchMessages() {
         if (!activeUserId) return;
         const container = document.getElementById('messageContainer');
@@ -387,6 +456,35 @@
             });
             if (!res.ok) return;
             const data = await res.json();
+
+            currentPendingResignation = data.pending_resignation || null;
+            currentOtherUser = data.user || null;
+
+            const resignBanner = document.getElementById('chatResignationBanner');
+            if (resignBanner) {
+                if (data.pending_resignation) {
+                    resignBanner.classList.remove('hidden');
+                    resignBanner.classList.add('flex');
+                    const jobTitleEl = document.getElementById('chatResignJobTitle');
+                    if (jobTitleEl) jobTitleEl.textContent = `Pengajuan Resign: ${data.pending_resignation.job_title}`;
+                    const detailsEl = document.getElementById('chatResignDetails');
+                    if (detailsEl) {
+                        detailsEl.textContent = `Efektif: ${data.pending_resignation.resignation_date} · Alasan: ${data.pending_resignation.resignation_reason}` + (data.pending_resignation.resignation_notes ? ` ("${data.pending_resignation.resignation_notes}")` : '');
+                    }
+
+                    const approveBtn = document.getElementById('chatResignApproveBtn');
+                    if (approveBtn) {
+                        approveBtn.onclick = () => handleResignInChat('approved');
+                    }
+                    const rejectBtn = document.getElementById('chatResignRejectBtn');
+                    if (rejectBtn) {
+                        rejectBtn.onclick = () => handleResignInChat('rejected');
+                    }
+                } else {
+                    resignBanner.classList.add('hidden');
+                    resignBanner.classList.remove('flex');
+                }
+            }
 
             const existingElements = Array.from(container.querySelectorAll('[data-msg-id]'));
             const existingIds = new Set(existingElements.map(el => parseInt(el.dataset.msgId)));
@@ -402,7 +500,7 @@
 
             if (data.messages.length === 0) {
                 container.innerHTML = `
-                    <div class="h-full flex flex-col items-center justify-center text-slate-400 my-auto text-center p-8">
+                    <div data-chat-placeholder class="h-full flex flex-col items-center justify-center text-slate-400 my-auto text-center p-8">
                         <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">waving_hand</span>
                         <p class="font-bold text-slate-700 dark:text-slate-300 text-xs">Belum ada riwayat pesan</p>
                         <p class="text-[11px] text-slate-400 mt-1 max-w-xs">Kirim pesan pertama Anda untuk memulai percakapan.</p>
@@ -411,7 +509,9 @@
                 return;
             }
 
-            const isPlaceholder = container.querySelector('.text-slate-400');
+            const isPlaceholder = container.querySelector('[data-chat-placeholder]');
+            const isNearBottom = (container.scrollHeight - container.scrollTop - container.clientHeight) < 80;
+
             if (isPlaceholder || existingIds.size === 0) {
                 container.innerHTML = '';
                 data.messages.forEach(msg => {
@@ -422,6 +522,7 @@
                 container.scrollTop = container.scrollHeight;
             } else {
                 let hasNew = false;
+                let hasMyNew = false;
                 data.messages.forEach(msg => {
                     if (!existingIds.has(msg.id)) {
                         const temp = document.createElement('div');
@@ -430,10 +531,13 @@
                         el.classList.add('animate-msg-popup');
                         container.appendChild(el);
                         hasNew = true;
+                        if (msg.is_me) {
+                            hasMyNew = true;
+                        }
                     }
                 });
 
-                if (hasNew) {
+                if (hasNew && (isNearBottom || hasMyNew)) {
                     container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
                 }
             }

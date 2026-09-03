@@ -80,7 +80,9 @@ class AllPagesRenderingSmokeTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk();
+        $this->actingAs($admin)->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Master data');
         $this->actingAs($admin)->get(route('admin.jobs.index'))->assertOk();
         $this->actingAs($admin)->get(route('admin.jobs.show', $job))->assertOk();
         $this->actingAs($admin)->get(route('admin.jobs.edit', $job))->assertOk();

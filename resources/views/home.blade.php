@@ -11,8 +11,8 @@
                 <p class="mt-6 max-w-xl text-base leading-7 text-brand-100 sm:text-lg">KerjaLokal mempertemukan talenta dengan UMKM melalui lowongan yang menyebutkan upah, jam kerja, dan keterampilan secara jelas.</p>
                 <form action="{{ route('jobs.index') }}" method="GET" class="mt-8 flex max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-xl sm:flex-row">
                     <label for="home-search" class="sr-only">Cari posisi atau lokasi</label>
-                    <div class="relative flex-1"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span><input id="home-search" name="q" type="search" class="min-h-12 w-full rounded-xl border-0 py-3 pl-11 pr-3 text-sm text-slate-900 outline-none ring-0" placeholder="Kasir, barista, Bandung"></div>
-                    <button class="min-h-12 rounded-xl bg-coral-600 px-6 text-sm font-bold text-white transition hover:bg-coral-700">Cari peluang</button>
+                    <div class="relative flex-1"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span><input id="home-search" name="q" type="search" class="min-h-12 w-full rounded-xl border-0 py-3 pl-11 pr-3 text-sm text-slate-900 outline-none ring-0" placeholder="Kasir, barista, Bandung..."></div>
+                    <button class="min-h-12 rounded-xl bg-coral-600 px-6 text-sm font-bold text-white transition hover:bg-coral-700 cursor-pointer">Cari peluang</button>
                 </form>
                 <div class="mt-8 flex flex-wrap gap-6 text-sm text-brand-100"><span class="flex items-center gap-2"><span class="material-symbols-outlined text-[19px] text-brand-300">payments</span>Upah transparan</span><span class="flex items-center gap-2"><span class="material-symbols-outlined text-[19px] text-brand-300">schedule</span>Maksimal 8 jam per hari</span></div>
             </div>
@@ -25,7 +25,7 @@
 
     <section class="-mt-5 relative z-10 mx-3 grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:mx-8 sm:grid-cols-3 dark:border-slate-800 dark:bg-slate-900" aria-label="Ringkasan platform" data-reveal>
         @foreach ([['value' => $metrics['open_jobs'], 'label' => 'lowongan aktif'], ['value' => $metrics['employers'], 'label' => 'mitra UMKM'], ['value' => $metrics['accepted_workers'], 'label' => 'pekerja diterima']] as $metric)
-            <div class="border-b border-slate-100 px-6 py-5 last:border-0 sm:border-b-0 sm:border-r sm:last:border-r-0 dark:border-slate-800"><strong class="block text-3xl font-bold tracking-tight text-brand-700 dark:text-brand-300">{{ number_format($metric['value']) }}</strong><span class="mt-1 block text-sm text-slate-500 dark:text-slate-400">{{ $metric['label'] }}</span></div>
+            <div class="border-b border-slate-100 px-6 py-5 last:border-0 sm:border-b-0 sm:border-r sm:last:border-r-0 dark:border-slate-800"><strong data-counter="{{ $metric['value'] }}" class="block text-3xl font-bold tracking-tight text-brand-700 dark:text-brand-300">0</strong><span class="mt-1 block text-sm text-slate-500 dark:text-slate-400">{{ $metric['label'] }}</span></div>
         @endforeach
     </section>
 
@@ -57,3 +57,121 @@
 
     <section class="py-20 text-center" data-reveal><h2 class="text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Siap mengambil langkah berikutnya?</h2><p class="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">Cari pekerjaan yang jelas atau bantu usaha lokal menemukan anggota tim yang tepat.</p><div class="mt-7 flex flex-wrap justify-center gap-3"><a href="{{ route('jobs.index') }}" class="portal-button-primary">Cari lowongan</a>@guest<a href="{{ route('register') }}" class="portal-button-secondary">Daftar sebagai mitra</a>@endguest</div></section>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Animasi Typewriter pada Kolom Pencarian (Search Input Placeholder)
+        const searchInput = document.getElementById('home-search');
+        if (searchInput) {
+            const searchSuggestions = [
+                'Kasir, barista, Bandung...',
+                'Staff admin, Surabaya...',
+                'Desain grafis, Jakarta...',
+                'Barista kedai kopi, Yogyakarta...',
+                'Video editor, Bandung...',
+                'Pramuniaga toko, Semarang...',
+                'Content creator, Bali...'
+            ];
+            let sIdx = 0;
+            let sChar = searchSuggestions[0].length;
+            let sDeleting = false;
+            let isFocused = false;
+
+            function stepSearchType() {
+                if (isFocused || searchInput.value.trim().length > 0) {
+                    setTimeout(stepSearchType, 1000);
+                    return;
+                }
+
+                const suggestion = searchSuggestions[sIdx];
+
+                if (sDeleting) {
+                    sChar--;
+                    searchInput.setAttribute('placeholder', suggestion.substring(0, sChar));
+                } else {
+                    sChar++;
+                    searchInput.setAttribute('placeholder', suggestion.substring(0, sChar));
+                }
+
+                let delay = sDeleting ? 30 : 65;
+
+                if (!sDeleting && sChar === suggestion.length) {
+                    delay = 2200;
+                    sDeleting = true;
+                } else if (sDeleting && sChar === 0) {
+                    sDeleting = false;
+                    sIdx = (sIdx + 1) % searchSuggestions.length;
+                    delay = 400;
+                }
+
+                setTimeout(stepSearchType, delay);
+            }
+
+            searchInput.addEventListener('focus', () => { isFocused = true; });
+            searchInput.addEventListener('blur', () => {
+                isFocused = false;
+                if (!searchInput.value.trim()) {
+                    sChar = 0;
+                    sDeleting = false;
+                }
+            });
+
+            setTimeout(() => {
+                sDeleting = true;
+                stepSearchType();
+            }, 2200);
+        }
+
+        // 3. Animasi Rolling / Rolling Numbers pada Statistik Metrik
+        const counterEls = document.querySelectorAll('[data-counter]');
+        if (counterEls.length > 0) {
+            const animateCounter = (el) => {
+                const target = parseInt(el.dataset.counter, 10) || 0;
+                if (target === 0) {
+                    el.textContent = '0';
+                    return;
+                }
+
+                const duration = 1500;
+                const start = performance.now();
+
+                function step(now) {
+                    const elapsed = now - start;
+                    const progress = Math.min(elapsed / duration, 1);
+                    // Smooth ease-out cubic
+                    const ease = 1 - Math.pow(1 - progress, 3);
+                    const currentVal = Math.round(ease * target);
+
+                    el.textContent = currentVal.toLocaleString('id-ID');
+
+                    if (progress < 1) {
+                        requestAnimationFrame(step);
+                    } else {
+                        el.textContent = target.toLocaleString('id-ID');
+                        el.classList.add('transition-transform', 'duration-200', 'scale-110');
+                        setTimeout(() => el.classList.remove('scale-110'), 250);
+                    }
+                }
+
+                requestAnimationFrame(step);
+            };
+
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            obs.unobserve(entry.target);
+                            animateCounter(entry.target);
+                        }
+                    });
+                }, { threshold: 0.25 });
+
+                counterEls.forEach(el => observer.observe(el));
+            } else {
+                counterEls.forEach(el => animateCounter(el));
+            }
+        }
+    });
+</script>
+@endpush

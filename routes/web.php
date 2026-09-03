@@ -15,6 +15,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\JobReportController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,10 +47,16 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('/chat/clear/{user}', [ChatController::class, 'clearChat'])->name('chat.clear');
     Route::post('/lowongan/{job}/lapor', [JobReportController::class, 'store'])->name('jobs.report');
 
+    Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifikasi/{id}/baca', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::delete('/notifikasi/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+
     Route::middleware('role:jobseeker')->group(function (): void {
         Route::post('/lowongan/{job}/lamar', [JobApplicationController::class, 'store'])->name('applications.store');
         Route::get('/riwayat-lamaran', [JobApplicationController::class, 'index'])->name('applications.index');
         Route::redirect('/lamaran', '/riwayat-lamaran')->name('applications.alias');
+        Route::post('/riwayat-lamaran/{application}/resign', [JobApplicationController::class, 'requestResignation'])->name('applications.resign');
         Route::delete('/riwayat-lamaran/{application}', [JobApplicationController::class, 'destroy'])->name('applications.destroy');
         Route::get('/riwayat-lamaran/{application}/resume/preview', [EmployerApplicationController::class, 'preview'])->name('applications.resume.preview');
         Route::get('/profil', [ProfileController::class, 'show'])->name('profile.index');
@@ -64,6 +71,7 @@ Route::middleware('auth')->group(function (): void {
         Route::patch('/lowongan/{job}/status', [EmployerJobController::class, 'updateStatus'])->name('jobs.status');
         Route::get('/pelamar', [EmployerApplicationController::class, 'index'])->name('applications.index');
         Route::patch('/pelamar/{application}', [EmployerApplicationController::class, 'update'])->name('applications.update');
+        Route::patch('/pelamar/{application}/resign-decision', [EmployerApplicationController::class, 'resignDecision'])->name('applications.resignDecision');
         Route::get('/pelamar/{application}/resume', [EmployerApplicationController::class, 'download'])->name('applications.resume');
         Route::get('/pelamar/{application}/resume/preview', [EmployerApplicationController::class, 'preview'])->name('applications.resume.preview');
         Route::delete('/keterampilan/{skill}', [EmployerJobController::class, 'destroySkill'])->name('skills.destroy');

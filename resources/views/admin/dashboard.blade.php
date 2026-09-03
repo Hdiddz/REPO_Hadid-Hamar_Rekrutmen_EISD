@@ -33,7 +33,7 @@
 
     <!-- Recent Reports Notification Banner if pending > 0 -->
     @if($metrics['pending_reports'] > 0)
-        <div class="mt-6 rounded-2xl bg-rose-50 p-4 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="mt-6 rounded-2xl bg-rose-50 p-4 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3" data-reveal>
             <div class="flex items-center gap-3">
                 <span class="material-symbols-outlined text-rose-600 text-2xl">priority_high</span>
                 <div>

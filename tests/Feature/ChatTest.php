@@ -75,7 +75,7 @@ class ChatTest extends TestCase
         $response->assertDontSee('100% Bebas Calo');
         $response->assertDontSee('100% Saluran Resmi Etis');
 
-        $homeResponse = $this->actingAs($user)->get('/');
+        $homeResponse = $this->actingAs($user)->followingRedirects()->get('/');
         $homeResponse->assertOk();
         $homeResponse->assertDontSee('100% Bebas Calo');
     }

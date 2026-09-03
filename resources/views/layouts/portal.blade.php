@@ -47,6 +47,8 @@
                         <span class="material-symbols-outlined text-[22px]">menu</span>
                     </button>
 
+                    <x-notification-bell />
+
                     <div class="relative">
                         <button type="button" class="flex min-h-11 items-center gap-2 rounded-xl px-2 py-1.5 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800" data-menu-toggle="portal-user-menu" aria-expanded="false" aria-haspopup="true">
                             @if(auth()->user()?->avatar_url)
@@ -135,6 +137,7 @@
     <x-logout-modal />
     <x-confirm-modal />
     <x-pdf-viewer-modal />
+    <x-notification-modal />
 
     @yield('portal_modals')
     @stack('modals')

@@ -8,6 +8,7 @@ use App\Models\ChatMessage;
 use App\Models\Job;
 use App\Models\JobApplication;
 use App\Models\Skill;
+use App\Notifications\ApplicationStatusUpdatedNotification;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -218,23 +219,35 @@ class JobController extends Controller
     public function updateApplicationStatus(Request $request, JobApplication $application): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'in:pending,reviewed,accepted,rejected'],
+            'status' => ['required', 'in:pending,reviewed,interview,accepted,rejected,resigned'],
         ]);
 
-        $application->update([
-            'status' => $validated['status'],
-        ]);
+        if ($validated['status'] === 'resigned') {
+            $application->update([
+                'status' => 'resigned',
+                'resignation_status' => 'approved',
+                'resigned_at' => $application->resigned_at ?? now(),
+            ]);
+        } else {
+            $application->update([
+                'status' => $validated['status'],
+            ]);
+        }
 
         // Kirim notifikasi pesan ke pelamar kerja
         $admin = $request->user();
         $statusLabels = [
             'pending' => 'Menunggu Tinjauan',
             'reviewed' => 'Sedang Ditinjau',
+            'interview' => 'Tahap Wawancara',
             'accepted' => 'Diterima Bekerja 🎉',
             'rejected' => 'Belum Lolos Seleksi',
+            'resigned' => 'Resign (Telah Mengundurkan Diri)',
         ];
         $label = $statusLabels[$validated['status']] ?? ucfirst($validated['status']);
         $employerName = $application->job->employer->business_name ?: $application->job->employer->name;
+
+        $application->user->notify(new ApplicationStatusUpdatedNotification($application, $validated['status']));
 
         ChatMessage::create([
             'sender_id' => $admin->id,
@@ -243,7 +256,7 @@ class JobController extends Controller
             'is_read' => false,
         ]);
 
-        return back()->with('success', "Status lamaran kandidat {$application->user->name} berhasil diubah menjadi: ".ucfirst($validated['status']));
+        return back()->with('success', "Status lamaran kandidat {$application->user->name} berhasil diubah menjadi: ".$label);
     }
 
     public function updateStatus(Request $request, Job $job): RedirectResponse

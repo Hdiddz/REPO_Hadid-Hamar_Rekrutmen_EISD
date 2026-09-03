@@ -159,10 +159,25 @@
                         @forelse($user->jobApplications as $app)
                             <div class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div class="min-w-0">
-                                    <div class="flex items-center gap-2">
-                                        <span class="portal-badge {{ match($app->status) {'accepted' => 'bg-emerald-50 text-emerald-800', 'rejected' => 'bg-rose-50 text-rose-800', 'reviewed' => 'bg-blue-50 text-blue-800', default => 'bg-amber-50 text-amber-800'} }} text-[10px]">
-                                            {{ match($app->status) {'accepted' => 'Diterima', 'rejected' => 'Ditolak', 'reviewed' => 'Ditinjau', default => 'Pending'} }}
-                                        </span>
+                                    @php
+                                        $isUserAppResigned = $app->status === 'resigned' || $app->resignation_status === 'approved';
+                                    @endphp
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        @if($isUserAppResigned)
+                                            <span class="portal-badge bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 text-[10px] font-bold inline-flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-[13px]">person_cancel</span>
+                                                Telah Resign
+                                            </span>
+                                        @elseif($app->resignation_status === 'pending')
+                                            <span class="portal-badge bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 text-[10px] font-bold inline-flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-[13px]">pending_actions</span>
+                                                Resign Ditinjau
+                                            </span>
+                                        @else
+                                            <span class="portal-badge {{ match($app->status) {'accepted' => 'bg-emerald-50 text-emerald-800', 'interview' => 'bg-indigo-50 text-indigo-800', 'rejected' => 'bg-rose-50 text-rose-800', 'reviewed' => 'bg-blue-50 text-blue-800', default => 'bg-amber-50 text-amber-800'} }} text-[10px]">
+                                                {{ match($app->status) {'accepted' => 'Diterima', 'interview' => 'Wawancara', 'rejected' => 'Ditolak', 'reviewed' => 'Ditinjau', default => 'Pending'} }}
+                                            </span>
+                                        @endif
                                         <span class="text-xs text-slate-400">{{ $app->created_at->translatedFormat('d M Y') }}</span>
                                     </div>
                                     <h4 class="mt-1 font-bold text-sm text-slate-900 dark:text-white truncate">
@@ -171,6 +186,36 @@
                                     <p class="mt-0.5 text-xs text-slate-500">
                                         Mitra: <strong>{{ $app->job->employer->business_name ?: $app->job->employer->name }}</strong>
                                     </p>
+                                    @if($isUserAppResigned)
+                                        <div class="mt-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 p-3 text-xs text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                            <div class="flex items-center gap-1.5 font-bold">
+                                                <span class="material-symbols-outlined text-[15px] text-slate-600 dark:text-slate-400">check_circle</span>
+                                                <span>Pengunduran Diri Resmi Disetujui</span>
+                                                @if($app->resignation_date)
+                                                    <span class="font-normal text-slate-500">· Tanggal Efektif: {{ $app->resignation_date->translatedFormat('d M Y') }}</span>
+                                                @endif
+                                                @if($app->resigned_at)
+                                                    <span class="font-normal text-slate-400">· Disetujui: {{ $app->resigned_at->translatedFormat('d M Y, H:i') }}</span>
+                                                @endif
+                                            </div>
+                                            @if($app->resignation_reason)
+                                                <p class="mt-1 text-[11px] text-slate-600 dark:text-slate-400 italic">"{{ $app->resignation_reason }}"</p>
+                                            @endif
+                                        </div>
+                                    @elseif($app->resignation_status === 'pending')
+                                        <div class="mt-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 p-3 text-xs text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-900">
+                                            <div class="flex items-center gap-1.5 font-bold">
+                                                <span class="material-symbols-outlined text-[15px] text-amber-600">pending_actions</span>
+                                                <span>Pengajuan Resign Masuk (Sedang Ditinjau Mitra)</span>
+                                                @if($app->resignation_date)
+                                                    <span class="font-normal text-amber-700">· Tanggal Efektif: {{ $app->resignation_date->translatedFormat('d M Y') }}</span>
+                                                @endif
+                                            </div>
+                                            @if($app->resignation_reason)
+                                                <p class="mt-1 text-[11px] text-amber-800 dark:text-amber-300 italic">"{{ $app->resignation_reason }}"</p>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <div class="flex items-center gap-2 shrink-0">
@@ -178,14 +223,10 @@
                                         Lihat Lowongan
                                     </a>
                                     @if($app->resume_file)
-                                        <button type="button" onclick="openPdfViewer('{{ route('admin.applications.resume.preview', $app) }}', '{{ addslashes($user->name) }}', '{{ route('admin.applications.resume', $app) }}')" class="portal-button-primary !py-1 !px-2.5 text-xs gap-1 cursor-pointer">
+                                        <button type="button" onclick="openPdfViewer('{{ route('admin.applications.resume.preview', $app) }}', '{{ addslashes($user->name) }}', '{{ route('admin.applications.resume', $app) }}')" class="portal-button-primary !py-1 !px-2.5 text-xs gap-1 cursor-pointer" title="Pratinjau CV/Resume kandidat di browser">
                                             <span class="material-symbols-outlined text-[16px]">visibility</span>
-                                            Lihat
+                                            Lihat Resume
                                         </button>
-                                        <a href="{{ route('admin.applications.resume', $app) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs">
-                                            <span class="material-symbols-outlined text-[16px]">download</span>
-                                            Unduh
-                                        </a>
                                     @endif
                                 </div>
                             </div>

@@ -6,6 +6,7 @@ use App\Models\ChatMessage;
 use App\Models\Job;
 use App\Models\JobApplication;
 use App\Models\User;
+use App\Notifications\NewChatMessageNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -112,6 +113,26 @@ class ChatController extends Controller
                 ] : null,
             ]);
 
+        $pendingResignation = null;
+        if ($request->user()->hasRole('employer')) {
+            $pendingResignationApp = JobApplication::query()
+                ->where('user_id', $user->id)
+                ->where('resignation_status', 'pending')
+                ->whereHas('job', fn ($q) => $q->where('employer_id', $userId))
+                ->with('job:id,title')
+                ->first();
+
+            if ($pendingResignationApp) {
+                $pendingResignation = [
+                    'application_id' => $pendingResignationApp->id,
+                    'job_title' => $pendingResignationApp->job->title,
+                    'resignation_date' => $pendingResignationApp->resignation_date ? $pendingResignationApp->resignation_date->translatedFormat('l, d F Y') : null,
+                    'resignation_reason' => $pendingResignationApp->resignation_reason,
+                    'resignation_notes' => $pendingResignationApp->resignation_notes,
+                ];
+            }
+        }
+
         return response()->json([
             'user' => [
                 'id' => $user->id,
@@ -122,6 +143,7 @@ class ChatController extends Controller
                 'initials' => strtoupper(substr($user->name, 0, 2)),
             ],
             'messages' => $messages,
+            'pending_resignation' => $pendingResignation,
         ]);
     }
 
@@ -141,6 +163,9 @@ class ChatController extends Controller
         ]);
 
         $message->load('replyTo.sender');
+        $message->setRelation('sender', $request->user());
+
+        $user->notify(new NewChatMessageNotification($message));
 
         return response()->json([
             'id' => $message->id,

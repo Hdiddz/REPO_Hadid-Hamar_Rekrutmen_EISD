@@ -27,7 +27,16 @@ class UpdateApplicationStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', Rule::in(['pending', 'interview', 'accepted', 'rejected'])],
+            'status' => ['required', Rule::in(['pending', 'interview', 'accepted', 'rejected', 'resigned'])],
+            'interview_date' => ['nullable', 'date'],
+            'interview_time' => ['nullable', 'string', 'max:50'],
+            'interview_type' => ['nullable', 'string', 'max:100'],
+            'interview_location' => ['nullable', 'string', 'max:255'],
+            'interview_notes' => ['nullable', 'string', 'max:2000'],
+            'start_date' => ['nullable', 'date'],
+            'acceptance_notes' => ['nullable', 'string', 'max:2000'],
+            'rejection_reason' => ['nullable', 'string', 'max:255'],
+            'rejection_notes' => ['nullable', 'string', 'max:2000'],
         ];
     }
 

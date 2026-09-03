@@ -38,6 +38,12 @@ class DashboardController extends Controller
             ->get()
             ->sum(fn (JobApplication $application): float => (float) $application->job->salary_amount);
 
+        $acceptedWorkers = (clone $applications)
+            ->where('status', 'accepted')
+            ->with(['user:id,name,username,email,phone,avatar', 'job:id,title,salary_amount,salary_type,location'])
+            ->latest('updated_at')
+            ->get();
+
         $metrics = [
             'open_jobs' => Job::whereBelongsTo($employer, 'employer')->where('status', 'open')->count(),
             'applications' => (clone $applications)->count(),
@@ -45,6 +51,6 @@ class DashboardController extends Controller
             'accepted_wages' => $acceptedWages,
         ];
 
-        return view('employer.dashboard', compact('employer', 'jobs', 'metrics'));
+        return view('employer.dashboard', compact('employer', 'jobs', 'metrics', 'acceptedWorkers'));
     }
 }

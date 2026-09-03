@@ -4,9 +4,14 @@ namespace App\Http\Controllers\Employer;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateApplicationStatusRequest;
+use App\Models\ChatMessage;
 use App\Models\Job;
 use App\Models\JobApplication;
+use App\Notifications\ApplicationStatusUpdatedNotification;
+use App\Notifications\ResignationDecisionNotification;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -21,15 +26,15 @@ class ApplicationController extends Controller
 
         $applications = JobApplication::query()
             ->whereHas('job', fn ($query) => $query->whereBelongsTo($employer, 'employer'))
-            ->with(['user:id,name,email,phone', 'job:id,employer_id,title', 'job.skills:id,name'])
-            ->when($request->integer('job'), fn ($query, $job) => $query->where('job_id', $job))
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
-            ->latest('id')
+            ->with(['user', 'job.skills', 'job.category'])
+            ->when($request->filled('job'), fn ($q) => $q->where('job_id', $request->integer('job')))
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->latest()
             ->paginate(10)
             ->withQueryString();
 
         $jobs = Job::query()
-            ->whereBelongsTo($employer, 'employer')
+            ->where('employer_id', $employer->id)
             ->orderBy('title')
             ->get(['id', 'title']);
 
@@ -38,8 +43,109 @@ class ApplicationController extends Controller
 
     public function update(UpdateApplicationStatusRequest $request, JobApplication $application): RedirectResponse
     {
-        $application->update($request->validated());
-        $application->loadMissing('user:id,name');
+        $oldStatus = $application->status;
+        $status = $request->validated('status');
+
+        $updateData = [
+            'status' => $status,
+        ];
+
+        if ($status === 'interview') {
+            $updateData['interview_date'] = $request->input('interview_date');
+            $updateData['interview_time'] = $request->input('interview_time');
+            $updateData['interview_type'] = $request->input('interview_type');
+            $updateData['interview_location'] = $request->input('interview_location');
+            $updateData['interview_notes'] = $request->input('interview_notes');
+        } elseif ($status === 'accepted') {
+            $updateData['start_date'] = $request->input('start_date');
+            $updateData['acceptance_notes'] = $request->input('acceptance_notes');
+        } elseif ($status === 'rejected') {
+            $updateData['rejection_reason'] = $request->input('rejection_reason');
+            $updateData['rejection_notes'] = $request->input('rejection_notes');
+        }
+
+        $application->update($updateData);
+        $application->loadMissing(['user:id,name', 'job.employer']);
+
+        $employer = $request->user();
+        $employerName = $employer->business_name ?: $employer->name;
+
+        // 1. Kasus Wawancara (interview) - Dengan pengaturan jadwal & konfirmasi
+        if ($status === 'interview') {
+            $dateFormatted = $request->filled('interview_date')
+                ? Carbon::parse($request->input('interview_date'))->locale('id')->translatedFormat('l, d F Y')
+                : null;
+            $timeFormatted = $request->filled('interview_time') ? $request->input('interview_time').' WIB' : null;
+            $type = $request->input('interview_type') ?: 'Wawancara Langsung';
+            $location = $request->input('interview_location') ?: ($employer->business_name ?: 'Lokasi UMKM');
+            $notes = $request->input('interview_notes') ?: 'Mohon konfirmasi kesiapan Anda menghadiri sesi wawancara ini.';
+
+            $scheduleSnippet = $dateFormatted ? " pada hari {$dateFormatted}".($timeFormatted ? " pukul {$timeFormatted}" : '') : '';
+            $customNotifMessage = "Kabar baik! Anda diundang mengikuti wawancara posisi '{$application->job->title}' di {$employerName}{$scheduleSnippet} ({$type}). Mohon konfirmasi kesiapan Anda.";
+
+            $application->user->notify(new ApplicationStatusUpdatedNotification($application, 'interview', $customNotifMessage));
+
+            $scheduleText = $dateFormatted ? "\n• Hari/Tanggal: {$dateFormatted}" : '';
+            if ($timeFormatted) {
+                $scheduleText .= "\n• Waktu: {$timeFormatted}";
+            }
+            $scheduleText .= "\n• Metode/Lokasi: {$type} - {$location}";
+            $scheduleText .= "\n• Catatan: {$notes}";
+
+            ChatMessage::create([
+                'sender_id' => $employer->id,
+                'receiver_id' => $application->user_id,
+                'message' => "📅 [Undangan Wawancara Kerja]\n\nHalo {$application->user->name},\nKami dari {$employerName} mengundang Anda untuk mengikuti sesi wawancara untuk posisi \"{$application->job->title}\":{$scheduleText}\n\nMohon konfirmasi kesiapan Anda dengan membalas pesan ini. Terima kasih!",
+                'is_read' => false,
+            ]);
+
+            return back()->with('success', "Undangan wawancara berhasil dijadwalkan dan dikirimkan ke {$application->user->name}!");
+        }
+
+        // 2. Kasus Diterima (accepted)
+        if ($status === 'accepted') {
+            $startDate = $request->filled('start_date')
+                ? Carbon::parse($request->input('start_date'))->locale('id')->translatedFormat('l, d F Y')
+                : 'Segera / Menyesuaikan';
+            $notes = $request->input('acceptance_notes') ?: 'Silakan koordinasikan persiapan Anda melalui ruang obrolan ini.';
+
+            $customNotifMessage = "🎉 Selamat! Lamaran Anda untuk posisi '{$application->job->title}' telah DITERIMA oleh {$employerName}. Mulai kerja: {$startDate}.";
+
+            $application->user->notify(new ApplicationStatusUpdatedNotification($application, 'accepted', $customNotifMessage));
+
+            ChatMessage::create([
+                'sender_id' => $employer->id,
+                'receiver_id' => $application->user_id,
+                'message' => "🎉 Selamat {$application->user->name}! Lamaran Anda untuk posisi \"{$application->job->title}\" telah DITERIMA oleh {$employerName}. Anda telah resmi tercatat sebagai peserta/tenaga kerja aktif kami.\n\n• Mulai Kerja: {$startDate}\n• Catatan: {$notes}\n\nSilakan koordinasikan persiapan Anda melalui ruang obrolan ini.",
+                'is_read' => false,
+            ]);
+
+            return back()->with('success', "Kandidat {$application->user->name} resmi diterima dan masuk sebagai peserta aktif di UMKM Anda!");
+        }
+
+        // 3. Kasus Ditolak (rejected)
+        if ($status === 'rejected') {
+            $reason = $request->input('rejection_reason') ?: 'Kualifikasi belum sesuai dengan kebutuhan saat ini';
+            $notes = $request->input('rejection_notes') ?: 'Terima kasih telah melamar di UMKM kami. Kami mendoakan kesuksesan untuk langkah karier Anda selanjutnya.';
+
+            $customNotifMessage = "Terima kasih telah melamar posisi '{$application->job->title}'. Proses seleksi belum dapat dilanjutkan kali ini ({$reason}).";
+
+            $application->user->notify(new ApplicationStatusUpdatedNotification($application, 'rejected', $customNotifMessage));
+
+            ChatMessage::create([
+                'sender_id' => $employer->id,
+                'receiver_id' => $application->user_id,
+                'message' => "📋 [Pemberitahuan Hasil Seleksi]\n\nHalo {$application->user->name},\nTerima kasih atas partisipasi dan minat Anda melamar posisi \"{$application->job->title}\" di {$employerName}.\n\nSetelah peninjauan berkas secara saksama, kami menginformasikan bahwa untuk saat ini kami belum dapat melanjutkan ke tahap berikutnya ({$reason}).\n\n{$notes}",
+                'is_read' => false,
+            ]);
+
+            return back()->with('success', "Pemberitahuan hasil seleksi telah dikirimkan ke {$application->user->name}.");
+        }
+
+        // 4. Kasus Default / Menunggu Tinjauan (pending)
+        if ($status !== $oldStatus) {
+            $application->user->notify(new ApplicationStatusUpdatedNotification($application, $status));
+        }
 
         return back()->with('success', "Status lamaran {$application->user->name} berhasil diperbarui.");
     }
@@ -72,5 +178,79 @@ class ApplicationController extends Controller
                 'X-Content-Type-Options' => 'nosniff',
             ],
         );
+    }
+
+    /**
+     * Process resignation decision (approve or reject) by employer.
+     */
+    public function resignDecision(Request $request, JobApplication $application): RedirectResponse|JsonResponse
+    {
+        $job = $application->job;
+        if ($job->employer_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki hak untuk mengelola pengajuan ini.');
+        }
+
+        if ($application->resignation_status !== 'pending') {
+            return back()->with('warning', 'Pengajuan resign untuk kandidat ini telah diproses sebelumnya.');
+        }
+
+        $validated = $request->validate([
+            'decision' => ['required', 'in:approved,rejected'],
+            'response_message' => ['required', 'string', 'max:1000'],
+        ], [
+            'decision.required' => 'Keputusan persetujuan atau penolakan wajib dipilih.',
+            'response_message.required' => 'Pesan atau tanggapan untuk kandidat wajib diisi.',
+        ]);
+
+        $employer = $request->user();
+        $application->loadMissing(['user:id,name']);
+
+        if ($validated['decision'] === 'approved') {
+            $application->update([
+                'status' => 'resigned',
+                'resignation_status' => 'approved',
+                'resigned_at' => now(),
+            ]);
+
+            // 1. Notifikasi ke pencari kerja
+            $application->user->notify(new ResignationDecisionNotification($application, 'approved', $validated['response_message']));
+
+            // 2. Kirim pesan konfirmasi resmi ke ruang obrolan
+            ChatMessage::create([
+                'sender_id' => $employer->id,
+                'receiver_id' => $application->user_id,
+                'message' => "✅ [Pengajuan Resign Disetujui]\n\nHalo {$application->user->name},\nPermohonan pengunduran diri Anda dari posisi \"{$job->title}\" telah kami setujui.\n\n• Pesan/Tanggapan Mitra: {$validated['response_message']}\n\nTerima kasih banyak atas dedikasi dan kerja sama yang baik selama ini. Kami mendoakan kesuksesan untuk langkah karier Anda selanjutnya!",
+                'is_read' => false,
+            ]);
+
+            $message = "Pengajuan resign {$application->user->name} resmi disetujui.";
+        } else {
+            $application->update([
+                'resignation_status' => 'rejected',
+            ]);
+
+            // 1. Notifikasi ke pencari kerja
+            $application->user->notify(new ResignationDecisionNotification($application, 'rejected', $validated['response_message']));
+
+            // 2. Kirim pesan penolakan resmi ke ruang obrolan
+            ChatMessage::create([
+                'sender_id' => $employer->id,
+                'receiver_id' => $application->user_id,
+                'message' => "❌ [Pengajuan Resign Belum Disetujui]\n\nHalo {$application->user->name},\nMohon maaf, permohonan pengunduran diri Anda dari posisi \"{$job->title}\" belum dapat kami setujui saat ini.\n\n• Catatan/Alasan Mitra: {$validated['response_message']}\n\nMari kita bicarakan kembali dan koordinasikan melalui ruang obrolan ini.",
+                'is_read' => false,
+            ]);
+
+            $message = "Pengajuan resign {$application->user->name} telah ditolak dengan catatan evaluasi.";
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'decision' => $validated['decision'],
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 }
