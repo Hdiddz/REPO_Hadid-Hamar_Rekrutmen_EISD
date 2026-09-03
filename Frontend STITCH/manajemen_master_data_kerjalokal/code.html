@@ -1,0 +1,723 @@
+<!DOCTYPE html><html lang="id" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Manajemen Master Data - KerjaLokal Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            teal: {
+              50: "#f0fdfa",
+              100: "#ccfbf1",
+              500: "#14b8a6",
+              600: "#0d9488",
+              700: "#0f766e",
+              800: "#115e59",
+              900: "#134e4a"
+            },
+            sdg8: {
+              burgundy: "#A21942",
+              light: "#FFF1F2"
+            }
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+<!-- TOP ADMIN NAVBAR -->
+<header class="sticky top-0 z-40 w-full bg-white border-b border-slate-200 shadow-sm"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="flex items-center justify-between h-16 gap-4">
+    <!-- Brand -->
+    <div class="flex items-center gap-2.5 shrink-0">
+      <a class="flex items-center gap-2" href="#">
+        <img alt="KerjaLokal Logo" class="h-8 w-auto object-contain rounded" src="https://lh3.googleusercontent.com/aida/AEtjO1VBIplvI84L6HgwNdOxcf1ouqPzA5chKag0IAHHg8M4IR6IeK3IVZw2J6UJEnL0d-UgVqQ6PmP6N5WPgF-b96nVYIEY8t9PMVRKCsgbDFwDVzTxca4jLWvyeGLX_iSpII6YSbxhc76SDhldyqT8egPYXyV7x9gXQRuSA51P6QOhby0Q9XQ7MgmdY5B9Az2JNXwekaWXf6o8OCyJ577_nqWwdh0dLaHK0WnTgVSQLlKIOt7_iJtN7q2imYc">
+        <div class="flex items-center gap-1.5">
+          <span class="font-bold text-lg text-teal-700 tracking-tight">KerjaLokal</span>
+          <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200">Admin</span>
+        </div>
+      </a>
+    </div>
+    <!-- Navigation Links -->
+    <nav class="hidden lg:flex items-center gap-1 shrink-0">
+      <a class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-teal-700 hover:bg-slate-100 transition-colors flex items-center gap-1.5" href="#">
+        <span class="material-symbols-outlined text-[18px]">query_stats</span>
+        <span class="">Dashboard Makro</span>
+      </a>
+      <a class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-600 text-white shadow-sm flex items-center gap-1.5" href="#">
+        <span class="material-symbols-outlined text-[18px]">category</span>
+        <span class="">Master Data</span>
+      </a>
+      <a class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-teal-700 hover:bg-slate-100 transition-colors flex items-center gap-1.5" href="#">
+        <span class="material-symbols-outlined text-[18px]">fact_check</span>
+        <span class="">Moderasi Lowongan</span>
+      </a>
+      <a class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-teal-700 hover:bg-slate-100 transition-colors flex items-center gap-1.5" href="#">
+        <span class="material-symbols-outlined text-[18px]">group</span>
+        <span class="">Kelola Pengguna</span>
+      </a>
+      <a class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-teal-700 hover:bg-slate-100 transition-colors flex items-center gap-1.5" href="#">
+        <span class="material-symbols-outlined text-[18px]">history</span>
+        <span class="">Audit Log</span>
+      </a>
+    </nav>
+    <!-- Right User Admin Profile -->
+    <div class="flex items-center gap-3 shrink-0 pl-3 border-l border-slate-200">
+      <div class="text-right hidden sm:block">
+        <div class="flex items-center justify-end gap-1.5">
+          <span class="text-xs font-semibold text-slate-900 leading-tight">Admin Pusat</span>
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold tracking-wider bg-amber-100 text-amber-800 border border-amber-300 uppercase">SUPERADMIN</span>
+        </div>
+        <p class="text-[11px] text-slate-500 font-mono">ID: SA-001 • Disnaker RI</p>
+      </div>
+      <img alt="Avatar Admin" class="w-9 h-9 rounded-full object-cover ring-2 ring-teal-600/30 shadow-sm" src="https://lh3.googleusercontent.com/aida/AEtjO1X-mqn8h3Rj1-6I2KeOG_j3Ix9wlik4fSt4fbbeUMgZGQBPln1merZzKVomscd94SWHc3GkzFLtWrvnKlkJIk_iqhQb7IA3sTaU3JRuoIZnrZsvqCK1O8jy3u5S5bS7gpxDkULoPTZ4OGvxqJH6ONi6yfidoTJ7Tpoeg6hyqYPWU2dcasjkTf2rGu0USlba7R12s8UCahMseDPPNzJ7v2PWfi0aNHbitnm2mXrddQMHEbEem6Rw3vWrWXk">
+    </div>
+  </div>
+</div></header>
+<!-- MAIN WRAPPER -->
+<main class="flex-1 py-8 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+<!-- BREADCRUMB & HEADER ACTIONS -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-1"><div class="">
+  <nav aria-label="Breadcrumb" class="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+    <span class="">Admin</span>
+    <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+    <span class="">Master Data</span>
+    <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+    <span class="font-semibold text-teal-700">Kategori &amp; Keahlian</span>
+  </nav>
+  <div class="flex items-center gap-2.5">
+    <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Kategori &amp; Keahlian Standar UMKM</h1>
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+      Sync Aktif
+    </span>
+  </div>
+  <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Kelola taksonomi sektor industri UMKM dan standarisasi keahlian praktis sesuai standar SDG 8.</p>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+  <button class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs sm:text-sm font-medium hover:bg-slate-50 hover:text-teal-700 shadow-sm transition-colors" onclick="syncDatabase()">
+    <span class="material-symbols-outlined text-[18px] text-teal-600">sync</span>
+    <span class="">Sinkronisasi</span>
+  </button>
+  <button class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-teal-600 text-white text-xs sm:text-sm font-semibold hover:bg-teal-700 shadow-sm transition-colors" onclick="exportCSV()">
+    <span class="material-symbols-outlined text-[18px]">download</span>
+    <span class="">Ekspor CSV</span>
+  </button>
+</div></div>
+<!-- STATS SUMMARY CARDS -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow transition-shadow">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Kategori Pekerjaan</span>
+<span class="p-2 rounded-lg bg-teal-50 text-teal-700">
+<span class="material-symbols-outlined text-[20px]">category</span>
+</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-2xl font-extrabold text-slate-900">14</span>
+<span class="text-xs font-semibold text-emerald-600">+2 bulan ini</span>
+</div>
+<p class="text-xs text-slate-500 mt-1">Sektor dominan: F&amp;B, Retail, Jasa</p>
+</div>
+<div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow transition-shadow">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Keahlian Terstandar</span>
+<span class="p-2 rounded-lg bg-blue-50 text-blue-700">
+<span class="material-symbols-outlined text-[20px]">psychology</span>
+</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-2xl font-extrabold text-slate-900">86</span>
+<span class="text-xs text-slate-500 font-medium">Standar Mikro</span>
+</div>
+<p class="text-xs text-slate-500 mt-1">342 kecocokan profil pelamar aktif</p>
+</div>
+<div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow transition-shadow">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Lowongan Terhubung</span>
+<span class="p-2 rounded-lg bg-rose-50 text-rose-700">
+<span class="material-symbols-outlined text-[20px]">work</span>
+</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-2xl font-extrabold text-slate-900">1,248</span>
+<span class="text-xs font-semibold text-rose-700">100% Berstandar</span>
+</div>
+<p class="text-xs text-slate-500 mt-1">Gaji layak &amp; jam kerja manusiawi</p>
+</div>
+<div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow transition-shadow">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Akurasi Rekomendasi</span>
+<span class="p-2 rounded-lg bg-emerald-50 text-emerald-700">
+<span class="material-symbols-outlined text-[20px]">target</span>
+</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-2xl font-extrabold text-slate-900">94.2%</span>
+<span class="text-xs font-semibold text-emerald-600">↑ 3.1% bulan ini</span>
+</div>
+<p class="text-xs text-slate-500 mt-1">Skill-matching tanpa diskriminasi</p>
+</div>
+</div>
+<!-- 2-COLUMN BALANCED CORE LAYOUT -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+<!-- ================= KOLOM 1: KATEGORI PEKERJAAN (categories) ================= -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+<!-- Header Column -->
+<div class="p-4 border-b border-slate-200 bg-slate-50/70 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="p-2 rounded-lg bg-teal-100 text-teal-800">
+<span class="material-symbols-outlined text-[20px]">folder_open</span>
+</span>
+<div>
+<h2 class="text-base font-bold text-slate-900">Kategori Pekerjaan UMKM</h2>
+<p class="text-xs text-slate-500">Klasifikasi jenis bidang usaha UMKM</p>
+</div>
+</div>
+<span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal-50 text-teal-700 border border-teal-200">
+            5 Ditampilkan
+          </span>
+</div>
+<!-- Inline Quick Form: Tambah Kategori -->
+<div class="p-4 bg-slate-50 border-b border-slate-200">
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-teal-600">add_box</span>
+            Tambah Kategori Baru
+          </h3>
+<form class="space-y-3" id="catQuickForm" onsubmit="event.preventDefault(); addNewCategory();">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div>
+<label class="block text-xs font-medium text-slate-700 mb-1" for="catNameInput">Nama Kategori <span class="text-rose-500">*</span></label>
+<input class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 bg-white" id="catNameInput" oninput="autoGenerateSlug(this.value)" placeholder="Misal: Bengkel &amp; Servis" required="" type="text">
+</div>
+<div>
+<label class="block text-xs font-medium text-slate-700 mb-1" for="catSlugInput">Slug URL (Otomatis)</label>
+<input class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-200 bg-slate-100 text-slate-600 font-mono" id="catSlugInput" placeholder="bengkel-servis" readonly="" type="text">
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+<div class="sm:col-span-2">
+<label class="block text-xs font-medium text-slate-700 mb-1" for="catDescInput">Deskripsi / Contoh Sub-sektor</label>
+<input class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 bg-white" id="catDescInput" placeholder="Montir motor, servis ac, elektronika..." type="text">
+</div>
+<button class="w-full py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-1.5" type="submit">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                Simpan Kategori
+              </button>
+</div>
+</form>
+</div>
+<!-- Search Bar Inside Column -->
+<div class="p-3 border-b border-slate-200 flex items-center justify-between gap-3 bg-white">
+<div class="relative w-full max-w-sm">
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-slate-400 text-[18px]">search</span>
+<input class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-600 focus:border-teal-600 text-slate-800" id="searchCategoryInput" onkeyup="filterCategories()" placeholder="Cari nama atau slug kategori..." type="text">
+</div>
+<span class="text-[11px] text-slate-500 shrink-0 font-medium">Total 5 Kategori</span>
+</div>
+<!-- Table Kategori -->
+<div class="overflow-x-auto">
+<table class="w-full text-left text-xs border-collapse" id="tableCategories">
+<thead>
+<tr class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+<th class="py-2.5 px-3">ID</th>
+<th class="py-2.5 px-3">Nama Kategori</th>
+<th class="py-2.5 px-3 hidden sm:table-cell">Slug</th>
+<th class="py-3 px-4 text-center w-28">Loker Aktif</th>
+<th class="py-2.5 px-3 text-right">Aksi</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-slate-700">
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-2.5 px-3 font-mono text-slate-500">CAT-01</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<span class="p-1 rounded bg-teal-50 text-teal-700">
+<span class="material-symbols-outlined text-[16px]">restaurant</span>
+</span>
+<div>
+<span class="font-semibold text-slate-900 block text-xs sm:text-sm">Kuliner &amp; F&amp;B</span>
+<span class="text-[11px] text-slate-500">Warung, Kopi, Katering</span>
+</div>
+</div>
+</td>
+<td class="py-2.5 px-3 font-mono text-slate-500 hidden sm:table-cell">kuliner-fnb</td>
+<td class="py-3 px-4 text-center"><span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">482 loker</span></td>
+<td class="py-2.5 px-3 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-2.5 px-3 font-mono text-slate-500">CAT-02</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<span class="p-1 rounded bg-blue-50 text-blue-700">
+<span class="material-symbols-outlined text-[16px]">shopping_bag</span>
+</span>
+<div>
+<span class="font-semibold text-slate-900 block text-xs sm:text-sm">Ritel &amp; Toko Kelontong</span>
+<span class="text-[11px] text-slate-500">Minimarket, Kios, Butik</span>
+</div>
+</div>
+</td>
+<td class="py-2.5 px-3 font-mono text-slate-500 hidden sm:table-cell">ritel-toko-kelontong</td>
+<td class="py-3 px-4 text-center"><span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">315 loker</span></td>
+<td class="py-2.5 px-3 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-2.5 px-3 font-mono text-slate-500">CAT-03</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<span class="p-1 rounded bg-indigo-50 text-indigo-700">
+<span class="material-symbols-outlined text-[16px]">local_laundry_service</span>
+</span>
+<div>
+<span class="font-semibold text-slate-900 block text-xs sm:text-sm">Jasa Kebersihan &amp; Laundry</span>
+<span class="text-[11px] text-slate-500">Cuci Kiloan, Cleaning</span>
+</div>
+</div>
+</td>
+<td class="py-2.5 px-3 font-mono text-slate-500 hidden sm:table-cell">kebersihan-laundry</td>
+<td class="py-3 px-4 text-center"><span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">194 loker</span></td>
+<td class="py-2.5 px-3 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-2.5 px-3 font-mono text-slate-500">CAT-04</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<span class="p-1 rounded bg-rose-50 text-rose-700">
+<span class="material-symbols-outlined text-[16px]">content_cut</span>
+</span>
+<div>
+<span class="font-semibold text-slate-900 block text-xs sm:text-sm">Pangkas Rambut &amp; Salon</span>
+<span class="text-[11px] text-slate-500">Barbershop, Perawatan Diri</span>
+</div>
+</div>
+</td>
+<td class="py-2.5 px-3 font-mono text-slate-500 hidden sm:table-cell">pangkas-rambut-salon</td>
+<td class="py-3 px-4 text-center"><span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">128 loker</span></td>
+<td class="py-2.5 px-3 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-2.5 px-3 font-mono text-slate-500">CAT-05</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<span class="p-1 rounded bg-amber-50 text-amber-700">
+<span class="material-symbols-outlined text-[16px]">build</span>
+</span>
+<div>
+<span class="font-semibold text-slate-900 block text-xs sm:text-sm">Bengkel &amp; Servis Ringan</span>
+<span class="text-[11px] text-slate-500">Montir Motor, Elektronik</span>
+</div>
+</div>
+</td>
+<td class="py-2.5 px-3 font-mono text-slate-500 hidden sm:table-cell">bengkel-servis</td>
+<td class="py-3 px-4 text-center"><span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">89 loker</span></td>
+<td class="py-2.5 px-3 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer Meta -->
+<div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500"><span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px] text-teal-600">verified</span> Terhubung langsung dengan lowongan aktif</span><span class="text-teal-700 font-medium">Data Terverifikasi</span></div>
+</div>
+<!-- ================= KOLOM 2: MASTER KEAHLIAN (skills) ================= -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+<!-- Header Column -->
+<div class="p-4 border-b border-slate-200 bg-slate-50/70 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="p-2 rounded-lg bg-teal-100 text-teal-800">
+<span class="material-symbols-outlined text-[20px]">stars</span>
+</span>
+<div>
+<h2 class="text-base font-bold text-slate-900">Master Keahlian (Skills)</h2>
+<p class="text-xs text-slate-500">Daftar kompetensi praktis kerja</p>
+</div>
+</div>
+<span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+            5 Prioritas Utama
+          </span>
+</div>
+<!-- Inline Quick Form: Tambah Skill -->
+<div class="p-4 bg-slate-50 border-b border-slate-200">
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-teal-600">add_circle</span>
+            Registrasi Keahlian Standar Baru
+          </h3>
+<form class="space-y-3" id="skillQuickForm" onsubmit="event.preventDefault(); addNewSkill();"><div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
+  <div class="sm:col-span-2">
+    <label class="block text-xs font-medium text-slate-700 mb-1" for="skillNameInput">Nama Keahlian Standar <span class="text-rose-500">*</span></label>
+    <input class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 bg-white" id="skillNameInput" placeholder="Contoh: Barista Espresso, Kasir POS" required="" type="text">
+  </div>
+  <button class="w-full py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-1.5" type="submit">
+    <span class="material-symbols-outlined text-[18px]">bookmark_add</span>
+    <span class="">Daftarkan Skill</span>
+  </button>
+</div>
+<div class="pt-1 flex items-center gap-1.5 flex-wrap">
+  <span class="text-[11px] text-slate-500">Preset Cepat:</span>
+  <button class="text-[11px] px-2 py-0.5 bg-white border border-slate-200 rounded-full text-slate-600 hover:border-teal-500 hover:text-teal-700 transition-colors" onclick="presetSkill('Hospitality Ramah')" type="button">+ Hospitality</button>
+  <button class="text-[11px] px-2 py-0.5 bg-white border border-slate-200 rounded-full text-slate-600 hover:border-teal-500 hover:text-teal-700 transition-colors" onclick="presetSkill('Manajemen Stok Gudang')" type="button">+ Stok Gudang</button>
+  <button class="text-[11px] px-2 py-0.5 bg-white border border-slate-200 rounded-full text-slate-600 hover:border-teal-500 hover:text-teal-700 transition-colors" onclick="presetSkill('Pencatatan Nota Keuangan')" type="button">+ Nota Kas</button>
+</div></form>
+</div>
+<!-- Search Bar Inside Column -->
+<div class="p-3 border-b border-slate-200 flex items-center justify-between gap-3 bg-white">
+<div class="relative w-full max-w-sm">
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-slate-400 text-[18px]">search</span>
+<input class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-teal-600 focus:border-teal-600 text-slate-800" id="searchSkillInput" onkeyup="filterSkills()" placeholder="Cari nama keahlian standar..." type="text">
+</div>
+<span class="text-[11px] text-emerald-700 shrink-0 font-medium flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Sistem Rekomendasi Aktif</span>
+</div>
+<!-- Table Skills -->
+<div class="overflow-x-auto">
+<table class="w-full text-left text-xs border-collapse" id="tableSkills">
+<thead>
+<tr class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+<th class="py-2.5 px-3">ID</th>
+<th class="py-2.5 px-3">Nama Keahlian Standar</th>
+<th class="py-2.5 px-3 text-center">Frekuensi (job_skill)</th>
+<th class="py-2.5 px-3 text-center">Rasio Match</th>
+<th class="py-2.5 px-3 text-right">Aksi</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-slate-700">
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-2.5 px-3 font-mono text-slate-500">SKL-01</td>
+<td class="py-2.5 px-3">
+<div class="font-semibold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-teal-600">check_circle</span>
+                    Barista Dasar &amp; Seduh Manual
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-center">
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">324 Loker</span>
+</td>
+<td class="py-2.5 px-3 text-center">
+<div class="w-20 bg-slate-100 rounded-full h-1.5 mx-auto overflow-hidden mb-1">
+<div class="bg-teal-600 h-1.5 rounded-full" style="width: 88%"></div>
+</div>
+<span class="text-[10px] font-mono text-slate-500">88% match</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-2.5 px-3 font-mono text-slate-500">SKL-02</td>
+<td class="py-2.5 px-3">
+<div class="font-semibold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-teal-600">check_circle</span>
+                    Kasir POS &amp; Rekap Kas Harian
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-center">
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">289 Loker</span>
+</td>
+<td class="py-2.5 px-3 text-center">
+<div class="w-20 bg-slate-100 rounded-full h-1.5 mx-auto overflow-hidden mb-1">
+<div class="bg-teal-600 h-1.5 rounded-full" style="width: 95%"></div>
+</div>
+<span class="text-[10px] font-mono text-slate-500">95% match</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-2.5 px-3 font-mono text-slate-500">SKL-03</td>
+<td class="py-2.5 px-3">
+<div class="font-semibold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-teal-600">check_circle</span>
+                    Barbershop / Potong Rambut Pria
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-center">
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">142 Loker</span>
+</td>
+<td class="py-2.5 px-3 text-center">
+<div class="w-20 bg-slate-100 rounded-full h-1.5 mx-auto overflow-hidden mb-1">
+<div class="bg-teal-600 h-1.5 rounded-full" style="width: 76%"></div>
+</div>
+<span class="text-[10px] font-mono text-slate-500">76% match</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-2.5 px-3 font-mono text-slate-500">SKL-04</td>
+<td class="py-2.5 px-3">
+<div class="font-semibold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-teal-600">check_circle</span>
+                    Manajemen Stok &amp; Display Produk
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-center">
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">198 Loker</span>
+</td>
+<td class="py-2.5 px-3 text-center">
+<div class="w-20 bg-slate-100 rounded-full h-1.5 mx-auto overflow-hidden mb-1">
+<div class="bg-teal-600 h-1.5 rounded-full" style="width: 82%"></div>
+</div>
+<span class="text-[10px] font-mono text-slate-500">82% match</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-2.5 px-3 font-mono text-slate-500">SKL-05</td>
+<td class="py-2.5 px-3">
+<div class="font-semibold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-teal-600">check_circle</span>
+                    Komunikasi Ramah &amp; Pelayanan
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-center">
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">410 Loker</span>
+</td>
+<td class="py-2.5 px-3 text-center">
+<div class="w-20 bg-slate-100 rounded-full h-1.5 mx-auto overflow-hidden mb-1">
+<div class="bg-teal-600 h-1.5 rounded-full" style="width: 98%"></div>
+</div>
+<span class="text-[10px] font-mono text-slate-500">98% match</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+<button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer Meta -->
+<div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500"><span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px] text-teal-600">auto_awesome</span> Pencocokan kualifikasi pelamar otomatis</span><span class="text-teal-700 font-medium">Presisi Tinggi</span></div>
+</div>
+</div>
+<!-- BOTTOM SECTION: AUDIT LOG & RIWAYAT SINKRONISASI BASIS DATA -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+<div class="p-4 border-b border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"><div class="flex items-center gap-2.5"><span class="p-2 rounded-lg bg-teal-50 text-teal-700"><span class="material-symbols-outlined text-[20px]">history_toggle_off</span></span><div><h3 class="text-base font-bold text-slate-900">Riwayat Audit &amp; Sinkronisasi Data</h3><p class="text-xs text-slate-500">Catatan aktivitas pembaruan kategori, standarisasi keahlian, dan sinkronisasi data</p></div></div><div class="flex items-center gap-2"><button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50" onclick="refreshLog()"><span class="material-symbols-outlined text-[16px]">refresh</span> Refresh Log</button><span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Pembaruan otomatis tiap 10 menit</span></div></div>
+<div class="divide-y divide-slate-100"><div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors"><div class="flex items-start sm:items-center gap-3"><span class="p-1.5 rounded bg-emerald-100 text-emerald-700 shrink-0"><span class="material-symbols-outlined text-[18px]">add_circle</span></span><div><div class="text-sm font-semibold text-slate-900">Kategori baru berhasil ditambahkan: <span class="text-teal-700 font-medium">Bengkel &amp; Servis Ringan</span></div><p class="text-xs text-slate-500 mt-0.5">Kategori baru berhasil ditambahkan oleh Tim Admin Pusat • Wilayah operasional nasional</p></div></div><div class="sm:text-right shrink-0"><span class="text-xs text-slate-500 block mb-1">Hari ini, 10:42 WIB</span><div><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Berhasil Ditambahkan</span></div></div></div><div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors"><div class="flex items-start sm:items-center gap-3"><span class="p-1.5 rounded bg-blue-100 text-blue-700 shrink-0"><span class="material-symbols-outlined text-[18px]">edit_note</span></span><div><div class="text-sm font-semibold text-slate-900">Pembaruan Standar Keahlian: <span class="text-blue-700 font-medium">Komunikasi Ramah &amp; Pelayanan</span></div><p class="text-xs text-slate-500 mt-0.5">Nama keahlian diselaraskan dengan standar vokasi Disnaker • Otorisasi Superadmin</p></div></div><div class="sm:text-right shrink-0"><span class="text-xs text-slate-500 block mb-1">Kemarin, 16:15 WIB</span><div><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200"><span class="w-1.5 h-1.5 rounded-full bg-teal-600"></span> Pembaruan Disimpan</span></div></div></div><div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors"><div class="flex items-start sm:items-center gap-3"><span class="p-1.5 rounded bg-teal-100 text-teal-700 shrink-0"><span class="material-symbols-outlined text-[18px]">sync_saved_locally</span></span><div><div class="text-sm font-semibold text-slate-900">Sinkronisasi Pencocokan Lowongan &amp; Keahlian</div><p class="text-xs text-slate-500 mt-0.5">Penyelarasan 1.248 lowongan aktif dengan keahlian pelamar untuk akurasi pencarian kerja lokal</p></div></div><div class="sm:text-right shrink-0"><span class="text-xs text-slate-500 block mb-1">24 Okt 2024, 02:00 WIB</span><div><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200"><span class="w-1.5 h-1.5 rounded-full bg-teal-600"></span> Sinkronisasi Otomatis Selesai</span></div></div></div></div>
+</div>
+</main>
+<!-- TOAST NOTIFICATION -->
+<div class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-3" id="toastNotification">
+<span class="material-symbols-outlined text-teal-400 text-[22px]">check_circle</span>
+<div>
+<h4 class="text-xs font-bold text-white" id="toastTitle">Sukses</h4>
+<p class="text-xs text-slate-300" id="toastMsg">Aksi berhasil dijalankan.</p>
+</div>
+</div>
+<!-- ADMIN FOOTER -->
+<footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-rose-700 text-[16px]">verified</span>
+<span class="">Panel Superadmin <strong>KerjaLokal</strong> • Selaras dengan <strong>SDG 8</strong>: Pertumbuhan Ekonomi &amp; Kerja Layak.</span>
+</div>
+<div>
+<span class="">v2.4.0-admin (Branch: <code class="font-mono text-teal-700">production</code>)</span>
+</div>
+</div>
+</footer>
+<!-- JAVASCRIPT LOGIC -->
+<script>
+    function autoGenerateSlug(text) {
+      const slugInput = document.getElementById('catSlugInput');
+      if (!slugInput) return;
+      const slug = text.toString().toLowerCase()
+        .trim()
+        .replace(/[\s\W-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      slugInput.value = slug;
+    }
+
+    function presetSkill(skillName) {
+      const skillInput = document.getElementById('skillNameInput');
+      if (skillInput) {
+        skillInput.value = skillName;
+        skillInput.focus();
+      }
+    }
+
+    function showToast(title, msg) {
+      const toast = document.getElementById('toastNotification');
+      const toastTitle = document.getElementById('toastTitle');
+      const toastMsg = document.getElementById('toastMsg');
+      if (toast && toastTitle && toastMsg) {
+        toastTitle.innerText = title;
+        toastMsg.innerText = msg;
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 3000);
+      }
+    }
+
+    function addNewCategory() {
+      const name = document.getElementById('catNameInput').value;
+      const slug = document.getElementById('catSlugInput').value;
+      const desc = document.getElementById('catDescInput').value || 'Sektor baru';
+      if (!name) return;
+
+      const tbody = document.querySelector('#tableCategories tbody');
+      const count = tbody.querySelectorAll('tr').length + 1;
+      const newId = 'CAT-0' + count;
+
+      const row = document.createElement('tr');
+      row.className = 'hover:bg-slate-50 transition-colors bg-teal-50/40';
+      row.innerHTML = `
+        <td class="py-2.5 px-3 font-mono text-slate-500">${newId}</td>
+        <td class="py-2.5 px-3">
+          <div class="flex items-center gap-2">
+            <span class="p-1 rounded bg-teal-100 text-teal-800">
+              <span class="material-symbols-outlined text-[16px]">folder</span>
+            </span>
+            <div>
+              <span class="font-semibold text-slate-900 block text-xs sm:text-sm">${name}</span>
+              <span class="text-[11px] text-slate-500">${desc}</span>
+            </div>
+          </div>
+        </td>
+        <td class="py-2.5 px-3 font-mono text-slate-500 hidden sm:table-cell">${slug}</td>
+        <td class="py-2.5 px-3 text-center">
+          <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">0 loker</span>
+        </td>
+        <td class="py-2.5 px-3 text-right">
+          <div class="inline-flex items-center gap-1">
+            <button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+            <button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+          </div>
+        </td>
+      `;
+      tbody.prepend(row);
+      showToast('Kategori Tersimpan!', `Kategori "${name}" berhasil ditambahkan ke database.`);
+      document.getElementById('catNameInput').value = '';
+      document.getElementById('catSlugInput').value = '';
+      document.getElementById('catDescInput').value = '';
+    }
+
+    function addNewSkill() {
+      const skillName = document.getElementById('skillNameInput').value;
+      if (!skillName) return;
+
+      const tbody = document.querySelector('#tableSkills tbody');
+      const count = tbody.querySelectorAll('tr').length + 1;
+      const newId = 'SKL-0' + count;
+
+      const row = document.createElement('tr');
+      row.className = 'hover:bg-slate-50 transition-colors bg-teal-50/40';
+      row.innerHTML = `
+        <td class="py-2.5 px-3 font-mono text-slate-500">${newId}</td>
+        <td class="py-2.5 px-3">
+          <div class="font-semibold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px] text-teal-600">new_releases</span>
+            ${skillName}
+          </div>
+        </td>
+        <td class="py-2.5 px-3 text-center">
+          <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">0 Loker</span>
+        </td>
+        <td class="py-2.5 px-3 text-center">
+          <div class="w-20 bg-slate-100 rounded-full h-1.5 mx-auto overflow-hidden mb-1">
+            <div class="bg-teal-600 h-1.5 rounded-full" style="width: 100%"></div>
+          </div>
+          <span class="text-[10px] font-mono text-slate-500">Baru terdaftar</span>
+        </td>
+        <td class="py-2.5 px-3 text-right">
+          <div class="inline-flex items-center gap-1">
+            <button class="p-1 text-slate-400 hover:text-teal-700 rounded hover:bg-slate-100" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>
+            <button class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Hapus"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+          </div>
+        </td>
+      `;
+      tbody.prepend(row);
+      showToast('Keahlian Baru Terdaftar!', `Skill "${skillName}" kini tersedia untuk filter kecocokan loker.`);
+      document.getElementById('skillNameInput').value = '';
+    }
+
+    function filterCategories() {
+      const q = document.getElementById('searchCategoryInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#tableCategories tbody tr');
+      rows.forEach(r => {
+        r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+
+    function filterSkills() {
+      const q = document.getElementById('searchSkillInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#tableSkills tbody tr');
+      rows.forEach(r => {
+        r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+
+    function syncDatabase() {
+      showToast('Sinkronisasi Berhasil!', 'Data skema categories dan skills telah tersinkronisasi 100%.');
+    }
+
+    function exportCSV() {
+      showToast('Ekspor Selesai!', 'Berkas master_data_taxonomy.csv siap diunduh.');
+    }
+
+    function refreshLog() {
+      showToast('Log Diperbarui', 'Riwayat audit telah dimuat ulang dengan log paling mutakhir.');
+    }
+  </script>
+
+
+</body></html>

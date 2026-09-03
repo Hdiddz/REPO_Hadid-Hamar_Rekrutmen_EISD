@@ -1,0 +1,248 @@
+<!DOCTYPE html><html class="h-full" lang="id" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title class="">Masuk - KerjaLokal | Platform Pekerjaan Lokal Terpercaya</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              teal: '#0d9488',
+              'teal-dark': '#0f766e',
+              'teal-deep': '#0f3d39',
+              'teal-surface': '#092f2c',
+            },
+            burgundy: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              700: '#be123c',
+              800: '#9f1239',
+              900: '#881337',
+            }
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="font-sans antialiased bg-white text-slate-800 min-h-screen flex flex-col md:h-screen md:overflow-hidden selection:bg-teal-100 selection:text-teal-900">
+<div class="flex-1 flex flex-col lg:flex-row h-full">
+<!-- ================= SISI KIRI (Branding & SDG 8 Value Panel) ================= -->
+<aside class="relative flex-shrink-0 lg:w-[44%] xl:w-[42%] bg-[#092f2c] text-white flex flex-col justify-between p-8 sm:p-12 lg:p-14 border-r border-[#0d4a46]/50 overflow-hidden">
+<!-- Subtle architectural grid pattern overlay (no neon AI slop) -->
+<div class="absolute inset-0 opacity-[0.04] pointer-events-none" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 24px 24px;"></div>
+<div class="absolute -right-32 -bottom-32 w-96 h-96 bg-[#0f4d47] rounded-full blur-3xl opacity-30 pointer-events-none"></div>
+<!-- Top Branding -->
+<div class="relative z-10">
+<a class="inline-flex items-center gap-3 group" href="#"><div class="w-10 h-10 rounded-xl bg-white p-1.5 shadow-md flex items-center justify-center flex-shrink-0"><img src="https://lh3.googleusercontent.com/aida/AEtjO1VBIplvI84L6HgwNdOxcf1ouqPzA5chKag0IAHHg8M4IR6IeK3IVZw2J6UJEnL0d-UgVqQ6PmP6N5WPgF-b96nVYIEY8t9PMVRKCsgbDFwDVzTxca4jLWvyeGLX_iSpII6YSbxhc76SDhldyqT8egPYXyV7x9gXQRuSA51P6QOhby0Q9XQ7MgmdY5B9Az2JNXwekaWXf6o8OCyJ577_nqWwdh0dLaHK0WnTgVSQLlKIOt7_iJtN7q2imYc" alt="KerjaLokal Logo" class="w-full h-full object-contain"></div><span class="text-xl font-bold tracking-tight text-white">KerjaLokal</span></a>
+<!-- Badge SDG 8 Minimalis -->
+
+</div>
+<!-- Center Value Proposition & Pillars -->
+<div class="relative z-10 my-10 lg:my-0"><h1 class="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-white tracking-tight leading-[1.25]">Temukan lowongan dan talenta lokal terbaik.</h1><p class="mt-4 text-sm sm:text-base text-teal-100/75 leading-relaxed max-w-md">Menghubungkan pencari kerja dengan pelaku usaha terpercaya di sekitar Anda secara cepat, adil, dan transparan.</p></div>
+<!-- Bottom Metric & Social Proof Bar -->
+<div class="relative z-10 pt-6 border-t border-[#134945]/80 text-xs text-teal-200/70"><p class="">© 2024 KerjaLokal. Seluruh hak cipta dilindungi.</p></div>
+</aside>
+<!-- ================= SISI KANAN (Formulir Login) ================= -->
+<main class="flex-1 bg-white flex flex-col justify-between p-6 sm:p-10 lg:p-12 overflow-y-auto">
+<!-- Navigasi Atas Form -->
+<div class="w-full max-w-md mx-auto flex items-center justify-between text-xs sm:text-sm pt-2">
+<a class="inline-flex items-center gap-1.5 text-slate-500 hover:text-teal-700 font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span class="">Kembali ke Beranda</span>
+</a>
+<div class="text-slate-500">
+          Belum punya akun? 
+          <a class="font-semibold text-teal-700 hover:text-teal-800 transition-colors ml-1" href="#">Daftar</a>
+</div>
+</div>
+<!-- Form Container Center -->
+<div class="w-full max-w-md mx-auto my-auto py-8">
+<!-- Header Form -->
+<div class="mb-6">
+<h2 class="text-2xl font-bold text-slate-900 tracking-tight">Masuk ke Akun Anda</h2>
+<p class="text-sm text-slate-500 mt-1">Akses dashboard terintegrasi dengan kredensial terdaftar.</p>
+</div>
+<!-- Role Selector (Segmented Control Minimalis) -->
+
+<!-- Login Form -->
+<form class="space-y-4" id="loginForm" onsubmit="handleFormSubmit(event)">
+<!-- Email Input -->
+<div>
+<label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider" for="email">
+              Alamat Email
+            </label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<input autocomplete="email" class="block w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors" id="email" name="email" placeholder="nama@email.com" required="" type="email">
+</div>
+</div>
+<!-- Password Input -->
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider" for="password">
+                Kata Sandi
+              </label>
+<a class="text-xs font-medium text-teal-700 hover:text-teal-800 transition-colors" href="#">
+                Lupa kata sandi?
+              </a>
+</div>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<rect height="11" rx="2" ry="2" width="18" x="3" y="11"></rect>
+<path d="M7 11V7a5 5 0 0110 0v4"></path>
+</svg>
+</div>
+<input autocomplete="current-password" class="block w-full pl-10 pr-10 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors" id="password" name="password" placeholder="Minimal 8 karakter" required="" type="password">
+<button aria-label="Tampilkan atau sembunyikan kata sandi" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none" id="togglePasswordBtn" onclick="togglePassword()" type="button">
+<span class="material-symbols-outlined text-[18px]" id="passwordEyeIcon">visibility</span>
+</button>
+</div>
+</div>
+<!-- Remember me checkbox -->
+<div class="flex items-center justify-between pt-0.5">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500/20" id="remember" name="remember" type="checkbox">
+<span class="text-xs text-slate-600 font-medium">Ingat perangkat ini selama 30 hari</span>
+</label>
+</div>
+<!-- Submit CTA -->
+<div class="pt-2">
+<button class="w-full py-2.5 px-4 bg-[#0d9488] hover:bg-[#0f766e] active:bg-[#115e59] text-white font-semibold text-sm rounded-lg shadow-sm hover:shadow transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2" id="submitBtn" type="submit">
+<span class="">Masuk ke Akun</span>
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</form>
+<!-- Divider -->
+<div class="relative my-6">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-slate-200"></div>
+</div>
+<div class="relative flex justify-center text-xs">
+<span class="bg-white px-3 text-slate-400 font-medium uppercase tracking-wider text-[10px]">atau masuk sebagai mitra</span>
+</div>
+</div>
+<!-- Secondary action info box -->
+<div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50/75 flex items-start gap-3"><span class="material-symbols-outlined text-slate-500 text-[18px] mt-0.5">storefront</span><div class="text-xs text-slate-600">Pemilik usaha lokal? <a class="font-semibold text-teal-700 hover:text-teal-800 hover:underline" href="#">Daftarkan usaha Anda</a> untuk mulai memasang lowongan kerja.</div></div>
+</div>
+<!-- Bottom Micro-copy & SDG Guarantee -->
+<div class="w-full max-w-md mx-auto pt-4 border-t border-slate-100 flex items-center justify-center text-[11px] text-slate-400"><p class="">© 2024 KerjaLokal. Seluruh hak cipta dilindungi.</p></div>
+</main>
+</div>
+<!-- Interactivity Script -->
+<script>
+    const accounts = {
+      jobseeker: {
+        roleTitle: 'Pencari Kerja',
+        description: '(Akses pelamaran & pantauan upah)',
+        email: 'budi.santoso@example.com',
+        password: 'REMOVED_CREDENTIAL'
+      },
+      employer: {
+        roleTitle: 'Mitra UMKM',
+        description: '(Kelola lowongan terverifikasi & pelamar)',
+        email: 'kedai.kopi.nusantara@example.com',
+        password: 'umkmjaya2024'
+      },
+      admin: {
+        roleTitle: 'Admin SDG',
+        description: '(Verifikasi upah & audit pilar SDG 8)',
+        email: 'verifikator.sdg8@kerjalokal.id',
+        password: 'adminpilar8'
+      }
+    };
+
+    let currentRole = 'jobseeker';
+
+    function selectRole(role) {
+      currentRole = role;
+      const roles = ['jobseeker', 'employer', 'admin'];
+
+      roles.forEach(r => {
+        const btn = document.getElementById('tab-' + r);
+        if (r === role) {
+          btn.className = 'py-2 text-center rounded-md font-semibold transition-all duration-150 bg-white text-slate-900 shadow-sm border border-slate-200/70';
+          btn.setAttribute('aria-selected', 'true');
+        } else {
+          btn.className = 'py-2 text-center rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all duration-150';
+          btn.setAttribute('aria-selected', 'false');
+        }
+      });
+
+      const hint = document.getElementById('role-hint');
+      if (hint) {
+        hint.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-teal-600"></span>Mode: <span class="font-medium text-slate-700">${accounts[role].roleTitle}</span> ${accounts[role].description}`;
+      }
+    }
+
+    function fillDemoAccount() {
+      const data = accounts[currentRole];
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+
+      emailInput.value = data.email;
+      passwordInput.value = data.password;
+
+      // Subtle active feedback
+      emailInput.classList.add('border-teal-600', 'bg-teal-50/30');
+      passwordInput.classList.add('border-teal-600', 'bg-teal-50/30');
+      setTimeout(() => {
+        emailInput.classList.remove('bg-teal-50/30');
+        passwordInput.classList.remove('bg-teal-50/30');
+      }, 350);
+    }
+
+    function togglePassword() {
+      const passInput = document.getElementById('password');
+      const eyeIcon = document.getElementById('passwordEyeIcon');
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        eyeIcon.textContent = 'visibility_off';
+      } else {
+        passInput.type = 'password';
+        eyeIcon.textContent = 'visibility';
+      }
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = `
+        <span class="inline-block animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+        <span>Memverifikasi Akun...</span>
+      `;
+
+      setTimeout(() => {
+        btn.classList.remove('bg-[#0d9488]', 'hover:bg-[#0f766e]');
+        btn.classList.add('bg-emerald-600');
+        btn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+          </svg>
+          <span>Berhasil Masuk</span>
+        `;
+      }, 700);
+    }
+  </script>
+
+
+</body></html>

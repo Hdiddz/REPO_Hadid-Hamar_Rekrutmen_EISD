@@ -1,0 +1,490 @@
+<!DOCTYPE html><html lang="id" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KerjaLokal - Platform Lowongan Kerja &amp; UMKM Lokal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-bright": "#f9f9ff",
+            "surface-dim": "#cfdaf2",
+            "secondary": "#b1264c",
+            "primary": "#00685f",
+            "primary-container": "#008378",
+            "on-primary-container": "#f4fffc",
+            "on-surface": "#111c2d",
+            "on-surface-variant": "#475569",
+            "surface-card": "#FFFFFF",
+            "surface-canvas": "#F8FAFC",
+            "border-subtle": "#E2E8F0",
+            "border-strong": "#CBD5E1",
+            "teal-light": "#CCFBF1",
+            "teal-dark": "#0c2d28",
+            "panel-bg": "#0f3d38",
+            "badge-salary-bg": "#ECFDF5",
+            "badge-salary-text": "#065F46",
+            "badge-hours-bg": "#EFF6FF",
+            "badge-hours-text": "#1E40AF",
+            "badge-verified-bg": "#FFF1F2",
+            "badge-verified-text": "#9F1239",
+            "on-primary": "#ffffff"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .side-scroll::-webkit-scrollbar { width: 4px; }
+    .side-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-surface-canvas text-on-surface antialiased min-h-screen">
+<div class="min-h-screen flex flex-col lg:flex-row w-full">
+<!-- ================= SISI KIRI: HERO SIDE-PANEL ================= -->
+<aside class="w-full lg:w-[420px] xl:w-[460px] lg:min-h-screen lg:fixed lg:top-0 lg:left-0 bg-panel-bg text-white flex flex-col justify-between p-6 sm:p-8 lg:p-10 z-30 shadow-xl overflow-y-auto side-scroll border-r border-teal-900/40 min-h-screen">
+<div class="flex flex-col gap-6">
+<!-- Logo Brand -->
+<div class="flex items-center gap-3">
+  <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-md shrink-0">
+    <img src="https://lh3.googleusercontent.com/aida/AEtjO1VBIplvI84L6HgwNdOxcf1ouqPzA5chKag0IAHHg8M4IR6IeK3IVZw2J6UJEnL0d-UgVqQ6PmP6N5WPgF-b96nVYIEY8t9PMVRKCsgbDFwDVzTxca4jLWvyeGLX_iSpII6YSbxhc76SDhldyqT8egPYXyV7x9gXQRuSA51P6QOhby0Q9XQ7MgmdY5B9Az2JNXwekaWXf6o8OCyJ577_nqWwdh0dLaHK0WnTgVSQLlKIOt7_iJtN7q2imYc" alt="Logo KerjaLokal" class="w-full h-full object-contain">
+  </div>
+  <span class="text-xl font-bold tracking-tight text-white">KerjaLokal</span>
+</div>
+<!-- Headline & Ringkasan -->
+<div class="space-y-3 pt-2">
+<h1 class="text-2xl lg:text-3xl font-bold tracking-tight text-white leading-snug">
+            Temukan lowongan kerja &amp; talenta lokal terbaik di sekitar Anda.
+          </h1>
+<p class="text-sm text-teal-100/80 leading-relaxed">
+            Platform rekrutmen terpercaya yang menghubungkan pencari kerja dengan pelaku usaha mikro dan UMKM lokal secara cepat, adil, dan transparan.
+          </p>
+</div>
+<!-- Quick Search Form in Side-Panel -->
+<form class="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/15 space-y-3 mt-1" id="sideSearchForm">
+<div class="space-y-1">
+<label class="text-xs font-medium text-teal-100/90 block">Keahlian / Posisi</label>
+<div class="flex items-center gap-2 bg-white/95 rounded-lg px-3 py-2.5 text-slate-800">
+<span class="material-symbols-outlined text-slate-400 text-lg">search</span>
+<input class="w-full bg-transparent text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none border-none p-0" id="sideKeyword" placeholder="Cth: Barista, Kasir, Kurir..." type="text">
+</div>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-medium text-teal-100/90 block">Kategori</label>
+<div class="flex items-center gap-2 bg-white/95 rounded-lg px-3 py-2.5 text-slate-800">
+<span class="material-symbols-outlined text-slate-400 text-lg">category</span>
+<select class="w-full bg-transparent text-sm text-slate-800 focus:outline-none border-none p-0 cursor-pointer" id="sideCategory">
+<option value="">Semua Kategori</option>
+<option value="fnb">F&amp;B / Kedai Kopi</option>
+<option value="retail">Ritel &amp; Grosir</option>
+<option value="logistics">Logistik &amp; Kurir</option>
+<option value="services">Jasa &amp; Pelayanan</option>
+<option value="admin">Administrasi &amp; Kasir</option>
+</select>
+</div>
+</div>
+<button class="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm transition-colors shadow-md mt-1" type="submit">
+<span class="material-symbols-outlined text-base">search</span>
+<span class="">Cari Lowongan</span>
+</button>
+</form>
+<!-- Quick Tag Filter Pills -->
+<div class="space-y-2 pt-1">
+<span class="text-xs font-medium text-teal-200/70 tracking-wide uppercase">Pencarian Populer:</span>
+<div class="flex flex-wrap gap-1.5">
+<button class="side-tag px-2.5 py-1 rounded-md text-xs font-medium bg-white/10 hover:bg-white/20 text-teal-50 transition-colors border border-white/10" data-term="Barista" type="button">Barista</button>
+<button class="side-tag px-2.5 py-1 rounded-md text-xs font-medium bg-white/10 hover:bg-white/20 text-teal-50 transition-colors border border-white/10" data-term="Kasir" type="button">Kasir</button>
+<button class="side-tag px-2.5 py-1 rounded-md text-xs font-medium bg-white/10 hover:bg-white/20 text-teal-50 transition-colors border border-white/10" data-term="Kurir" type="button">Kurir</button>
+<button class="side-tag px-2.5 py-1 rounded-md text-xs font-medium bg-white/10 hover:bg-white/20 text-teal-50 transition-colors border border-white/10" data-term="Staff Toko" type="button">Staff Toko</button>
+<button class="side-tag px-2.5 py-1 rounded-md text-xs font-medium bg-white/10 hover:bg-white/20 text-teal-50 transition-colors border border-white/10" data-term="Admin Gudang" type="button">Admin Gudang</button>
+</div>
+</div>
+<!-- Quick Stats Compact Bar -->
+<div class="grid grid-cols-2 gap-2 pt-3 border-t border-white/15">
+<div class="bg-white/5 rounded-lg p-3 border border-white/10">
+<div class="text-xl font-bold text-white leading-none">840+</div>
+<div class="text-xs text-teal-200/75 mt-1">UMKM Terverifikasi</div>
+</div>
+<div class="bg-white/5 rounded-lg p-3 border border-white/10">
+<div class="text-xl font-bold text-white leading-none">1.420</div>
+<div class="text-xs text-teal-200/75 mt-1">Loker Aktif</div>
+</div>
+</div>
+</div>
+<!-- Side-Panel Footer -->
+<div class="pt-8 text-xs text-teal-200/60 border-t border-white/10 mt-8">
+<p class="">© 2025 KerjaLokal. Platform Tenaga Kerja UMKM.</p>
+</div>
+</aside>
+<!-- ================= SISI KANAN: KONTEN UTAMA ================= -->
+<div class="flex-1 lg:ml-[420px] xl:ml-[460px] flex flex-col min-h-screen">
+<!-- Top Minimal Nav -->
+<header class="sticky top-0 z-20 bg-surface-card/90 backdrop-blur-md border-b border-border-subtle px-6 lg:px-10 py-3.5 flex items-center justify-between">
+<div class="flex items-center gap-6">
+<nav class="hidden sm:flex items-center gap-6 text-sm font-medium">
+<a class="text-primary font-semibold" href="#">Beranda</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Katalog Lowongan</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Tentang Kami</a>
+</nav>
+</div>
+<div class="flex items-center gap-3">
+<a class="px-3.5 py-1.5 rounded-lg text-sm font-semibold text-on-surface hover:text-primary transition-colors" href="#">Masuk</a>
+<a class="px-4 py-1.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-teal-700 transition-colors shadow-sm" href="#">Daftar Sekarang</a>
+
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 p-6 lg:p-10 space-y-10 max-w-5xl">
+<!-- KATEGORI POPULER (CLEAN & COMPACT) -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="text-base font-bold text-on-surface tracking-tight">Kategori Populer</h2>
+<a class="text-xs font-semibold text-primary hover:underline flex items-center gap-1" href="#">
+              Lihat Semua <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+<a class="flex flex-col items-center justify-center p-3 rounded-xl bg-surface-card border border-border-subtle hover:border-primary/40 hover:shadow-sm transition-all group text-center" href="#">
+<span class="material-symbols-outlined text-primary text-2xl mb-1.5 group-hover:scale-110 transition-transform">coffee</span>
+<span class="text-xs font-semibold text-on-surface">F&amp;B / Kafe</span>
+<span class="text-[11px] text-slate-400">340+ Posisi</span>
+</a>
+<a class="flex flex-col items-center justify-center p-3 rounded-xl bg-surface-card border border-border-subtle hover:border-primary/40 hover:shadow-sm transition-all group text-center" href="#">
+<span class="material-symbols-outlined text-primary text-2xl mb-1.5 group-hover:scale-110 transition-transform">storefront</span>
+<span class="text-xs font-semibold text-on-surface">Ritel &amp; Toko</span>
+<span class="text-[11px] text-slate-400">280+ Posisi</span>
+</a>
+<a class="flex flex-col items-center justify-center p-3 rounded-xl bg-surface-card border border-border-subtle hover:border-primary/40 hover:shadow-sm transition-all group text-center" href="#">
+<span class="material-symbols-outlined text-primary text-2xl mb-1.5 group-hover:scale-110 transition-transform">local_shipping</span>
+<span class="text-xs font-semibold text-on-surface">Logistik &amp; Kurir</span>
+<span class="text-[11px] text-slate-400">190+ Posisi</span>
+</a>
+<a class="flex flex-col items-center justify-center p-3 rounded-xl bg-surface-card border border-border-subtle hover:border-primary/40 hover:shadow-sm transition-all group text-center" href="#">
+<span class="material-symbols-outlined text-primary text-2xl mb-1.5 group-hover:scale-110 transition-transform">room_service</span>
+<span class="text-xs font-semibold text-on-surface">Jasa Layanan</span>
+<span class="text-[11px] text-slate-400">160+ Posisi</span>
+</a>
+<a class="flex flex-col items-center justify-center p-3 rounded-xl bg-surface-card border border-border-subtle hover:border-primary/40 hover:shadow-sm transition-all group text-center" href="#">
+<span class="material-symbols-outlined text-primary text-2xl mb-1.5 group-hover:scale-110 transition-transform">point_of_sale</span>
+<span class="text-xs font-semibold text-on-surface">Kasir &amp; Admin</span>
+<span class="text-[11px] text-slate-400">210+ Posisi</span>
+</a>
+</div>
+</section>
+<!-- KEUNGGULAN PLATFORM (SIMPLIFIED & CLEAN) -->
+<section class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div class="p-4 rounded-xl bg-surface-card border border-border-subtle flex items-start gap-3">
+<span class="material-symbols-outlined text-emerald-600 bg-emerald-50 p-2 rounded-lg text-xl shrink-0">payments</span>
+<div>
+<h3 class="text-xs font-bold text-on-surface uppercase tracking-wide">Upah Transparan di Muka</h3>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Nominal gaji bersih dicantumkan jelas sejak awal tanpa pemotongan sepihak.</p>
+</div>
+</div>
+<div class="p-4 rounded-xl bg-surface-card border border-border-subtle flex items-start gap-3">
+<span class="material-symbols-outlined text-blue-600 bg-blue-50 p-2 rounded-lg text-xl shrink-0">schedule</span>
+<div>
+<h3 class="text-xs font-bold text-on-surface uppercase tracking-wide">Jam Kerja Manusiawi</h3>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Ketentuan shift kerja pasti dan wajar, teratur maksimal 8 jam per hari.</p>
+</div>
+</div>
+<div class="p-4 rounded-xl bg-surface-card border border-border-subtle flex items-start gap-3">
+<span class="material-symbols-outlined text-rose-600 bg-rose-50 p-2 rounded-lg text-xl shrink-0">verified_user</span>
+<div>
+<h3 class="text-xs font-bold text-on-surface uppercase tracking-wide">Bebas Biaya Calo</h3>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">100% gratis bagi pencari kerja dengan UMKM yang terverifikasi resmi.</p>
+</div>
+</div>
+</section>
+<!-- LOWONGAN PILIHAN TERBARU -->
+<section class="space-y-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div>
+<h2 class="text-lg font-bold text-on-surface tracking-tight">Lowongan Pilihan Terbaru</h2>
+<p class="text-xs text-on-surface-variant mt-0.5">Diverifikasi langsung oleh tim KerjaLokal</p>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="px-3 py-1 text-xs font-medium rounded-lg bg-primary text-white" type="button">Semua</button>
+<button class="px-3 py-1 text-xs font-medium rounded-lg bg-surface-card text-on-surface-variant hover:bg-slate-100 transition-colors" type="button">Penuh Waktu</button>
+<button class="px-3 py-1 text-xs font-medium rounded-lg bg-surface-card text-on-surface-variant hover:bg-slate-100 transition-colors" type="button">Paruh Waktu</button>
+</div>
+</div>
+<!-- Job Cards List -->
+<div class="space-y-3">
+<!-- Card 1 -->
+<article class="bg-surface-card border border-border-subtle hover:border-primary/40 rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="space-y-2 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="text-xs font-semibold text-on-surface">Kopi Rasa Sahabat</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-badge-verified-bg text-badge-verified-text">
+<span class="material-symbols-outlined text-[13px]">verified</span> Terverifikasi
+                  </span>
+<span class="text-[11px] text-slate-400 ml-auto md:ml-0">2 jam lalu</span>
+</div>
+<h3 class="text-base font-bold text-on-surface">Barista &amp; Staff Kedai Kopi</h3>
+<div class="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-primary">location_on</span> Tebet, Jakarta Selatan</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-badge-hours-text">schedule</span> Shift 7 Jam</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-slate-400">badge</span> Penuh Waktu</span>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">Espresso</span>
+<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">Kasir POS</span>
+</div>
+</div>
+<div class="flex md:flex-col items-center md:items-end justify-between gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+<div class="text-left md:text-right">
+<span class="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">Gaji Bersih</span>
+<div class="text-sm md:text-base font-bold text-badge-salary-text">Rp 3.200.000 <span class="text-xs font-normal text-slate-500">/bln</span></div>
+</div>
+<button class="btn-detail px-4 py-2 rounded-lg bg-primary hover:bg-teal-700 text-white font-medium text-xs shadow-sm transition-colors" data-job="1" type="button">
+                  Lihat Detail
+                </button>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-card border border-border-subtle hover:border-primary/40 rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="space-y-2 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="text-xs font-semibold text-on-surface">Toko Grosir Berkah Mandiri</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-badge-verified-bg text-badge-verified-text">
+<span class="material-symbols-outlined text-[13px]">verified</span> Terverifikasi
+                  </span>
+<span class="text-[11px] text-slate-400 ml-auto md:ml-0">4 jam lalu</span>
+</div>
+<h3 class="text-base font-bold text-on-surface">Staf Administrasi &amp; Kasir Grosir</h3>
+<div class="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-primary">location_on</span> Pasar Minggu, Jaksel</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-badge-hours-text">schedule</span> 08.00 - 16.00</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-slate-400">badge</span> Penuh Waktu</span>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">Excel Dasar</span>
+<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">Cek Stok</span>
+</div>
+</div>
+<div class="flex md:flex-col items-center md:items-end justify-between gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+<div class="text-left md:text-right">
+<span class="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">Gaji Bersih</span>
+<div class="text-sm md:text-base font-bold text-badge-salary-text">Rp 2.900.000 <span class="text-xs font-normal text-slate-500">/bln</span></div>
+</div>
+<button class="btn-detail px-4 py-2 rounded-lg bg-primary hover:bg-teal-700 text-white font-medium text-xs shadow-sm transition-colors" data-job="2" type="button">
+                  Lihat Detail
+                </button>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="bg-surface-card border border-border-subtle hover:border-primary/40 rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="space-y-2 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="text-xs font-semibold text-on-surface">Sentra Distribusi Cepat</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-badge-verified-bg text-badge-verified-text">
+<span class="material-symbols-outlined text-[13px]">verified</span> Terverifikasi
+                  </span>
+<span class="text-[11px] text-slate-400 ml-auto md:ml-0">Hari ini</span>
+</div>
+<h3 class="text-base font-bold text-on-surface">Kurir Wilayah &amp; Checker Paket</h3>
+<div class="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-primary">location_on</span> Cilandak, Jakarta Selatan</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-badge-hours-text">schedule</span> Shift Max 7 Jam</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-slate-400">badge</span> Harian / Paruh Waktu</span>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">SIM C</span>
+<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">Area Lokal</span>
+</div>
+</div>
+<div class="flex md:flex-col items-center md:items-end justify-between gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+<div class="text-left md:text-right">
+<span class="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">Upah Harian</span>
+<div class="text-sm md:text-base font-bold text-badge-salary-text">Rp 135.000 <span class="text-xs font-normal text-slate-500">/hari</span></div>
+</div>
+<button class="btn-detail px-4 py-2 rounded-lg bg-primary hover:bg-teal-700 text-white font-medium text-xs shadow-sm transition-colors" data-job="3" type="button">
+                  Lihat Detail
+                </button>
+</div>
+</article>
+<!-- Card 4 -->
+<article class="bg-surface-card border border-border-subtle hover:border-primary/40 rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="space-y-2 flex-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="text-xs font-semibold text-on-surface">Dapur Kue Bu Endang</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-badge-verified-bg text-badge-verified-text">
+<span class="material-symbols-outlined text-[13px]">verified</span> Terverifikasi
+                  </span>
+<span class="text-[11px] text-slate-400 ml-auto md:ml-0">Kemarin</span>
+</div>
+<h3 class="text-base font-bold text-on-surface">Helper Produksi Roti &amp; Kue Kering</h3>
+<div class="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-primary">location_on</span> Jagakarsa, Jakarta Selatan</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-badge-hours-text">schedule</span> 06.00 - 13.00</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-slate-400">badge</span> Paruh Waktu</span>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">Baking Dasar</span>
+<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">Pengemasan</span>
+</div>
+</div>
+<div class="flex md:flex-col items-center md:items-end justify-between gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+<div class="text-left md:text-right">
+<span class="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">Upah Harian</span>
+<div class="text-sm md:text-base font-bold text-badge-salary-text">Rp 120.000 <span class="text-xs font-normal text-slate-500">/hari</span></div>
+</div>
+<button class="btn-detail px-4 py-2 rounded-lg bg-primary hover:bg-teal-700 text-white font-medium text-xs shadow-sm transition-colors" data-job="4" type="button">
+                  Lihat Detail
+                </button>
+</div>
+</article>
+</div>
+<!-- Bottom View All Action -->
+<div class="text-center pt-2">
+<a class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-strong bg-white hover:bg-slate-50 text-xs font-semibold text-on-surface transition-colors shadow-sm" href="#">
+<span class="">Jelajahi 1.420+ Lowongan Lainnya</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</section>
+</main>
+<!-- Clean Minimal Footer Sisi Kanan -->
+<footer class="border-t border-border-subtle bg-surface-card px-6 lg:px-10 py-5 text-xs text-on-surface-variant flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto">
+<div>
+<span class="">KerjaLokal Indonesia © 2025</span>
+</div>
+<div class="flex items-center gap-5">
+<a class="hover:text-primary transition-colors" href="#">Katalog Lowongan</a>
+<a class="hover:text-primary transition-colors" href="#">Tentang Kami</a>
+<a class="hover:text-primary transition-colors" href="#">Syarat &amp; Ketentuan</a>
+<a class="hover:text-primary transition-colors" href="#">Privasi</a>
+</div>
+</footer>
+</div>
+</div>
+<!-- Detail Modal -->
+<div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4" id="detailModal">
+<div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+<div class="flex items-start justify-between">
+<div>
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800">Terverifikasi</span>
+<h3 class="text-lg font-bold text-slate-900 mt-1" id="modalJobTitle">Detail Posisi</h3>
+</div>
+<button class="text-slate-400 hover:text-slate-700 p-1" id="closeModal" type="button">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<div class="mt-4 space-y-3 text-xs text-slate-600">
+<p class="">Informasi lowongan kerja terverifikasi dengan ketentuan upah transparan dan lingkungan kerja layak.</p>
+<div class="p-3 bg-slate-50 rounded-lg space-y-1.5 border border-slate-100">
+<div class="flex justify-between">
+<span class="text-slate-500">Status Legalitas:</span>
+<span class="font-semibold text-primary">Tervalidasi UMKM Resmi</span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-500">Biaya Rekrutmen:</span>
+<span class="font-semibold text-emerald-600">100% Gratis</span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-500">Respons Perekrut:</span>
+<span class="font-semibold text-slate-800">Maks. 24 Jam Kerja</span>
+</div>
+</div>
+</div>
+<div class="mt-6 flex items-center gap-2">
+<button class="flex-1 py-2 rounded-lg bg-slate-100 text-slate-700 font-semibold text-xs hover:bg-slate-200 transition-colors" id="closeModalAlt" type="button">
+          Tutup
+        </button>
+<button class="flex-1 py-2 rounded-lg bg-primary hover:bg-teal-700 text-white font-semibold text-xs transition-colors shadow-sm" id="applyDirectBtn" type="button">
+          Kirim Lamaran
+        </button>
+</div>
+</div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Quick search tags in sidebar
+      const sideTags = document.querySelectorAll('.side-tag');
+      const sideInput = document.getElementById('sideKeyword');
+
+      sideTags.forEach(tag => {
+        tag.addEventListener('click', () => {
+          const term = tag.getAttribute('data-term');
+          if (sideInput) {
+            sideInput.value = term;
+            sideInput.focus();
+          }
+        });
+      });
+
+      // Modal Handling
+      const modal = document.getElementById('detailModal');
+      const closeModal = document.getElementById('closeModal');
+      const closeModalAlt = document.getElementById('closeModalAlt');
+      const modalJobTitle = document.getElementById('modalJobTitle');
+      const detailBtns = document.querySelectorAll('.btn-detail');
+
+      const jobData = {
+        '1': 'Barista & Staff Kedai Kopi - Kopi Rasa Sahabat',
+        '2': 'Staf Administrasi & Kasir Grosir - Toko Grosir Berkah Mandiri',
+        '3': 'Kurir Wilayah & Checker Paket - Sentra Distribusi Cepat',
+        '4': 'Helper Produksi Roti & Kue Kering - Dapur Kue Bu Endang'
+      };
+
+      detailBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const jobId = btn.getAttribute('data-job');
+          if (modalJobTitle && jobData[jobId]) {
+            modalJobTitle.textContent = jobData[jobId];
+          }
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+          }
+        });
+      });
+
+      const hideModal = () => {
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
+      };
+
+      if (closeModal) closeModal.addEventListener('click', hideModal);
+      if (closeModalAlt) closeModalAlt.addEventListener('click', hideModal);
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) hideModal();
+        });
+      }
+
+      const applyBtn = document.getElementById('applyDirectBtn');
+      if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+          applyBtn.textContent = 'Lamaran Terkirim!';
+          applyBtn.classList.remove('bg-primary');
+          applyBtn.classList.add('bg-emerald-600');
+          setTimeout(() => {
+            hideModal();
+            applyBtn.textContent = 'Kirim Lamaran';
+            applyBtn.classList.remove('bg-emerald-600');
+            applyBtn.classList.add('bg-primary');
+          }, 1200);
+        });
+      }
+    });
+  </script>
+
+
+
+
+
+
+</body></html>
