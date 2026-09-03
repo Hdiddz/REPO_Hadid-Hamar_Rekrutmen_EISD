@@ -18,9 +18,14 @@ class JobController extends Controller
 {
     public function index(Request $request): View
     {
+        $categories = Category::orderBy('name')->get();
+
         $jobs = Job::query()
             ->with(['employer:id,name,email,phone,business_name,banned_at,banned_until', 'category:id,name'])
             ->withCount(['applications', 'reports'])
+            ->when($request->filled('category_id'), function ($query) use ($request): void {
+                $query->where('category_id', $request->integer('category_id'));
+            })
             ->when($request->filled('status'), function ($query) use ($request): void {
                 $status = $request->string('status')->toString();
                 if ($status === 'closed_by_admin') {
@@ -29,6 +34,8 @@ class JobController extends Controller
                     $query->where('status', 'open');
                 } elseif ($status === 'closed') {
                     $query->where('status', 'closed')->where('closed_by_admin', false);
+                } elseif ($status === 'reported') {
+                    $query->has('reports');
                 }
             })
             ->when($request->filled('q'), function ($query) use ($request): void {
@@ -53,7 +60,7 @@ class JobController extends Controller
             'closed_by_admin' => Job::where('closed_by_admin', true)->count(),
         ];
 
-        return view('admin.jobs.index', compact('jobs', 'stats'));
+        return view('admin.jobs.index', compact('jobs', 'stats', 'categories'));
     }
 
     public function show(Job $job): View

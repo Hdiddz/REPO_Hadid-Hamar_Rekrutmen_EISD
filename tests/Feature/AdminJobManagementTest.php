@@ -13,6 +13,20 @@ class AdminJobManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_admin_can_access_jobs_index_page_and_filter_by_category(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $category = Category::factory()->create(['name' => 'Kreatif']);
+        $job = Job::factory()->create(['category_id' => $category->id, 'title' => 'Video Editor']);
+
+        $response = $this->actingAs($admin)->get(route('admin.jobs.index'));
+
+        $response->assertOk()
+            ->assertSee('Semua Lowongan')
+            ->assertSee('Video Editor')
+            ->assertSee('Kreatif');
+    }
+
     public function test_admin_can_edit_job_details(): void
     {
         $admin = User::factory()->admin()->create();
