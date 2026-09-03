@@ -44,6 +44,8 @@ jobs:
         run: |
           npm install
           npm run build
+          rm -f bootstrap/cache/*.php
+          chmod +x azure-startup.sh
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
