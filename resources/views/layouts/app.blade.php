@@ -8,7 +8,7 @@
     <script>
         (() => {
             const savedTheme = localStorage.getItem('theme');
-            const dark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            const dark = savedTheme === 'dark';
             document.documentElement.classList.toggle('dark', dark);
         })();
     </script>
