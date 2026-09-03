@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+vendor
+tests
+.env
+.env.backup
+.env.production
+.phpunit.cache
+storage/logs/*.log
