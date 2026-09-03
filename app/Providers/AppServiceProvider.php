@@ -6,6 +6,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -25,6 +26,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::preventLazyLoading(! app()->isProduction());
+
+        if (
+            request()->header('x-forwarded-proto') === 'https'
+            || str_contains((string) request()->header('host', ''), 'trycloudflare.com')
+        ) {
+            URL::forceScheme('https');
+        }
 
         RateLimiter::for('login', function (Request $request): Limit {
             $key = Str::transliterate(Str::lower($request->string('email')).'|'.$request->ip());
