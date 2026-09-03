@@ -18,7 +18,19 @@
             @forelse($jobs as $job)
                 <article class="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
                     <div><div class="flex flex-wrap items-center gap-2"><span class="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ $job->category->name }}</span><span class="rounded-md px-2 py-1 text-[11px] font-bold {{ $job->status === 'open' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">{{ $job->status === 'open' ? 'Dibuka' : 'Ditutup' }}</span></div><h3 class="mt-2 text-base font-bold text-slate-950 dark:text-white">{{ $job->title }}</h3><p class="mt-1 text-xs text-slate-500">{{ $job->location }} · Rp {{ number_format($job->salary_amount, 0, ',', '.') }} / {{ $job->salary_type === 'monthly' ? 'bulan' : 'hari' }} · {{ $job->applications_count }} pelamar</p></div>
-                    <div class="flex flex-wrap items-center gap-2"><a href="{{ route('jobs.show', $job) }}" class="portal-icon-button" title="Lihat"><span class="material-symbols-outlined text-[18px]">visibility</span></a><a href="{{ route('employer.jobs.edit', $job) }}" class="portal-button-secondary">Edit</a><form action="{{ route('employer.jobs.status', $job) }}" method="POST">@csrf @method('PATCH')<input type="hidden" name="status" value="{{ $job->status === 'open' ? 'closed' : 'open' }}"><button class="portal-button-secondary">{{ $job->status === 'open' ? 'Tutup' : 'Buka' }}</button></form><form action="{{ route('employer.jobs.destroy', $job) }}" method="POST">@csrf @method('DELETE')<button class="portal-icon-button text-rose-600" title="Hapus"><span class="material-symbols-outlined text-[18px]">delete</span></button></form></div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{{ route('jobs.show', $job) }}" class="portal-icon-button" title="Lihat detail lowongan">
+                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </a>
+                        <a href="{{ route('employer.jobs.edit', $job) }}" class="portal-button-secondary">Edit</a>
+                        <form id="deleteEmployerJob-{{ $job->id }}" action="{{ route('employer.jobs.destroy', $job) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button" onclick="confirmDeleteJob('{{ $job->id }}', '{{ addslashes($job->title) }}')" class="portal-icon-button text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer" title="Hapus lowongan">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </form>
+                    </div>
                 </article>
             @empty
                 <div class="p-12 text-center"><span class="material-symbols-outlined text-4xl text-slate-300">work_off</span><h3 class="mt-3 font-bold">Belum ada lowongan</h3><p class="mt-1 text-sm text-slate-500">Terbitkan peluang pertama untuk mulai menerima pelamar.</p></div>
@@ -27,3 +39,22 @@
     </section>
     <div class="mt-6">{{ $jobs->links() }}</div>
 @endsection
+
+@push('scripts')
+<script>
+    async function confirmDeleteJob(jobId, jobTitle) {
+        const confirmed = await window.showAppConfirm({
+            title: 'Hapus Lowongan Pekerjaan?',
+            message: `Apakah Anda yakin ingin menghapus lowongan "${jobTitle}"?\n\nJika lowongan sudah memiliki pelamar, sistem akan otomatis mengamankannya menjadi ditutup untuk arsip riwayat.`,
+            confirmText: 'Ya, Hapus',
+            cancelText: 'Batal',
+            type: 'danger',
+            icon: 'delete'
+        });
+
+        if (confirmed) {
+            document.getElementById(`deleteEmployerJob-${jobId}`)?.submit();
+        }
+    }
+</script>
+@endpush

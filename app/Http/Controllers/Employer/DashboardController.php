@@ -15,6 +15,11 @@ class DashboardController extends Controller
      */
     public function __invoke(Request $request): View
     {
+        return $this->index($request);
+    }
+
+    public function index(Request $request): View
+    {
         $employer = $request->user();
 
         $jobs = Job::query()

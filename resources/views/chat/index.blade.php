@@ -1,506 +1,156 @@
-@extends('layouts.app')
+@extends(match(Auth::user()->role ?? 'jobseeker') {
+    'admin' => 'layouts.admin',
+    'employer' => 'layouts.employer',
+    default => 'layouts.app',
+})
 
 @php
     $currentRole = Auth::user()->role ?? 'jobseeker';
-    $userName = Auth::user()->name ?? 'Budi Santoso';
+    $userName = Auth::user()->name ?? 'Pengguna';
     $userInitials = strtoupper(substr($userName, 0, 2));
 @endphp
 
-@section('title', ($currentRole === 'employer' ? 'Pesan Pelamar Kerja' : ($currentRole === 'admin' ? 'Saluran Pengawasan SDG 8' : 'Pesan & Obrolan Kerja')) . ' - KerjaLokal')
+@section('title', 'Pesan & Saluran Komunikasi | KerjaLokal')
+
+@section('portal_icon', 'forum')
+@section('portal_context', match($currentRole) {
+    'admin' => 'Pusat tata kelola sistem',
+    'employer' => 'Portal operasional mitra',
+    default => 'KerjaLokal',
+})
+@section('portal_title', 'Pesan & Obrolan Real-time')
+@section('portal_description', 'Komunikasi langsung dan transparan antara Mitra UMKM, Pencari Kerja, dan Administrator.')
+
+@push('styles')
+<style>
+    html, body {
+        height: 100% !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+        overscroll-behavior: none !important;
+    }
+</style>
+@endpush
 
 @section('content')
-<div class="flex flex-col w-full bg-slate-50 min-h-screen py-6 sm:py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+<div class="w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden">
+    
+    <!-- Compact Top Bar Header for All Roles -->
+    <div class="mb-2 sm:mb-2.5 flex items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <h1 class="text-lg sm:text-xl font-bold text-slate-950 dark:text-white tracking-tight truncate">
+                Pesan &amp; Obrolan Kerja
+            </h1>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border border-teal-200/70 dark:border-teal-900 shrink-0">
+                @if($currentRole === 'employer')
+                    Mitra UMKM
+                @elseif($currentRole === 'admin')
+                    Administrator
+                @else
+                    Pencari Kerja
+                @endif
+            </span>
+            <p class="hidden md:block text-xs text-slate-500 dark:text-slate-400 truncate">
+                · Koordinasi langsung dan transparan terkait proses kerja
+            </p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[11px] font-bold rounded-xl border border-emerald-200 dark:border-emerald-800">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="hidden sm:inline">Saluran Komunikasi Aktif</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Fixed Mode Split Chat Container -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col lg:flex-row flex-1 min-h-0 w-full">
         
-        <!-- Page Header -->
-        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-                <div class="flex items-center gap-2">
-                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                        @if($currentRole === 'employer')
-                            Pesan &amp; Obrolan Pelamar Kerja
-                        @elseif($currentRole === 'admin')
-                            Saluran Pengawasan &amp; Kepatuhan SDG 8
-                        @else
-                            Pesan &amp; Obrolan Kerja
-                        @endif
-                    </h1>
-                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold {{ $currentRole === 'employer' ? 'bg-blue-50 text-blue-800' : ($currentRole === 'admin' ? 'bg-purple-50 text-purple-800' : 'bg-teal-50 text-teal-800') }}">
-                        {{ $currentRole === 'employer' ? 'Portal Mitra UMKM' : ($currentRole === 'admin' ? 'Super Admin SDG 8' : 'Pencari Kerja') }}
-                    </span>
+        <!-- Left Pane: Conversation List -->
+        <div class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex flex-col h-full bg-slate-50/50 dark:bg-slate-950/40 shrink-0 overflow-hidden">
+            <!-- Search bar -->
+            <div class="p-3.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs focus-within:bg-white dark:focus-within:bg-slate-950 focus-within:ring-2 focus-within:ring-teal-600/20 focus-within:border-teal-600 border border-transparent transition-all">
+                    <span class="material-symbols-outlined text-slate-400 text-base mr-2">search</span>
+                    <input type="text" id="chatSearchInput" oninput="filterConversations()" placeholder="Cari kontak obrolan..." class="w-full bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder:text-slate-400 p-0 text-xs">
                 </div>
-                <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
-                    @if($currentRole === 'employer')
-                        Koordinasi seleksi, penjadwalan wawancara, dan tanya-jawab berkas bersama kandidat pelamar
-                    @elseif($currentRole === 'admin')
-                        Saluran komunikasi resmi tim pengawas independen bersama Mitra UMKM dan Pencari Kerja
-                    @else
-                        Koordinasi langsung dengan pemilik UMKM terkait proses seleksi dan wawancara bebas percaloan
-                    @endif
-                </p>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span>100% Saluran Resmi Etis</span>
-                </span>
+
+            <!-- Chat Thread Items (Dynamic) -->
+            <div class="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60" id="chatThreadList">
+                <div class="p-8 text-center flex flex-col items-center justify-center text-slate-400 my-auto h-full">
+                    <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">chat_bubble_outline</span>
+                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">Belum ada obrolan</p>
+                    <p class="text-[11px] text-slate-400 mt-1 max-w-[200px]">Daftar kontak percakapan Anda akan muncul di sini.</p>
+                </div>
             </div>
         </div>
 
-        <!-- Chat Split Container -->
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[620px]">
+        <!-- Right Pane: Active Chat Conversation -->
+        <div class="flex-1 flex flex-col h-full bg-white dark:bg-slate-900 min-w-0 overflow-hidden" id="chatRightPane">
             
-            <!-- Left Pane: Conversation List (4 Cols) -->
-            <div class="lg:col-span-4 border-r border-slate-200 flex flex-col bg-slate-50/50">
-                <!-- Search bar -->
-                <div class="p-3.5 border-b border-slate-200 bg-white">
-                    <div class="flex items-center bg-slate-100 rounded-xl px-3 py-2 text-xs focus-within:bg-white focus-within:ring-2 focus-within:ring-teal-600/20 focus-within:border-teal-600 border border-transparent transition-all">
-                        <span class="material-symbols-outlined text-slate-400 text-base mr-2">search</span>
-                        <input type="text" placeholder="{{ $currentRole === 'employer' ? 'Cari nama pelamar atau posisi...' : ($currentRole === 'admin' ? 'Cari mitra atau aduan pelamar...' : 'Cari percakapan UMKM...') }}" class="w-full bg-transparent border-none outline-none text-slate-900 placeholder:text-slate-400 p-0 text-xs">
+            <!-- Chat Window Header -->
+            <div class="p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0" id="activeChatHeader">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-2xl bg-teal-700 text-white font-bold flex items-center justify-center text-sm shrink-0" id="activeChatAvatar">
+                        --
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-sm text-slate-900 dark:text-white truncate" id="activeChatName">Pilih percakapan</span>
+                            <span class="px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 text-[10px] font-bold border border-teal-200 dark:border-teal-800 hidden" id="activeChatRoleBadge"></span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5" id="activeChatStatus">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                            <span>Tidak ada obrolan aktif</span>
+                        </p>
                     </div>
                 </div>
 
-                <!-- Chat Thread Items -->
-                <div class="flex-1 overflow-y-auto divide-y divide-slate-100" id="chatThreadList">
-                    @if($currentRole === 'employer')
-                        <!-- EMPLOYER THREADS (Job Candidates) -->
-                        <!-- Thread 1: Budi Santoso (Active) -->
-                        <div class="p-4 bg-white border-l-4 border-teal-600 cursor-pointer transition-all hover:bg-slate-50 flex items-start gap-3">
-                            <div class="w-11 h-11 rounded-2xl bg-teal-100 text-teal-800 font-bold flex items-center justify-center shrink-0 text-sm">
-                                BS
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-1 mb-0.5">
-                                    <span class="font-bold text-xs text-slate-900 truncate">Budi Santoso</span>
-                                    <span class="text-[10px] text-teal-700 font-semibold shrink-0">10:15</span>
-                                </div>
-                                <span class="inline-block text-[10px] font-bold text-teal-800 bg-teal-50 px-1.5 py-0.5 rounded mb-1">
-                                    Barista &amp; Kasir • 100% Match
-                                </span>
-                                <p class="text-xs text-slate-600 truncate font-semibold">
-                                    "Saya konfirmasi siap hadir tepat waktu besok jam 14.00..."
-                                </p>
-                            </div>
-                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-2"></span>
-                        </div>
-
-                        <!-- Thread 2: Siti Rahma -->
-                        <div class="p-4 bg-transparent cursor-pointer transition-all hover:bg-white flex items-start gap-3 opacity-80 hover:opacity-100">
-                            <div class="w-11 h-11 rounded-2xl bg-blue-100 text-blue-800 font-bold flex items-center justify-center shrink-0 text-sm">
-                                SR
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-1 mb-0.5">
-                                    <span class="font-bold text-xs text-slate-800 truncate">Siti Rahma</span>
-                                    <span class="text-[10px] text-slate-400 shrink-0">Kemarin</span>
-                                </div>
-                                <span class="inline-block text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded mb-1">
-                                    Kasir Grosir • 85% Match
-                                </span>
-                                <p class="text-xs text-slate-500 truncate">
-                                    "Terima kasih infonya, saya membawa fotokopi KTP dan CV..."
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Thread 3: Ahmad Fauzi -->
-                        <div class="p-4 bg-transparent cursor-pointer transition-all hover:bg-white flex items-start gap-3 opacity-80 hover:opacity-100">
-                            <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-800 font-bold flex items-center justify-center shrink-0 text-sm">
-                                AF
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-1 mb-0.5">
-                                    <span class="font-bold text-xs text-slate-800 truncate">Ahmad Fauzi</span>
-                                    <span class="text-[10px] text-slate-400 shrink-0">2 hari</span>
-                                </div>
-                                <span class="inline-block text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded mb-1">
-                                    Kurir Logistik • SIM C
-                                </span>
-                                <p class="text-xs text-slate-500 truncate">
-                                    "Motor dan SIM C siap untuk operasional shift..."
-                                </p>
-                            </div>
-                        </div>
-
-                    @elseif($currentRole === 'admin')
-                        <!-- ADMIN THREADS (Monitoring & Audit) -->
-                        <!-- Thread 1: Kedai Kopi Sudut Temu (Active) -->
-                        <div class="p-4 bg-white border-l-4 border-teal-600 cursor-pointer transition-all hover:bg-slate-50 flex items-start gap-3">
-                            <div class="w-11 h-11 rounded-2xl bg-teal-100 text-teal-800 font-bold flex items-center justify-center shrink-0 text-sm">
-                                ST
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-1 mb-0.5">
-                                    <span class="font-bold text-xs text-slate-900 truncate">Kedai Kopi Sudut Temu</span>
-                                    <span class="text-[10px] text-teal-700 font-semibold shrink-0">11:30</span>
-                                </div>
-                                <span class="inline-block text-[10px] font-bold text-teal-800 bg-teal-50 px-1.5 py-0.5 rounded mb-1">
-                                    Hendra Wijaya • Audit Gaji
-                                </span>
-                                <p class="text-xs text-slate-600 truncate font-semibold">
-                                    "Laporan transparansi upah bulanan telah diunggah lengkap."
-                                </p>
-                            </div>
-                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-2"></span>
-                        </div>
-
-                        <!-- Thread 2: Budi Santoso (Pelamar) -->
-                        <div class="p-4 bg-transparent cursor-pointer transition-all hover:bg-white flex items-start gap-3 opacity-80 hover:opacity-100">
-                            <div class="w-11 h-11 rounded-2xl bg-purple-100 text-purple-800 font-bold flex items-center justify-center shrink-0 text-sm">
-                                BS
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-1 mb-0.5">
-                                    <span class="font-bold text-xs text-slate-800 truncate">Budi Santoso</span>
-                                    <span class="text-[10px] text-slate-400 shrink-0">Kemarin</span>
-                                </div>
-                                <span class="inline-block text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded mb-1">
-                                    Pencari Kerja • Verifikasi Loker
-                                </span>
-                                <p class="text-xs text-slate-500 truncate">
-                                    "Terima kasih tindak lanjut atas verifikasi loker kemarin..."
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Thread 3: Toko Berkah Mandiri -->
-                        <div class="p-4 bg-transparent cursor-pointer transition-all hover:bg-white flex items-start gap-3 opacity-80 hover:opacity-100">
-                            <div class="w-11 h-11 rounded-2xl bg-slate-200 text-slate-700 font-bold flex items-center justify-center shrink-0 text-sm">
-                                BM
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-1 mb-0.5">
-                                    <span class="font-bold text-xs text-slate-800 truncate">Toko Berkah Mandiri</span>
-                                    <span class="text-[10px] text-slate-400 shrink-0">3 hari</span>
-                                </div>
-                                <span class="inline-block text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded mb-1">
-                                    Bpk. Subagyo • Standar Jam Kerja
-                                </span>
-                                <p class="text-xs text-slate-500 truncate">
-                                    "Jadwal shift 8 jam sudah diterapkan ketat di toko."
-                                </p>
-                            </div>
-                        </div>
-
-                    @else
-                        <!-- JOBSEEKER THREADS (UMKM Partners) -->
-                        <!-- Thread 1: Kedai Kopi Sudut Temu (Active) -->
-                        <div class="p-4 bg-white border-l-4 border-teal-600 cursor-pointer transition-all hover:bg-slate-50 flex items-start gap-3">
-                            <div class="w-11 h-11 rounded-2xl bg-teal-100 text-teal-800 font-bold flex items-center justify-center shrink-0 text-sm">
-                                ST
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-1 mb-0.5">
-                                    <span class="font-bold text-xs text-slate-900 truncate">Kedai Kopi Sudut Temu</span>
-                                    <span class="text-[10px] text-teal-700 font-semibold shrink-0">10:15</span>
-                                </div>
-                                <span class="inline-block text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded mb-1">
-                                    Barista &amp; Kasir
-                                </span>
-                                <p class="text-xs text-slate-600 truncate font-semibold">
-                                    Undangan Wawancara: Besok jam 14.00 WIB
-                                </p>
-                            </div>
-                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-2"></span>
-                        </div>
-
-                        <!-- Thread 2: Toko Berkah Mandiri -->
-                        <div class="p-4 bg-transparent cursor-pointer transition-all hover:bg-white flex items-start gap-3 opacity-80 hover:opacity-100">
-                            <div class="w-11 h-11 rounded-2xl bg-slate-200 text-slate-700 font-bold flex items-center justify-center shrink-0 text-sm">
-                                BM
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-1 mb-0.5">
-                                    <span class="font-bold text-xs text-slate-800 truncate">Toko Berkah Mandiri</span>
-                                    <span class="text-[10px] text-slate-400 shrink-0">Kemarin</span>
-                                </div>
-                                <span class="inline-block text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded mb-1">
-                                    Staf Gudang
-                                </span>
-                                <p class="text-xs text-slate-500 truncate">
-                                    Berkas lamaran Anda sudah kami verifikasi.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Thread 3: Sentra Distribusi Cepat -->
-                        <div class="p-4 bg-transparent cursor-pointer transition-all hover:bg-white flex items-start gap-3 opacity-80 hover:opacity-100">
-                            <div class="w-11 h-11 rounded-2xl bg-slate-200 text-slate-700 font-bold flex items-center justify-center shrink-0 text-sm">
-                                SC
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-1 mb-0.5">
-                                    <span class="font-bold text-xs text-slate-800 truncate">Sentra Distribusi Cepat</span>
-                                    <span class="text-[10px] text-slate-400 shrink-0">2 hari</span>
-                                </div>
-                                <span class="inline-block text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded mb-1">
-                                    Kurir Logistik
-                                </span>
-                                <p class="text-xs text-slate-500 truncate">
-                                    Apakah Anda memiliki SIM C aktif saat ini?
-                                </p>
-                            </div>
-                        </div>
-                    @endif
+                <!-- Action Buttons: Remove Contact & Clear Chat -->
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <button type="button" id="removeContactBtn" onclick="confirmRemovePerson()" class="hidden portal-button-secondary !py-1.5 !px-2.5 sm:!px-3 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 dark:border-rose-900/50 dark:hover:bg-rose-950/40 cursor-pointer" title="Hapus kontak dari daftar obrolan">
+                        <span class="material-symbols-outlined text-[16px]">person_remove</span>
+                        <span class="hidden md:inline">Hapus Kontak</span>
+                    </button>
+                    <button type="button" id="clearChatBtn" onclick="confirmClearChat()" class="hidden portal-button-secondary !py-1.5 !px-2.5 sm:!px-3 text-xs text-slate-600 hover:text-rose-700 hover:bg-rose-50 border-slate-200 dark:border-slate-800 dark:hover:bg-rose-950/40 cursor-pointer" title="Bersihkan seluruh riwayat pesan obrolan">
+                        <span class="material-symbols-outlined text-[16px]">delete_sweep</span>
+                        <span class="hidden md:inline">Bersihkan Obrolan</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- Right Pane: Active Chat Conversation (8 Cols) -->
-            <div class="lg:col-span-8 flex flex-col bg-white">
-                
-                <!-- Chat Window Header -->
-                <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-white">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-teal-600 text-white font-bold flex items-center justify-center text-sm">
-                            @if($currentRole === 'employer')
-                                BS
-                            @else
-                                ST
-                            @endif
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-sm text-slate-900">
-                                    @if($currentRole === 'employer')
-                                        Budi Santoso (Pelamar)
-                                    @elseif($currentRole === 'admin')
-                                        Hendra Wijaya (Owner)
-                                    @else
-                                        Hendra Wijaya (Owner)
-                                    @endif
-                                </span>
-                                <span class="px-2 py-0.5 rounded bg-teal-50 text-teal-800 text-[10px] font-bold border border-teal-200">
-                                    @if($currentRole === 'employer')
-                                        Posisi: Barista &amp; Kasir
-                                    @else
-                                        Kedai Kopi Sudut Temu
-                                    @endif
-                                </span>
-                            </div>
-                            <p class="text-[11px] text-slate-500 flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <span>
-                                    @if($currentRole === 'employer')
-                                        Online • Melamar 24 Okt 2024 • CV Terverifikasi
-                                    @elseif($currentRole === 'admin')
-                                        Online • Kepatuhan Kerja Layak: Terverifikasi
-                                    @else
-                                        Online • Posisi: Barista &amp; Kasir
-                                    @endif
-                                </span>
-                            </p>
-                        </div>
+            <!-- Messages Scroll Area (Fixed & Independent Scroll) -->
+            <div class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-3.5 bg-slate-50/40 dark:bg-slate-950/30" id="messageContainer">
+                <div class="h-full flex flex-col items-center justify-center text-slate-400 my-auto text-center p-8">
+                    <span class="material-symbols-outlined text-5xl text-slate-300 mb-3">forum</span>
+                    <p class="font-bold text-slate-700 dark:text-slate-300 text-sm">Pilih obrolan di sebelah kiri</p>
+                    <p class="text-xs text-slate-400 mt-1 max-w-xs">Anda dapat saling berkirim pesan secara real-time antar sesama pengguna.</p>
+                </div>
+            </div>
+
+            <!-- Reply Preview Strip -->
+            <div id="replyPreviewBar" class="hidden px-4 py-2 bg-teal-50/90 dark:bg-slate-800/90 border-t border-teal-100 dark:border-slate-700/80 flex items-center justify-between gap-3 text-xs animate-page-enter">
+                <div class="flex items-center gap-2.5 min-w-0 border-l-4 border-teal-600 pl-2.5">
+                    <span class="material-symbols-outlined text-teal-700 dark:text-teal-400 text-base shrink-0">reply</span>
+                    <div class="min-w-0">
+                        <p class="font-bold text-teal-900 dark:text-teal-200 text-[11px] truncate" id="replyPreviewSender">Membalas</p>
+                        <p class="text-slate-600 dark:text-slate-400 text-[11px] truncate max-w-md" id="replyPreviewSnippet">Teks pesan...</p>
                     </div>
-
-                    @if($currentRole === 'employer')
-                        <a href="{{ route('employer.applications.index') }}" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">person_search</span>
-                            <span>Tinjau Berkas</span>
-                        </a>
-                    @elseif($currentRole === 'admin')
-                        <a href="{{ route('admin.dashboard') }}" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">dashboard</span>
-                            <span>Dashboard Audit</span>
-                        </a>
-                    @else
-                        <a href="{{ route('jobs.show', ['id' => 1]) }}" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">visibility</span>
-                            <span>Lihat Loker</span>
-                        </a>
-                    @endif
                 </div>
+                <button type="button" onclick="cancelReply()" class="p-1 hover:bg-slate-200/70 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer" title="Batal membalas">
+                    <span class="material-symbols-outlined text-[17px]">close</span>
+                </button>
+            </div>
 
-                <!-- Anti-Fraud Safe Banner -->
-                <div class="px-4 py-2.5 bg-amber-50/80 border-b border-amber-100 text-[11px] text-amber-900 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-amber-700 text-base shrink-0">info</span>
-                    <span>
-                        @if($currentRole === 'employer')
-                            Kepatuhan Etis: Dilarang memungut biaya administrasi atau menahan ijazah asli calon pekerja.
-                        @elseif($currentRole === 'admin')
-                            Audit Kepatuhan: Seluruh histori komunikasi tercatat di sistem pemantauan standar SDG 8.
-                        @else
-                            Peringatan Keamanan: Rekrutmen KerjaLokal bebas biaya calo. Jangan pernah mentransfer uang atau menyerahkan ijazah asli.
-                        @endif
-                    </span>
-                </div>
-
-                <!-- Messages Scroll Area -->
-                <div class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-slate-50/30" id="messageContainer">
-                    
-                    <!-- Date Separator -->
-                    <div class="flex items-center justify-center">
-                        <span class="px-3 py-1 bg-white border border-slate-200 text-slate-500 text-[10px] font-bold rounded-full shadow-2xs">
-                            Kemarin
-                        </span>
-                    </div>
-
-                    @if($currentRole === 'employer')
-                        <!-- EMPLOYER POV MESSAGES -->
-                        <!-- Outbound (From Employer) -->
-                        <div class="flex items-start justify-end gap-2.5 ml-auto max-w-lg">
-                            <div class="bg-teal-700 text-white rounded-2xl rounded-tr-sm p-3.5 shadow-2xs text-xs space-y-1 text-left">
-                                <p class="font-bold text-[11px] text-teal-200">Hendra Wijaya • Kedai Kopi Sudut Temu</p>
-                                <p class="leading-relaxed">
-                                    Halo Budi Santoso, salam kenal. Kami sudah melihat profil dan resume Anda yang dikirim melalui KerjaLokal. Pengalaman Anda di mesin espresso Pawoon POS cocok dengan kualifikasi yang kami butuhkan.
-                                </p>
-                                <span class="text-[9px] text-teal-200 block text-right">16:40</span>
-                            </div>
-                            <div class="w-7 h-7 rounded-xl bg-teal-800 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
-                                ST
-                            </div>
-                        </div>
-
-                        <!-- Inbound (From Candidate Budi) -->
-                        <div class="flex items-start gap-2.5 max-w-lg">
-                            <div class="w-7 h-7 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
-                                BS
-                            </div>
-                            <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-sm p-3.5 shadow-2xs text-xs text-slate-800 space-y-1">
-                                <p class="font-bold text-[11px] text-teal-800">Budi Santoso</p>
-                                <p class="leading-relaxed">
-                                    Selamat sore Pak Hendra. Terima kasih banyak atas apresiasinya. Saya sangat tertarik untuk berkontribusi di Kedai Kopi Sudut Temu dan siap bekerja sistem shift.
-                                </p>
-                                <span class="text-[9px] text-slate-400 block text-right">16:45</span>
-                            </div>
-                        </div>
-
-                        <!-- Date Separator -->
-                        <div class="flex items-center justify-center pt-2">
-                            <span class="px-3 py-1 bg-white border border-slate-200 text-slate-500 text-[10px] font-bold rounded-full shadow-2xs">
-                                Hari Ini
-                            </span>
-                        </div>
-
-                        <!-- Outbound (Employer Invitation) -->
-                        <div class="flex items-start justify-end gap-2.5 ml-auto max-w-lg">
-                            <div class="space-y-2 w-full">
-                                <div class="bg-teal-700 text-white rounded-2xl rounded-tr-sm p-3.5 shadow-2xs text-xs space-y-1 text-left">
-                                    <p class="leading-relaxed">
-                                        Apakah besok Kamis Anda berkenan datang ke kedai kami di Dipatiukur untuk sesi ngobrol santai dan uji kalibrasi mesin kopi?
-                                    </p>
-                                    <span class="text-[9px] text-teal-200 block text-right">10:00</span>
-                                </div>
-
-                                <!-- Mini Ticket Sent -->
-                                <div class="p-3.5 bg-teal-50 border border-teal-200 rounded-2xl space-y-2">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-[10px] font-bold uppercase tracking-wider text-teal-800">Undangan Wawancara Dikirim</span>
-                                        <span class="material-symbols-outlined text-sm text-teal-700">check_circle</span>
-                                    </div>
-                                    <div class="space-y-0.5 text-xs text-slate-900">
-                                        <div class="font-black text-sm">Kamis, 14:00 - 15:00 WIB</div>
-                                        <div class="text-slate-600 text-[11px]">Lokasi: Jl. Dipatiukur No. 42, Coblong, Bandung</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="w-7 h-7 rounded-xl bg-teal-800 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
-                                ST
-                            </div>
-                        </div>
-
-                        <!-- Inbound (Candidate Reply) -->
-                        <div class="flex items-start gap-2.5 max-w-lg">
-                            <div class="w-7 h-7 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
-                                BS
-                            </div>
-                            <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-sm p-3.5 shadow-2xs text-xs text-slate-800 space-y-1">
-                                <p class="font-bold text-[11px] text-teal-800">Budi Santoso</p>
-                                <p class="leading-relaxed">
-                                    Saya konfirmasi siap hadir tepat waktu besok jam 14.00 WIB Pak. Saya akan membawa fotokopi CV fisik. Terima kasih atas kesempatannya!
-                                </p>
-                                <span class="text-[9px] text-slate-400 block text-right">10:15</span>
-                            </div>
-                        </div>
-
-                    @else
-                        <!-- JOBSEEKER & ADMIN POV MESSAGES -->
-                        <!-- Inbound Message -->
-                        <div class="flex items-start gap-2.5 max-w-lg">
-                            <div class="w-7 h-7 rounded-xl bg-teal-600 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
-                                ST
-                            </div>
-                            <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-sm p-3.5 shadow-2xs text-xs text-slate-800 space-y-1">
-                                <p class="font-bold text-[11px] text-teal-800">Hendra Wijaya • Kedai Kopi Sudut Temu</p>
-                                <p class="leading-relaxed">
-                                    Halo, salam kenal. Kami sudah melihat berkas dan kualifikasi yang Anda kirimkan melalui KerjaLokal. Pengalaman Anda cocok dengan kualifikasi yang kami butuhkan.
-                                </p>
-                                <span class="text-[9px] text-slate-400 block text-right">16:40</span>
-                            </div>
-                        </div>
-
-                        <!-- Outbound Message -->
-                        <div class="flex items-start justify-end gap-2.5 ml-auto max-w-lg">
-                            <div class="bg-teal-700 text-white rounded-2xl rounded-tr-sm p-3.5 shadow-2xs text-xs space-y-1 text-left">
-                                <p class="leading-relaxed">
-                                    Selamat sore Pak Hendra. Terima kasih banyak atas apresiasinya. Saya sangat tertarik untuk berkontribusi di Kedai Kopi Sudut Temu.
-                                </p>
-                                <span class="text-[9px] text-teal-200 block text-right">16:45</span>
-                            </div>
-                            <div class="w-7 h-7 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
-                                {{ $userInitials }}
-                            </div>
-                        </div>
-
-                        <!-- Date Separator -->
-                        <div class="flex items-center justify-center pt-2">
-                            <span class="px-3 py-1 bg-white border border-slate-200 text-slate-500 text-[10px] font-bold rounded-full shadow-2xs">
-                                Hari Ini
-                            </span>
-                        </div>
-
-                        <!-- Inbound Invitation Message & Card -->
-                        <div class="flex items-start gap-2.5 max-w-lg">
-                            <div class="w-7 h-7 rounded-xl bg-teal-600 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
-                                ST
-                            </div>
-                            <div class="space-y-2 w-full">
-                                <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-sm p-3.5 shadow-2xs text-xs text-slate-800 space-y-1">
-                                    <p class="font-bold text-[11px] text-teal-800">Hendra Wijaya</p>
-                                    <p class="leading-relaxed">
-                                        Apakah besok Kamis Anda berkenan datang ke kedai kami untuk sesi ngobrol santai dan melihat langsung area kerja bar kopi?
-                                    </p>
-                                    <span class="text-[9px] text-slate-400 block text-right">10:15</span>
-                                </div>
-
-                                <!-- Interview Ticket Card -->
-                                <div class="p-3.5 bg-teal-50 border border-teal-200 rounded-2xl space-y-2">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-[10px] font-bold uppercase tracking-wider text-teal-800">Undangan Temu Wawancara</span>
-                                        <span class="material-symbols-outlined text-sm text-teal-700">event</span>
-                                    </div>
-                                    <div class="space-y-0.5 text-xs text-slate-900">
-                                        <div class="font-black text-sm">Kamis, 14:00 - 15:00 WIB</div>
-                                        <div class="text-slate-600 text-[11px]">Lokasi: Jl. Dipatiukur No. 42, Coblong, Bandung</div>
-                                    </div>
-                                    <div class="pt-1 flex items-center gap-2">
-                                        <button type="button" onclick="sendQuickReply('Saya konfirmasi siap hadir tepat waktu besok jam 14.00 WIB.')" class="px-3 py-1.5 bg-teal-700 hover:bg-teal-800 text-white font-bold text-[11px] rounded-xl shadow-xs cursor-pointer">
-                                            Konfirmasi Hadir
-                                        </button>
-                                        <button type="button" onclick="sendQuickReply('Mohon maaf Pak, apakah jam wawancaranya bisa disesuaikan ke jam 16.00 WIB?')" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-[11px] rounded-xl border border-slate-200 cursor-pointer">
-                                            Minta Reschedule
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                </div>
-
-                <!-- Chat Input Strip -->
-                <div class="p-4 border-t border-slate-200 bg-white">
-                    <form onsubmit="handleSendMessage(event)" class="flex items-center gap-2">
-                        <button type="button" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors" title="Unggah dokumen / gambar">
-                            <span class="material-symbols-outlined text-xl">attach_file</span>
-                        </button>
-                        <input type="text" id="chatInput" placeholder="{{ $currentRole === 'employer' ? 'Tulis pesan balasan ke Budi Santoso...' : ($currentRole === 'admin' ? 'Tulis catatan pengawasan etis...' : 'Tulis pesan ke Mitra UMKM...') }}" class="flex-1 py-2.5 px-4 bg-slate-100 focus:bg-white rounded-xl border border-transparent focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 text-xs text-slate-900 outline-none transition-all">
-                        <button type="submit" class="px-4 py-2.5 bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer">
-                            <span>Kirim</span>
-                            <span class="material-symbols-outlined text-sm">send</span>
-                        </button>
-                    </form>
-                </div>
-
+            <!-- Chat Input Strip (Fixed at Bottom) -->
+            <div class="p-3 sm:p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                <form id="mainChatForm" onsubmit="handleSendMessage(event)" class="flex items-center gap-2">
+                    <input type="text" id="chatInput" placeholder="Ketik pesan..." class="flex-1 py-2.5 px-4 bg-slate-100 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-950 rounded-2xl border border-transparent focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 text-xs text-slate-900 dark:text-white outline-none transition-all" autocomplete="off" disabled required>
+                    <button type="submit" id="chatSendBtn" class="px-5 py-2.5 bg-teal-700 hover:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 text-white font-bold text-xs rounded-2xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer" disabled>
+                        <span>Kirim</span>
+                        <span class="material-symbols-outlined text-sm">send</span>
+                    </button>
+                </form>
             </div>
 
         </div>
@@ -511,41 +161,489 @@
 
 @push('scripts')
 <script>
-    function sendQuickReply(text) {
-        const input = document.getElementById('chatInput');
-        if (input) {
-            input.value = text;
-            input.focus();
+    let activeUserId = {{ $activeUserId ? (int) $activeUserId : 'null' }};
+    let activeUserName = '';
+    let allConversations = [];
+    let pollMessagesTimer = null;
+    let pollConversationsTimer = null;
+    let currentReply = null;
+    const currentUserInitials = "{{ $userInitials }}";
+    const csrfToken = "{{ csrf_token() }}";
+
+    async function loadConversations() {
+        try {
+            const url = activeUserId ? `/chat/conversations?with=${activeUserId}` : '/chat/conversations';
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
+            allConversations = await res.json();
+            renderConversations(allConversations);
+
+            if (activeUserId && !pollMessagesTimer) {
+                const target = allConversations.find(c => c.id === activeUserId);
+                if (target) {
+                    selectConversation(target.id, target.name, target.role_label, target.initials);
+                } else {
+                    selectConversation(activeUserId, 'Kontak Obrolan', 'Kontak', 'KL');
+                }
+            }
+        } catch (e) {
+            console.error(e);
         }
     }
 
-    function handleSendMessage(e) {
+    function renderConversations(conversations) {
+        const list = document.getElementById('chatThreadList');
+        if (!list) return;
+
+        if (!conversations || conversations.length === 0) {
+            list.innerHTML = `
+                <div class="p-8 text-center flex flex-col items-center justify-center text-slate-400 my-auto h-full">
+                    <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">chat_bubble_outline</span>
+                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">Belum ada obrolan</p>
+                    <p class="text-[11px] text-slate-400 mt-1 max-w-[200px]">Daftar kontak percakapan Anda akan muncul di sini.</p>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = conversations.map(user => {
+            const isActive = user.id === activeUserId;
+            return `
+                <div onclick="selectConversation(${user.id}, '${escapeHtml(user.name)}', '${escapeHtml(user.role_label)}', '${escapeHtml(user.initials)}')" 
+                     class="group relative p-3.5 sm:p-4 cursor-pointer transition-all flex items-start gap-3 ${isActive ? 'bg-white dark:bg-slate-900 border-l-4 border-teal-600' : 'bg-transparent hover:bg-white dark:hover:bg-slate-850'}">
+                    <div class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-200 font-bold flex items-center justify-center shrink-0 text-xs">
+                        ${escapeHtml(user.initials)}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-1 mb-0.5">
+                            <span class="font-bold text-xs text-slate-900 dark:text-white truncate">${escapeHtml(user.name)}</span>
+                            <span class="text-[10px] text-teal-700 dark:text-teal-400 font-semibold shrink-0">${user.last_time || ''}</span>
+                        </div>
+                        <span class="inline-block text-[10px] font-bold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/70 px-1.5 py-0.5 rounded mb-1">
+                            ${escapeHtml(user.role_label)}
+                        </span>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            ${user.last_message ? escapeHtml(user.last_message) : '<em>Mulai obrolan...</em>'}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        ${user.unread_count > 0 ? '<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-2"></span>' : ''}
+                        <button type="button" onclick="event.stopPropagation(); removePersonConversation(${user.id}, '${escapeHtml(user.name)}')" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-opacity cursor-pointer" title="Hapus kontak ini dari daftar">
+                            <span class="material-symbols-outlined text-[17px]">person_remove</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function filterConversations() {
+        const q = (document.getElementById('chatSearchInput')?.value || '').toLowerCase();
+        if (!q) {
+            renderConversations(allConversations);
+            return;
+        }
+        const filtered = allConversations.filter(c => c.name.toLowerCase().includes(q) || (c.role_label && c.role_label.toLowerCase().includes(q)));
+        renderConversations(filtered);
+    }
+
+    async function selectConversation(userId, name, roleLabel, initials) {
+        activeUserId = userId;
+        activeUserName = name;
+        cancelReply();
+
+        const rightPane = document.getElementById('chatRightPane');
+        if (rightPane) {
+            rightPane.classList.remove('animate-chat-slide-right');
+            void rightPane.offsetWidth;
+            rightPane.classList.add('animate-chat-slide-right');
+        }
+
+        const avatar = document.getElementById('activeChatAvatar');
+        const nameEl = document.getElementById('activeChatName');
+        const badge = document.getElementById('activeChatRoleBadge');
+        const status = document.getElementById('activeChatStatus');
+        const input = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('chatSendBtn');
+        const clearBtn = document.getElementById('clearChatBtn');
+        const removeBtn = document.getElementById('removeContactBtn');
+
+        if (avatar) avatar.textContent = initials || name.substring(0, 2).toUpperCase();
+        if (nameEl) nameEl.textContent = name;
+        if (badge) {
+            badge.textContent = roleLabel;
+            badge.classList.remove('hidden');
+        }
+        if (status) {
+            status.innerHTML = `
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>Online</span>
+            `;
+        }
+
+        if (clearBtn) clearBtn.classList.remove('hidden');
+        if (removeBtn) removeBtn.classList.remove('hidden');
+
+        if (input) {
+            input.disabled = false;
+            input.placeholder = `Tulis pesan ke ${name}...`;
+            input.focus();
+        }
+        if (sendBtn) sendBtn.disabled = false;
+
+        renderConversations(allConversations);
+
+        const container = document.getElementById('messageContainer');
+        if (container) container.innerHTML = '';
+
+        await fetchMessages();
+
+        if (pollMessagesTimer) clearInterval(pollMessagesTimer);
+        pollMessagesTimer = setInterval(fetchMessages, 1500);
+    }
+
+    function renderMessageHTML(msg, otherUser) {
+        let replyHtml = '';
+        if (msg.reply_to) {
+            if (msg.is_me) {
+                replyHtml = `
+                    <div class="mb-1.5 p-2 rounded-xl bg-black/15 dark:bg-black/30 border-l-3 border-teal-300 text-[11px] leading-snug">
+                        <div class="font-bold text-teal-200 text-[10px] flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[13px]">reply</span>
+                            <span>${escapeHtml(msg.reply_to.sender_name)}</span>
+                        </div>
+                        <p class="text-teal-50 truncate text-[10px] mt-0.5 opacity-90">${escapeHtml(msg.reply_to.message)}</p>
+                    </div>
+                `;
+            } else {
+                replyHtml = `
+                    <div class="mb-1.5 p-2 rounded-xl bg-slate-100 dark:bg-slate-700/60 border-l-3 border-teal-600 text-[11px] leading-snug">
+                        <div class="font-bold text-teal-800 dark:text-teal-400 text-[10px] flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[13px]">reply</span>
+                            <span>${escapeHtml(msg.reply_to.sender_name)}</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300 truncate text-[10px] mt-0.5">${escapeHtml(msg.reply_to.message)}</p>
+                    </div>
+                `;
+            }
+        }
+
+        const senderName = msg.is_me ? 'Anda' : otherUser.name;
+        const safeSnippet = escapeJs(msg.message);
+
+        if (msg.is_me) {
+            return `
+                <div data-msg-id="${msg.id}" class="group relative flex items-start justify-end gap-1.5 sm:gap-2 ml-auto max-w-xl">
+                    <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
+                        <button type="button" onclick="startReply(${msg.id}, '${escapeHtml(senderName)}', '${safeSnippet}')" title="Balas pesan ini" class="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+                            <span class="material-symbols-outlined text-[16px]">reply</span>
+                        </button>
+                        <button type="button" onclick="deleteMessage(${msg.id})" title="Hapus pesan ini" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+                            <span class="material-symbols-outlined text-[16px]">delete</span>
+                        </button>
+                    </div>
+                    <div class="bg-teal-700 text-white rounded-2xl rounded-tr-sm p-3 sm:p-3.5 shadow-2xs text-xs space-y-1 text-left min-w-[90px]">
+                        ${replyHtml}
+                        <p class="leading-relaxed whitespace-pre-line">${escapeHtml(msg.message)}</p>
+                        <span class="text-[9px] text-teal-200 block text-right">${msg.time}</span>
+                    </div>
+                    <div class="w-8 h-8 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
+                        ${currentUserInitials}
+                    </div>
+                </div>
+            `;
+        } else {
+            return `
+                <div data-msg-id="${msg.id}" class="group relative flex items-start gap-1.5 sm:gap-2 max-w-xl">
+                    <div class="w-8 h-8 rounded-xl bg-teal-700 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
+                        ${escapeHtml(otherUser.initials)}
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-sm p-3 sm:p-3.5 shadow-2xs text-xs space-y-1 text-left min-w-[90px]">
+                        ${replyHtml}
+                        <p class="text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-line">${escapeHtml(msg.message)}</p>
+                        <span class="text-[9px] text-slate-400 block text-right">${msg.time}</span>
+                    </div>
+                    <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
+                        <button type="button" onclick="startReply(${msg.id}, '${escapeHtml(senderName)}', '${safeSnippet}')" title="Balas pesan ini" class="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+                            <span class="material-symbols-outlined text-[16px]">reply</span>
+                        </button>
+                        <button type="button" onclick="deleteMessage(${msg.id})" title="Hapus pesan ini" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+                            <span class="material-symbols-outlined text-[16px]">delete</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    async function fetchMessages() {
+        if (!activeUserId) return;
+        const container = document.getElementById('messageContainer');
+        if (!container) return;
+
+        try {
+            const res = await fetch(`/chat/messages/${activeUserId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+
+            const existingElements = Array.from(container.querySelectorAll('[data-msg-id]'));
+            const existingIds = new Set(existingElements.map(el => parseInt(el.dataset.msgId)));
+            const incomingIds = new Set(data.messages.map(m => m.id));
+
+            // Remove deleted messages
+            existingElements.forEach(el => {
+                const id = parseInt(el.dataset.msgId);
+                if (!incomingIds.has(id)) {
+                    el.remove();
+                }
+            });
+
+            if (data.messages.length === 0) {
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-slate-400 my-auto text-center p-8">
+                        <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">waving_hand</span>
+                        <p class="font-bold text-slate-700 dark:text-slate-300 text-xs">Belum ada riwayat pesan</p>
+                        <p class="text-[11px] text-slate-400 mt-1 max-w-xs">Kirim pesan pertama Anda untuk memulai percakapan.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const isPlaceholder = container.querySelector('.text-slate-400');
+            if (isPlaceholder || existingIds.size === 0) {
+                container.innerHTML = '';
+                data.messages.forEach(msg => {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = renderMessageHTML(msg, data.user).trim();
+                    container.appendChild(temp.firstElementChild);
+                });
+                container.scrollTop = container.scrollHeight;
+            } else {
+                let hasNew = false;
+                data.messages.forEach(msg => {
+                    if (!existingIds.has(msg.id)) {
+                        const temp = document.createElement('div');
+                        temp.innerHTML = renderMessageHTML(msg, data.user).trim();
+                        const el = temp.firstElementChild;
+                        el.classList.add('animate-msg-popup');
+                        container.appendChild(el);
+                        hasNew = true;
+                    }
+                });
+
+                if (hasNew) {
+                    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function startReply(msgId, senderName, messageText) {
+        currentReply = { id: msgId, name: senderName, text: messageText };
+        const bar = document.getElementById('replyPreviewBar');
+        const senderEl = document.getElementById('replyPreviewSender');
+        const snippetEl = document.getElementById('replyPreviewSnippet');
+        const input = document.getElementById('chatInput');
+
+        if (senderEl) senderEl.textContent = `Membalas ke: ${senderName}`;
+        if (snippetEl) snippetEl.textContent = messageText.length > 80 ? messageText.substring(0, 80) + '...' : messageText;
+        if (bar) bar.classList.remove('hidden');
+        if (input) input.focus();
+    }
+
+    function cancelReply() {
+        currentReply = null;
+        const bar = document.getElementById('replyPreviewBar');
+        if (bar) bar.classList.add('hidden');
+    }
+
+    async function handleSendMessage(e) {
         e.preventDefault();
+        if (!activeUserId) return;
+
         const input = document.getElementById('chatInput');
         const text = input ? input.value.trim() : '';
         if (!text) return;
 
-        const container = document.getElementById('messageContainer');
-        const newMsg = document.createElement('div');
-        newMsg.className = 'flex items-start justify-end gap-2.5 ml-auto max-w-lg animate-page-enter';
-        newMsg.innerHTML = `
-            <div class="bg-teal-700 text-white rounded-2xl rounded-tr-sm p-3.5 shadow-2xs text-xs space-y-1 text-left">
-                <p class="leading-relaxed">${escapeHtml(text)}</p>
-                <span class="text-[9px] text-teal-200 block text-right">Baru saja</span>
-            </div>
-            <div class="w-7 h-7 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
-                {{ $userInitials }}
-            </div>
-        `;
-        container.appendChild(newMsg);
+        const replyId = currentReply ? currentReply.id : null;
         input.value = '';
-        container.scrollTop = container.scrollHeight;
+        cancelReply();
+
+        try {
+            const res = await fetch(`/chat/messages/${activeUserId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    message: text,
+                    reply_to_id: replyId
+                })
+            });
+            if (res.ok) {
+                await fetchMessages();
+                loadConversations();
+            }
+        } catch (e) {
+            console.error(e);
+        }
     }
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    async function deleteMessage(msgId) {
+        const confirmed = await window.showAppConfirm({
+            title: 'Hapus Pesan Obrolan?',
+            message: 'Pesan yang telah dihapus tidak dapat dipulihkan kembali.',
+            confirmText: 'Ya, Hapus Pesan',
+            type: 'danger',
+            icon: 'delete'
+        });
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(`/chat/messages/${msgId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+            if (res.ok) {
+                const el = document.querySelector(`[data-msg-id="${msgId}"]`);
+                if (el) el.remove();
+                loadConversations();
+            }
+        } catch (e) {
+            console.error(e);
+        }
     }
+
+    async function confirmClearChat() {
+        if (!activeUserId) return;
+        const confirmed = await window.showAppConfirm({
+            title: 'Bersihkan Seluruh Obrolan?',
+            message: 'Seluruh riwayat pesan obrolan dengan pengguna ini akan dihapus secara permanen.',
+            confirmText: 'Ya, Bersihkan',
+            type: 'danger',
+            icon: 'delete_sweep'
+        });
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(`/chat/clear/${activeUserId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+            if (res.ok) {
+                const container = document.getElementById('messageContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="h-full flex flex-col items-center justify-center text-slate-400 my-auto text-center p-8">
+                            <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">delete_sweep</span>
+                            <p class="font-bold text-slate-700 dark:text-slate-300 text-xs">Riwayat obrolan telah dibersihkan</p>
+                            <p class="text-[11px] text-slate-400 mt-1 max-w-xs">Mulai percakapan baru dengan mengirim pesan di bawah.</p>
+                        </div>
+                    `;
+                }
+                cancelReply();
+                loadConversations();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function confirmRemovePerson() {
+        if (!activeUserId) return;
+        await removePersonConversation(activeUserId, activeUserName || 'pengguna ini');
+    }
+
+    async function removePersonConversation(userId, userName) {
+        const confirmed = await window.showAppConfirm({
+            title: 'Hapus Kontak Obrolan?',
+            message: `Hapus ${userName} dari daftar kontak Anda? Riwayat percakapan akan dibersihkan.`,
+            confirmText: 'Ya, Hapus Kontak',
+            type: 'danger',
+            icon: 'person_remove'
+        });
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(`/chat/conversations/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+            if (res.ok) {
+                if (activeUserId === userId) {
+                    activeUserId = null;
+                    activeUserName = '';
+                    if (pollMessagesTimer) clearInterval(pollMessagesTimer);
+                    pollMessagesTimer = null;
+                    cancelReply();
+
+                    // Reset right pane
+                    document.getElementById('activeChatName').textContent = 'Pilih percakapan';
+                    document.getElementById('activeChatAvatar').textContent = '--';
+                    document.getElementById('activeChatRoleBadge').classList.add('hidden');
+                    document.getElementById('activeChatStatus').innerHTML = `
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                        <span>Tidak ada obrolan aktif</span>
+                    `;
+                    document.getElementById('clearChatBtn').classList.add('hidden');
+                    document.getElementById('removeContactBtn').classList.add('hidden');
+                    document.getElementById('chatInput').disabled = true;
+                    document.getElementById('chatInput').placeholder = 'Ketik pesan...';
+                    document.getElementById('chatSendBtn').disabled = true;
+
+                    document.getElementById('messageContainer').innerHTML = `
+                        <div class="h-full flex flex-col items-center justify-center text-slate-400 my-auto text-center p-8">
+                            <span class="material-symbols-outlined text-5xl text-slate-300 mb-3">forum</span>
+                            <p class="font-bold text-slate-700 dark:text-slate-300 text-sm">Pilih obrolan di sebelah kiri</p>
+                            <p class="text-xs text-slate-400 mt-1 max-w-xs">Anda dapat saling berkirim pesan secara real-time antar sesama pengguna.</p>
+                        </div>
+                    `;
+                }
+                loadConversations();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function escapeJs(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, ' ')
+            .replace(/\r/g, '');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadConversations();
+        pollConversationsTimer = setInterval(loadConversations, 4000);
+    });
 </script>
 @endpush

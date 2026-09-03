@@ -43,17 +43,21 @@ class JobController extends Controller
      */
     public function show(Request $request, Job $job): View
     {
-        if ($job->status !== 'open' && ! $request->user()?->hasRole('admin') && $job->employer_id !== $request->user()?->id) {
+        $application = $request->user()?->hasRole('jobseeker')
+            ? $job->applications()->where('user_id', $request->user()->id)->first()
+            : null;
+        $hasApplied = $application !== null;
+
+        if ($job->status !== 'open'
+            && ! $request->user()?->hasRole('admin')
+            && $job->employer_id !== $request->user()?->id
+            && ! $hasApplied) {
             abort(404);
         }
 
         $job->load(['category:id,name', 'employer:id,name,email,phone,business_name', 'skills:id,name'])
             ->loadCount('applications');
 
-        $hasApplied = $request->user()?->hasRole('jobseeker')
-            ? $job->applications()->where('user_id', $request->user()->id)->exists()
-            : false;
-
-        return view('jobs.show', compact('job', 'hasApplied'));
+        return view('jobs.show', compact('job', 'hasApplied', 'application'));
     }
 }

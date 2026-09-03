@@ -56,4 +56,21 @@ class ApplicationController extends Controller
             ['Content-Type' => 'application/pdf'],
         );
     }
+
+    public function preview(JobApplication $application): StreamedResponse
+    {
+        Gate::authorize('download', $application);
+        abort_unless(Storage::disk('local')->exists($application->resume_file), 404, 'Berkas resume tidak ditemukan.');
+        $application->loadMissing('user:id,name');
+
+        return Storage::disk('local')->response(
+            $application->resume_file,
+            'CV-'.$application->user->name.'.pdf',
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="CV-'.$application->user->name.'.pdf"',
+                'X-Content-Type-Options' => 'nosniff',
+            ],
+        );
+    }
 }

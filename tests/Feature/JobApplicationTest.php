@@ -76,6 +76,35 @@ class JobApplicationTest extends TestCase
         $this->actingAs($otherEmployer)->get(route('employer.applications.resume', $application))->assertForbidden();
     }
 
+    public function test_employer_and_admin_can_preview_private_resume_inline_but_other_employer_cannot(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('resumes/candidate.pdf', '%PDF-1.4 test preview');
+        $owner = User::factory()->employer()->create();
+        $otherEmployer = User::factory()->employer()->create();
+        $admin = User::factory()->admin()->create();
+        $applicant = User::factory()->jobseeker()->create();
+        $job = Job::factory()->for($owner, 'employer')->create();
+        $application = JobApplication::factory()->for($job)->for($applicant, 'user')->create([
+            'resume_file' => 'resumes/candidate.pdf',
+        ]);
+
+        $ownerResponse = $this->actingAs($owner)->get(route('employer.applications.resume.preview', $application));
+        $ownerResponse->assertOk();
+        $this->assertSame('application/pdf', $ownerResponse->headers->get('content-type'));
+        $this->assertStringContainsString('inline', $ownerResponse->headers->get('content-disposition'));
+
+        $adminResponse = $this->actingAs($admin)->get(route('admin.applications.resume.preview', $application));
+        $adminResponse->assertOk();
+        $this->assertSame('application/pdf', $adminResponse->headers->get('content-type'));
+
+        $applicantResponse = $this->actingAs($applicant)->get(route('applications.resume.preview', $application));
+        $applicantResponse->assertOk();
+        $this->assertSame('application/pdf', $applicantResponse->headers->get('content-type'));
+
+        $this->actingAs($otherEmployer)->get(route('employer.applications.resume.preview', $application))->assertForbidden();
+    }
+
     public function test_duplicate_application_is_rejected_without_second_pivot_row(): void
     {
         Storage::fake('local');
@@ -115,5 +144,77 @@ class JobApplicationTest extends TestCase
         $this->actingAs($jobseeker)->get(route('applications.index'))
             ->assertOk()
             ->assertSee('Diterima');
+    }
+
+    public function test_applied_jobseeker_can_view_job_detail_even_when_under_review_or_closed(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $jobseeker = User::factory()->jobseeker()->create();
+        $job = Job::factory()->for($employer, 'employer')->create([
+            'title' => 'Video Editor Kreatif',
+            'status' => 'open',
+        ]);
+
+        $application = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create([
+            'status' => 'pending',
+        ]);
+
+        // Jobseeker can see "Lihat Detail Lowongan" in applications history
+        $this->actingAs($jobseeker)->get(route('applications.index'))
+            ->assertOk()
+            ->assertSee('Lihat Detail Lowongan')
+            ->assertSee('Video Editor Kreatif');
+
+        // Jobseeker can view job detail page when under review
+        $this->actingAs($jobseeker)->get(route('jobs.show', $job))
+            ->assertOk()
+            ->assertSee('Video Editor Kreatif')
+            ->assertSee('Lamaran Sudah Terkirim')
+            ->assertSee('Menunggu Tinjauan');
+
+        // Even if job is closed by employer, applied jobseeker can still view job details
+        $job->update(['status' => 'closed']);
+
+        $this->actingAs($jobseeker)->get(route('jobs.show', $job))
+            ->assertOk()
+            ->assertSee('Video Editor Kreatif')
+            ->assertSee('Lamaran Sudah Terkirim');
+    }
+
+    public function test_jobseeker_can_cancel_their_own_application_and_resume_file_is_removed(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('resumes/test_cancel.pdf', '%PDF-1.4 test');
+
+        $jobseeker = User::factory()->jobseeker()->create();
+        $job = Job::factory()->create(['title' => 'Graphic Designer']);
+        $application = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create([
+            'resume_file' => 'resumes/test_cancel.pdf',
+        ]);
+
+        $response = $this->actingAs($jobseeker)->delete(route('applications.destroy', $application));
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseMissing('job_applications', [
+            'id' => $application->id,
+        ]);
+        Storage::disk('local')->assertMissing('resumes/test_cancel.pdf');
+    }
+
+    public function test_other_user_cannot_cancel_another_users_application(): void
+    {
+        Storage::fake('local');
+        $owner = User::factory()->jobseeker()->create();
+        $otherUser = User::factory()->jobseeker()->create();
+        $job = Job::factory()->create();
+        $application = JobApplication::factory()->for($job)->for($owner, 'user')->create();
+
+        $this->actingAs($otherUser)
+            ->delete(route('applications.destroy', $application))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('job_applications', [
+            'id' => $application->id,
+        ]);
     }
 }

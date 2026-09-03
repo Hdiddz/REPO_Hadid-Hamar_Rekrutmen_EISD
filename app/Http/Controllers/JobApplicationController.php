@@ -9,6 +9,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -56,5 +57,29 @@ class JobApplicationController extends Controller
 
         return redirect()->route('applications.index')
             ->with('success', 'Lamaran berhasil dikirim dan dapat dipantau pada riwayat lamaran.');
+    }
+
+    public function destroy(Request $request, JobApplication $application): RedirectResponse
+    {
+        Gate::authorize('delete', $application);
+
+        $job = $application->job;
+        $jobTitle = $job?->title ?? 'posisi pekerjaan';
+        $resumeFile = $application->resume_file;
+
+        DB::transaction(function () use ($application): void {
+            $application->delete();
+        });
+
+        if ($resumeFile && Storage::disk('local')->exists($resumeFile)) {
+            Storage::disk('local')->delete($resumeFile);
+        }
+
+        if ($job && $job->status !== 'open') {
+            return redirect()->route('applications.index')
+                ->with('success', "Lamaran untuk \"{$jobTitle}\" berhasil dibatalkan.");
+        }
+
+        return back()->with('success', "Lamaran untuk \"{$jobTitle}\" berhasil dibatalkan.");
     }
 }

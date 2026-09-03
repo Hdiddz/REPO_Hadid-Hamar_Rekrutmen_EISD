@@ -93,8 +93,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.querySelectorAll('[data-alert-dismiss]').forEach((button) => {
-        button.addEventListener('click', () => button.closest('[data-flash-alert]')?.remove());
+    document.querySelectorAll('[data-flash-alert]').forEach((alert) => {
+        let isDismissed = false;
+        const dismissAlert = () => {
+            if (isDismissed) {
+                return;
+            }
+            isDismissed = true;
+            alert.style.transition = 'opacity 350ms ease, transform 350ms ease';
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-16px) scale(0.95)';
+            setTimeout(() => {
+                const container = alert.closest('[data-flash-container]') || alert;
+                container.remove();
+            }, 350);
+        };
+
+        alert.querySelectorAll('[data-alert-dismiss]').forEach((button) => {
+            button.addEventListener('click', dismissAlert);
+        });
+
+        setTimeout(dismissAlert, 2000);
     });
 
     document.querySelectorAll('[data-password-toggle]').forEach((button) => {

@@ -31,9 +31,22 @@ class StoreJobRequest extends FormRequest
             'salary_type' => ['required', Rule::in(['hourly', 'daily', 'monthly'])],
             'salary_amount' => ['required', 'numeric', 'min:1', 'max:9999999999.99'],
             'work_hours_per_day' => ['required', 'integer', 'between:1,8'],
-            'skills' => ['required', 'array', 'min:1'],
+            'skills' => ['nullable', 'array'],
             'skills.*' => ['integer', 'distinct', 'exists:skills,id'],
+            'new_skills' => ['nullable', 'array'],
+            'new_skills.*' => ['string', 'max:100'],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($v): void {
+            $hasSkills = ! empty($this->input('skills'));
+            $hasNewSkills = ! empty(array_filter((array) $this->input('new_skills', [])));
+            if (! $hasSkills && ! $hasNewSkills) {
+                $v->errors()->add('skills', 'Pilih minimal satu keahlian yang dibutuhkan atau tambahkan keahlian baru.');
+            }
+        });
     }
 
     public function messages(): array

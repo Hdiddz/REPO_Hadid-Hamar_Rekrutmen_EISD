@@ -8,6 +8,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -28,26 +29,65 @@ class AuthController extends Controller
      */
     public function login(Request $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        $input = $request->string('email')->trim()->value();
+        $password = $request->string('password')->value();
+
+        $request->validate([
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ], [
-            'email.required' => 'Email wajib diisi.',
-            'email.email' => 'Format email tidak valid.',
+            'email.required' => 'Email atau nama pengguna wajib diisi.',
             'password.required' => 'Kata sandi wajib diisi.',
         ]);
 
         $remember = $request->boolean('remember');
+        $isEmail = (bool) filter_var($input, FILTER_VALIDATE_EMAIL);
 
-        if (Auth::attempt($credentials, $remember)) {
+        // Cari data pengguna di sistem
+        $user = $isEmail
+            ? User::where('email', $input)->first()
+            : User::where('username', $input)->orWhere('name', $input)->first();
+
+        // 1. Kasus Akun Terhapus / Tidak Ditemukan
+        if (! $user) {
+            return redirect()->route('login')
+                ->with('account_not_found', [
+                    'input' => $input,
+                ])
+                ->with('error', 'Akun tidak ditemukan. Akun ini belum terdaftar atau telah dihapus dari sistem.')
+                ->withErrors(['email' => 'Akun tidak ditemukan. Akun ini belum terdaftar atau telah dihapus dari sistem.'])
+                ->onlyInput('email');
+        }
+
+        // 2. Kasus Akun Terkena Ban / Pemblokiran
+        if ($user->isBanned()) {
+            $duration = $user->banned_until
+                ? 'sampai '.$user->banned_until->translatedFormat('d F Y, H:i').' WIB'
+                : 'secara permanen';
+            $reason = $user->ban_reason ?: 'Pelanggaran standar etika rekrutmen KerjaLokal.';
+
+            return redirect()->route('login')
+                ->with('account_banned', [
+                    'name' => $user->name,
+                    'username' => $user->username,
+                    'duration' => $duration,
+                    'reason' => $reason,
+                    'until' => $user->banned_until?->translatedFormat('d F Y, H:i') ?: 'Permanen',
+                ])
+                ->with('error', "Akun Anda ({$user->name}) sedang dibekukan oleh Administrator {$duration}. Alasan: {$reason}")
+                ->withErrors(['email' => "Akun Anda ({$user->name}) sedang dibekukan oleh Administrator {$duration}."])
+                ->onlyInput('email');
+        }
+
+        // 3. Autentikasi Kredensial Kata Sandi
+        if (Auth::attempt(['id' => $user->id, 'password' => $password], $remember)) {
             $request->session()->regenerate();
-            $user = Auth::user();
 
             return $this->redirectBasedOnRole($user, "Selamat datang kembali, {$user->name}!");
         }
 
         return back()->withErrors([
-            'email' => 'Kombinasi email dan kata sandi tidak terdaftar.',
+            'password' => 'Kata sandi yang Anda masukkan salah.',
         ])->onlyInput('email');
     }
 
@@ -70,8 +110,16 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
+        $base = Str::slug($validated['name'], '_') ?: 'user';
+        $candidate = strtolower($base);
+        $i = 1;
+        while (User::where('username', $candidate)->exists()) {
+            $candidate = strtolower($base).'_'.$i++;
+        }
+
         $user = User::create([
             'name' => $validated['name'],
+            'username' => $candidate,
             'email' => $validated['email'],
             'password' => $validated['password'],
             'role' => $validated['role'],

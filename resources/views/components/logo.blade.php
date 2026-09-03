@@ -13,7 +13,7 @@
             Kerja<span class="{{ $white ? 'text-teal-300' : 'text-teal-600' }}">Lokal</span>
         </span>
         <span class="text-[10px] font-medium tracking-wide mt-0.5 {{ $white ? 'text-teal-200/80' : 'text-slate-500' }}">
-            Decent Work • SDG 8
+            Peluang Kerja Layak
         </span>
     </div>
 </div>

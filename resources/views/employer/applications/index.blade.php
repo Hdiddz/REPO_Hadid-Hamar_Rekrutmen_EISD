@@ -15,7 +15,33 @@
     <div class="space-y-4">
         @forelse($applications as $application)
             <article class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900" data-reveal>
-                <div class="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-start"><div class="flex items-start gap-4"><div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-700 font-bold text-white">{{ str($application->user->name)->substr(0, 1)->upper() }}</div><div><p class="text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-300">{{ $application->job->title }}</p><h2 class="mt-1 text-lg font-bold">{{ $application->user->name }}</h2><p class="mt-1 text-sm text-slate-500">{{ $application->user->email }}{{ $application->user->phone ? ' · '.$application->user->phone : '' }}</p><div class="mt-3 flex flex-wrap gap-1.5">@foreach($application->job->skills as $skill)<span class="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ $skill->name }}</span>@endforeach</div></div></div><div class="flex flex-wrap gap-2"><a href="{{ route('employer.applications.resume', $application) }}" class="portal-button-secondary"><span class="material-symbols-outlined text-[18px]">download</span>Unduh resume</a></div></div>
+                <div class="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-start">
+                    <div class="flex items-start gap-4">
+                        <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-700 font-bold text-white">
+                            {{ str($application->user->name)->substr(0, 1)->upper() }}
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-300">{{ $application->job->title }}</p>
+                            <h2 class="mt-1 text-lg font-bold">{{ $application->user->name }}</h2>
+                            <p class="mt-1 text-sm text-slate-500">{{ $application->user->email }}{{ $application->user->phone ? ' · '.$application->user->phone : '' }}</p>
+                            <div class="mt-3 flex flex-wrap gap-1.5">
+                                @foreach($application->job->skills as $skill)
+                                    <span class="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ $skill->name }}</span>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="openPdfViewer('{{ route('employer.applications.resume.preview', $application) }}', '{{ addslashes($application->user->name) }}', '{{ route('employer.applications.resume', $application) }}')" class="portal-button-primary cursor-pointer">
+                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                            Lihat resume
+                        </button>
+                        <a href="{{ route('employer.applications.resume', $application) }}" class="portal-button-secondary">
+                            <span class="material-symbols-outlined text-[18px]">download</span>
+                            Unduh resume
+                        </a>
+                    </div>
+                </div>
                 @if($application->note)<p class="mt-5 rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600 dark:bg-slate-950 dark:text-slate-300"><strong>Catatan kandidat:</strong> {{ $application->note }}</p>@endif
                 <form action="{{ route('employer.applications.update', $application) }}" method="POST" class="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-end dark:border-slate-800">@csrf @method('PATCH')<div class="flex-1"><label for="status-{{ $application->id }}" class="portal-label">Status seleksi</label><select id="status-{{ $application->id }}" name="status" class="portal-input">@foreach(['pending' => 'Menunggu tinjauan', 'interview' => 'Wawancara', 'accepted' => 'Diterima', 'rejected' => 'Ditolak'] as $value => $label)<option value="{{ $value }}" @selected($application->status === $value)>{{ $label }}</option>@endforeach</select>@error('status')<p class="portal-field-error">{{ $message }}</p>@enderror</div><button class="portal-button-primary sm:mb-px"><span class="material-symbols-outlined text-[18px]">save</span>Perbarui status</button></form>
             </article>

@@ -17,12 +17,8 @@
                 <div class="mt-8 flex flex-wrap gap-6 text-sm text-brand-100"><span class="flex items-center gap-2"><span class="material-symbols-outlined text-[19px] text-brand-300">payments</span>Upah transparan</span><span class="flex items-center gap-2"><span class="material-symbols-outlined text-[19px] text-brand-300">schedule</span>Maksimal 8 jam per hari</span></div>
             </div>
             <div class="relative min-h-[390px] lg:min-h-full">
-                <img src="{{ asset('images/hero-kerjalokal.jpg') }}" alt="Pekerja dan pemilik usaha lokal sedang berkolaborasi" class="absolute inset-0 h-full w-full object-cover">
+                <img src="{{ asset('images/hero-kerjalokal.jpg') }}" alt="Talenta dan tim KerjaLokal sedang berkolaborasi" class="absolute inset-0 h-full w-full object-cover object-[center_30%]">
                 <div class="absolute inset-0 bg-brand-950/25"></div>
-                <div class="absolute bottom-6 right-6 max-w-xs rounded-2xl border border-white/20 bg-slate-950/70 p-4 backdrop-blur-md" data-reveal>
-                    <p class="text-xs font-bold uppercase tracking-widest text-brand-200">Dampak nyata</p>
-                    <p class="mt-2 text-sm leading-6 text-white">Satu ruang untuk pencari kerja, mitra UMKM, dan admin menjaga proses tetap terhubung.</p>
-                </div>
             </div>
         </div>
     </section>

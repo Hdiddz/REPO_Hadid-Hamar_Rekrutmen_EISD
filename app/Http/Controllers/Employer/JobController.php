@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Job;
 use App\Models\Skill;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -44,8 +45,20 @@ class JobController extends Controller
     public function store(StoreJobRequest $request): RedirectResponse
     {
         $job = DB::transaction(function () use ($request): Job {
-            $job = $request->user()->jobs()->create($request->safe()->except('skills'));
-            $job->skills()->sync($request->validated('skills'));
+            $job = $request->user()->jobs()->create($request->safe()->except(['skills', 'new_skills']));
+
+            $skillIds = collect($request->input('skills', []))->map(fn ($id) => (int) $id);
+            if ($request->has('new_skills')) {
+                foreach ((array) $request->input('new_skills') as $name) {
+                    $cleanName = trim(strip_tags((string) $name));
+                    if ($cleanName !== '') {
+                        $skill = Skill::firstOrCreate(['name' => $cleanName]);
+                        $skillIds->push($skill->id);
+                    }
+                }
+            }
+
+            $job->skills()->sync($skillIds->unique()->values()->all());
 
             return $job;
         });
@@ -84,8 +97,20 @@ class JobController extends Controller
     public function update(UpdateJobRequest $request, Job $job): RedirectResponse
     {
         DB::transaction(function () use ($request, $job): void {
-            $job->update($request->safe()->except('skills'));
-            $job->skills()->sync($request->validated('skills'));
+            $job->update($request->safe()->except(['skills', 'new_skills']));
+
+            $skillIds = collect($request->input('skills', []))->map(fn ($id) => (int) $id);
+            if ($request->has('new_skills')) {
+                foreach ((array) $request->input('new_skills') as $name) {
+                    $cleanName = trim(strip_tags((string) $name));
+                    if ($cleanName !== '') {
+                        $skill = Skill::firstOrCreate(['name' => $cleanName]);
+                        $skillIds->push($skill->id);
+                    }
+                }
+            }
+
+            $job->skills()->sync($skillIds->unique()->values()->all());
         });
 
         return redirect()->route('employer.dashboard')
@@ -119,8 +144,24 @@ class JobController extends Controller
             'status.in' => 'Status lowongan tidak valid.',
         ]);
 
+        if ($job->isClosedByAdmin() && $validated['status'] === 'open') {
+            return back()->with('error', 'Lowongan ini ditutup oleh Administrator ('.$job->closed_reason.'). Hubungi pengawas untuk evaluasi pembukaan kembali.');
+        }
+
         $job->update($validated);
 
         return back()->with('success', 'Status lowongan berhasil diperbarui.');
+    }
+
+    public function destroySkill(Skill $skill): JsonResponse
+    {
+        $name = $skill->name;
+        $skill->jobs()->detach();
+        $skill->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Keterampilan '{$name}' berhasil dihapus.",
+        ]);
     }
 }

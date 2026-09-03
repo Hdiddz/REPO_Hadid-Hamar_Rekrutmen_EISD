@@ -20,7 +20,7 @@
 <body class="min-h-[100dvh] bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
     <main class="grid min-h-[100dvh] lg:grid-cols-[minmax(360px,0.85fr)_1.15fr]">
         <section class="relative hidden min-h-[100dvh] overflow-hidden bg-brand-950 lg:block" aria-label="Tentang KerjaLokal">
-            <img src="{{ asset('images/hero-kerjalokal.jpg') }}" alt="Pekerja dan pelaku usaha lokal di sebuah kedai" class="absolute inset-0 h-full w-full object-cover">
+            <img src="{{ asset('images/hero-kerjalokal.jpg') }}" alt="Talenta dan tim KerjaLokal sedang berkolaborasi" class="absolute inset-0 h-full w-full object-cover object-[center_30%]">
             <div class="absolute inset-0 bg-brand-950/55"></div>
             <div class="absolute inset-x-0 bottom-0 p-10 xl:p-14" data-reveal>
                 <a href="{{ route('home') }}" class="inline-flex rounded-xl bg-white/95 p-3 shadow-lg" aria-label="Kembali ke beranda KerjaLokal">
@@ -50,10 +50,11 @@
             </div>
 
             <footer class="px-4 py-5 text-center text-xs text-slate-500 dark:text-slate-400">
-                &copy; {{ now()->year }} KerjaLokal. SDG 8 untuk pekerjaan layak dan pertumbuhan ekonomi.
+                &copy; {{ now()->year }} KerjaLokal. Platform pekerjaan layak dan pertumbuhan ekonomi.
             </footer>
         </section>
     </main>
+    <x-confirm-modal />
     @stack('scripts')
 </body>
 </html>

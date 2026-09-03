@@ -102,6 +102,26 @@
         @apply inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 active:translate-y-px dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
     }
 
+    .portal-action-btn {
+        @apply inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs transition hover:border-slate-300 hover:bg-slate-50 active:translate-y-px dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
+    }
+
+    .portal-action-btn-danger {
+        @apply inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-rose-300/80 bg-rose-50 px-3 text-xs sm:text-sm font-semibold text-rose-700 shadow-xs transition hover:border-rose-400 hover:bg-rose-100 active:translate-y-px dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-300;
+    }
+
+    .portal-action-btn-warning {
+        @apply inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-amber-300/80 bg-amber-50 px-3 text-xs sm:text-sm font-semibold text-amber-800 shadow-xs transition hover:border-amber-400 hover:bg-amber-100 active:translate-y-px dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-300;
+    }
+
+    .portal-action-btn-success {
+        @apply inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-emerald-300/80 bg-emerald-50 px-3 text-xs sm:text-sm font-semibold text-emerald-800 shadow-xs transition hover:border-emerald-400 hover:bg-emerald-100 active:translate-y-px dark:border-emerald-900/60 dark:bg-emerald-950/50 dark:text-emerald-300;
+    }
+
+    .portal-action-btn-primary {
+        @apply inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-brand-700 px-3.5 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-brand-800 active:translate-y-px dark:bg-brand-500 dark:text-brand-950 dark:hover:bg-brand-400;
+    }
+
     .portal-field {
         @apply min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-600 focus:ring-3 focus:ring-brand-100 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-950;
     }
@@ -155,7 +175,7 @@
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: none;
     }
 }
 
@@ -245,6 +265,21 @@ body.modal-open {
     transform: translateY(0);
 }
 
+@keyframes flashFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-16px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+[data-flash-alert] {
+    animation: flashFadeIn 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .auth-role-option.is-selected {
     border-color: var(--color-brand-600);
     background: var(--color-brand-50);
@@ -295,4 +330,68 @@ body.modal-open {
 .dark .portal-legacy .text-slate-600,
 .dark .portal-legacy .text-slate-500 {
     color: var(--color-slate-300);
+}
+
+@keyframes chatSlideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes chatSlideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes chatMessagePopUp {
+    0% {
+        opacity: 0;
+        transform: translateY(18px) scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animate-msg-popup {
+    animation: chatMessagePopUp 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-chat-slide-right {
+    animation: chatSlideInRight 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-chat-slide-left {
+    animation: chatSlideInLeft 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-chat-msg {
+    animation: chatMessagePopUp 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalPopup {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.animate-modal-pop {
+    animation: modalPopup 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

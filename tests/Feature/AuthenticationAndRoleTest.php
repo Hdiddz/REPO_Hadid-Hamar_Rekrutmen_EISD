@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthenticationAndRoleTest extends TestCase
@@ -74,5 +75,54 @@ class AuthenticationAndRoleTest extends TestCase
 
         $content = $response->getContent();
         $this->assertLessThan(strpos($content, 'Operasi berhasil.'), strpos($content, '</header>'));
+    }
+
+    public function test_user_can_update_password_from_settings_page(): void
+    {
+        $user = User::factory()->employer()->create([
+            'password' => Hash::make('REMOVED_CREDENTIAL'),
+        ]);
+
+        $response = $this->actingAs($user)->put(route('settings.password.update'), [
+            'current_password' => 'REMOVED_CREDENTIAL',
+            'password' => 'newREMOVED_CREDENTIAL',
+            'password_confirmation' => 'newREMOVED_CREDENTIAL',
+        ]);
+
+        $response->assertRedirect()->assertSessionHas('success');
+        $this->assertTrue(Hash::check('newREMOVED_CREDENTIAL', $user->fresh()->password));
+    }
+
+    public function test_banned_user_attempting_login_receives_banned_notice_and_session(): void
+    {
+        $bannedUser = User::factory()->jobseeker()->create([
+            'email' => 'banned@example.test',
+            'username' => 'banned_user',
+            'banned_at' => now()->subDay(),
+            'banned_until' => now()->addDays(3),
+            'ban_reason' => 'Melanggar aturan komunitas.',
+            'password' => Hash::make('REMOVED_CREDENTIAL'),
+        ]);
+
+        $response = $this->post(route('login'), [
+            'email' => 'banned@example.test',
+            'password' => 'REMOVED_CREDENTIAL',
+        ]);
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('account_banned');
+        $this->assertGuest();
+    }
+
+    public function test_deleted_or_non_existent_account_receives_account_not_found_session(): void
+    {
+        $response = $this->post(route('login'), [
+            'email' => 'deleted_account@example.test',
+            'password' => 'REMOVED_CREDENTIAL',
+        ]);
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('account_not_found');
+        $this->assertGuest();
     }
 }

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['employer_id', 'category_id', 'title', 'description', 'location', 'salary_type', 'salary_amount', 'work_hours_per_day', 'status'])]
+#[Fillable(['employer_id', 'category_id', 'title', 'description', 'location', 'salary_type', 'salary_amount', 'work_hours_per_day', 'status', 'closed_reason', 'closed_until', 'closed_by_admin'])]
 class Job extends Model
 {
     /** @use HasFactory<JobFactory> */
@@ -21,6 +21,8 @@ class Job extends Model
         return [
             'salary_amount' => 'decimal:2',
             'work_hours_per_day' => 'integer',
+            'closed_until' => 'datetime',
+            'closed_by_admin' => 'boolean',
         ];
     }
 
@@ -44,10 +46,20 @@ class Job extends Model
         return $this->hasMany(JobApplication::class);
     }
 
+    public function reports(): HasMany
+    {
+        return $this->hasMany(JobReport::class);
+    }
+
     public function applicants(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'job_applications')
             ->withPivot(['id', 'resume_file', 'note', 'status'])
             ->withTimestamps();
+    }
+
+    public function isClosedByAdmin(): bool
+    {
+        return $this->closed_by_admin && $this->status === 'closed';
     }
 }
