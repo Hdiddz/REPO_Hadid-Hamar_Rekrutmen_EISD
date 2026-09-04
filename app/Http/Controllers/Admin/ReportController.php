@@ -64,6 +64,17 @@ class ReportController extends Controller
             abort(404, 'Laporan ini telah dihapus dari riwayat panel admin.');
         }
 
+        $report->loadMissing(['job', 'reporter']);
+
+        // Jika lowongan yang sempat disanksi penutupan kini telah dibuka kembali, otomatis perbarui status laporan menjadi resolved
+        if ($report->job && $report->job->status === 'open' && $report->status === 'action_taken' && str_contains(strtolower($report->action_taken ?? ''), 'tutup')) {
+            $report->update([
+                'status' => 'resolved',
+                'action_taken' => 'Lowongan telah dibuka kembali oleh Admin (Sanksi Selesai)',
+            ]);
+            $report->refresh();
+        }
+
         $previousUrl = url()->previous();
         if ($request->filled('return_to')) {
             $returnTo = $request->string('return_to')->toString();

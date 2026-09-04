@@ -136,7 +136,7 @@ class JobController extends Controller
             'work_hours_per_day.between' => 'Jam kerja harus berada di antara 1 sampai 8 jam per hari.',
         ]);
 
-        $job->update([
+        $updateData = [
             'category_id' => $validated['category_id'],
             'title' => $validated['title'],
             'description' => $validated['description'],
@@ -145,7 +145,23 @@ class JobController extends Controller
             'salary_amount' => $validated['salary_amount'] ?? $job->salary_amount,
             'work_hours_per_day' => $validated['work_hours_per_day'],
             'status' => $validated['status'],
-        ]);
+        ];
+
+        if ($validated['status'] === 'open' && $job->closed_by_admin) {
+            $updateData['closed_by_admin'] = false;
+            $updateData['closed_reason'] = null;
+            $updateData['closed_until'] = null;
+
+            $job->reports()
+                ->where('status', 'action_taken')
+                ->where('action_taken', 'like', '%tutup%')
+                ->update([
+                    'status' => 'resolved',
+                    'action_taken' => 'Lowongan telah dibuka kembali oleh Admin (Sanksi Selesai)',
+                ]);
+        }
+
+        $job->update($updateData);
 
         $job->skills()->sync($request->input('skills', []));
         $job->touch();
@@ -212,6 +228,15 @@ class JobController extends Controller
             'closed_reason' => null,
             'closed_until' => null,
         ]);
+
+        // Perbarui seluruh laporan aktif terkait penutupan lowongan ini menjadi Selesai (resolved)
+        $job->reports()
+            ->where('status', 'action_taken')
+            ->where('action_taken', 'like', '%tutup%')
+            ->update([
+                'status' => 'resolved',
+                'action_taken' => 'Lowongan telah dibuka kembali oleh Admin (Sanksi Selesai)',
+            ]);
 
         // Kirim pesan notifikasi pembukaan kembali lowongan ke Mitra
         $admin = auth()->user();

@@ -462,10 +462,12 @@
         </div>
 
     </div>
+@endsection
 
+@push('modals')
     <!-- Modal: Selesaikan Laporan -->
-    <div id="resolveModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
+    <div id="resolveModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto" onclick="if(event.target === this) closeResolveModal()">
+        <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
             <div class="flex items-center gap-3 text-emerald-600 mb-3">
                 <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
                     <span class="material-symbols-outlined text-2xl">check_circle</span>
@@ -501,8 +503,8 @@
     </div>
 
     <!-- Modal: Hapus Riwayat Laporan -->
-    <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
+    <div id="deleteModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto" onclick="if(event.target === this) closeDeleteModal()">
+        <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
             <div class="flex items-center gap-3 text-rose-600 mb-3">
                 <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center border border-rose-200 dark:border-rose-800">
                     <span class="material-symbols-outlined text-2xl">delete</span>
@@ -531,7 +533,7 @@
             </form>
         </div>
     </div>
-@endsection
+@endpush
 
 @push('scripts')
 <script>
@@ -540,6 +542,7 @@
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
         }
     }
 
@@ -548,6 +551,7 @@
         if (modal) {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            document.body.classList.remove('overflow-hidden');
         }
     }
 
@@ -556,6 +560,7 @@
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
         }
     }
 
@@ -564,8 +569,16 @@
         if (modal) {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            document.body.classList.remove('overflow-hidden');
         }
     }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeResolveModal();
+            closeDeleteModal();
+        }
+    });
 
     function handleActionTypeChange(val) {
         const closeOpts = document.getElementById('closeJobOptions');

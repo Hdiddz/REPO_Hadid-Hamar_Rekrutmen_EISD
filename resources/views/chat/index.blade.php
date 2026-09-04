@@ -224,7 +224,9 @@
 
     </div>
 </div>
+@endsection
 
+@push('modals')
 @if(Auth::user()?->role === 'employer')
     <x-resign-decision-modal />
 @endif
@@ -262,7 +264,7 @@
         </form>
     </div>
 </div>
-@endsection
+@endpush
 
 @push('scripts')
 <script>

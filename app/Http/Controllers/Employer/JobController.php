@@ -212,10 +212,28 @@ class JobController extends Controller
         ]);
 
         if ($job->isClosedByAdmin() && $validated['status'] === 'open') {
-            return back()->with('error', 'Lowongan ini ditutup oleh Administrator ('.$job->closed_reason.'). Hubungi pengawas untuk evaluasi pembukaan kembali.');
+            if ($job->closed_until && $job->closed_until->isPast()) {
+                $job->update([
+                    'closed_by_admin' => false,
+                    'closed_reason' => null,
+                    'closed_until' => null,
+                ]);
+            } else {
+                return back()->with('error', 'Lowongan ini ditutup oleh Administrator ('.$job->closed_reason.'). Hubungi pengawas untuk evaluasi pembukaan kembali.');
+            }
         }
 
         $job->update($validated);
+
+        if ($validated['status'] === 'open') {
+            $job->reports()
+                ->where('status', 'action_taken')
+                ->where('action_taken', 'like', '%tutup%')
+                ->update([
+                    'status' => 'resolved',
+                    'action_taken' => 'Lowongan telah dibuka kembali (Masa Sanksi Berakhir)',
+                ]);
+        }
 
         return back()->with('success', 'Status lowongan berhasil diperbarui.');
     }

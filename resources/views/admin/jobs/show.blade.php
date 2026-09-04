@@ -443,7 +443,7 @@
     </div>
 
     <!-- Modal Konfirmasi Hapus Lowongan -->
-    <div id="deleteJobModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm p-4 overflow-y-auto flex items-center justify-center" onclick="if(event.target === this) closeDeleteJobModal()">
+    <div id="deleteJobModal" class="fixed inset-0 z-[100] hidden bg-slate-950/60 backdrop-blur-sm p-4 overflow-y-auto flex items-center justify-center" onclick="if(event.target === this) closeDeleteJobModal()">
         <div class="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-7 shadow-2xl shadow-slate-950/20 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop">
             
             <div class="flex items-start gap-3.5">

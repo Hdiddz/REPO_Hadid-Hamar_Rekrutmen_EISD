@@ -495,4 +495,50 @@ class JobReportingTest extends TestCase
         $this->actingAs($jobseeker)->delete(route('admin.reports.destroy', $report))->assertForbidden();
         $this->actingAs($jobseeker)->post(route('admin.reports.clearCompleted'))->assertForbidden();
     }
+
+    public function test_reopening_job_updates_report_status_to_resolved(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $job = Job::factory()->create(['status' => 'open', 'title' => 'Admin Penjualan']);
+        $reporter = User::factory()->jobseeker()->create();
+
+        $report = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $reporter->id,
+            'reason' => 'Indikasi Percaloan / Pungutan Biaya Administrasi',
+            'details' => 'Meminta biaya registrasi.',
+            'status' => 'pending',
+        ]);
+
+        // 1. Admin closes the job as a sanction
+        $this->actingAs($admin)->post(route('admin.reports.action', $report), [
+            'action_type' => 'close_job',
+            'close_duration' => '7_days',
+            'admin_notes' => 'Nonaktif 7 hari untuk investigasi.',
+        ])->assertRedirect(route('admin.reports.index'));
+
+        $report->refresh();
+        $this->assertSame('action_taken', $report->status);
+        $this->assertSame('Lowongan ditutup oleh Admin', $report->action_taken);
+        $this->assertSame('closed', $job->fresh()->status);
+
+        // 2. Admin reopens the job
+        $this->actingAs($admin)->post(route('admin.jobs.reopen', $job))
+            ->assertSessionHas('success');
+
+        $job->refresh();
+        $report->refresh();
+
+        $this->assertSame('open', $job->status);
+        $this->assertFalse($job->closed_by_admin);
+        // Report status automatically changes to resolved
+        $this->assertSame('resolved', $report->status);
+        $this->assertStringContainsString('dibuka kembali', $report->action_taken);
+
+        // 3. Detail page reflects the resolved status banner
+        $showResponse = $this->actingAs($admin)->get(route('admin.reports.show', $report));
+        $showResponse->assertOk()
+            ->assertSee('Status: Laporan Telah Selesai Ditangani')
+            ->assertSee('Sedang Dibuka');
+    }
 }

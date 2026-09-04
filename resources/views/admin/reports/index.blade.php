@@ -67,18 +67,18 @@
 
     <!-- Quick Status Tabs & Action Toolbar -->
     <div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
             <a href="{{ route('admin.reports.index', array_merge(request()->except('status', 'page'), ['status' => 'active'])) }}" 
-               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'active' ? 'bg-brand-700 text-white shadow-xs dark:bg-brand-500 dark:text-brand-950' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'active' ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-900 shadow-2xs' : 'bg-white text-slate-600 border border-slate-200/80 hover:text-blue-600 hover:bg-blue-50/50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
                 <span class="material-symbols-outlined text-[16px]">inbox</span>
                 <span>Laporan Aktif</span>
                 @if($counts['active'] > 0)
-                    <span class="rounded-full bg-black/10 dark:bg-white/10 px-1.5 py-0.2 text-[10px]">{{ $counts['active'] }}</span>
+                    <span class="rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200 px-1.5 py-0.2 text-[10px]">{{ $counts['active'] }}</span>
                 @endif
             </a>
 
             <a href="{{ route('admin.reports.index', array_merge(request()->except('status', 'page'), ['status' => 'pending'])) }}" 
-               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'pending' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-900 shadow-2xs' : 'bg-white text-slate-600 border border-slate-200/80 hover:text-blue-600 hover:bg-blue-50/50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
                 <span class="material-symbols-outlined text-[16px]">pending_actions</span>
                 <span>Menunggu Tinjauan</span>
                 @if($counts['pending'] > 0)
@@ -87,16 +87,16 @@
             </a>
 
             <a href="{{ route('admin.reports.index', array_merge(request()->except('status', 'page'), ['status' => 'reviewed'])) }}" 
-               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'reviewed' ? 'bg-blue-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'reviewed' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-900 shadow-2xs' : 'bg-white text-slate-600 border border-slate-200/80 hover:text-blue-600 hover:bg-blue-50/50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
                 <span class="material-symbols-outlined text-[16px]">visibility</span>
                 <span>Sedang Ditinjau</span>
                 @if($counts['reviewed'] > 0)
-                    <span class="rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 px-1.5 py-0.2 text-[10px]">{{ $counts['reviewed'] }}</span>
+                    <span class="rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 px-1.5 py-0.2 text-[10px]">{{ $counts['reviewed'] }}</span>
                 @endif
             </a>
 
             <a href="{{ route('admin.reports.index', array_merge(request()->except('status', 'page'), ['status' => 'action_taken'])) }}" 
-               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'action_taken' ? 'bg-rose-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'action_taken' ? 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-900 shadow-2xs' : 'bg-white text-slate-600 border border-slate-200/80 hover:text-blue-600 hover:bg-blue-50/50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
                 <span class="material-symbols-outlined text-[16px]">gavel</span>
                 <span>Telah Ditindak</span>
                 @if($counts['action_taken'] > 0)
@@ -105,7 +105,7 @@
             </a>
 
             <a href="{{ route('admin.reports.index', array_merge(request()->except('status', 'page'), ['status' => 'resolved'])) }}" 
-               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'resolved' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900 shadow-2xs' : 'bg-white text-slate-600 border border-slate-200/80 hover:text-blue-600 hover:bg-blue-50/50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
                 <span class="material-symbols-outlined text-[16px]">task_alt</span>
                 <span>Selesai / Ditolak</span>
                 @if($counts['resolved'] > 0)
@@ -114,133 +114,135 @@
             </a>
 
             <a href="{{ route('admin.reports.index', array_merge(request()->except('status', 'page'), ['status' => 'all'])) }}" 
-               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'all' ? 'bg-slate-800 text-white shadow-xs dark:bg-slate-200 dark:text-slate-900' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0 transition {{ $currentStatus === 'all' ? 'bg-slate-100 text-slate-900 border border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 shadow-2xs' : 'bg-white text-slate-600 border border-slate-200/80 hover:text-blue-600 hover:bg-blue-50/50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
                 <span>Semua Status</span>
                 <span class="rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.2 text-[10px]">{{ $counts['all'] }}</span>
             </a>
         </div>
 
         @if(($currentStatus === 'resolved' || $currentStatus === 'all') && $counts['resolved'] > 0)
-            <button type="button" onclick="openClearCompletedModal()" class="portal-button-secondary !py-1.5 !px-3 text-xs text-rose-700 hover:bg-rose-50 hover:border-rose-300 dark:text-rose-400 dark:hover:bg-rose-950/40 shrink-0 self-end sm:self-auto" title="Bersihkan semua laporan yang sudah selesai dari panel admin">
+            <button type="button" onclick="openClearCompletedModal()" class="portal-button-secondary !py-1.5 !px-3 text-xs text-rose-700 hover:bg-rose-50 hover:border-rose-300 dark:text-rose-400 dark:hover:bg-rose-950/40 shrink-0 self-end sm:self-auto cursor-pointer" title="Bersihkan semua laporan yang sudah selesai dari panel admin">
                 <span class="material-symbols-outlined text-[16px]">cleaning_services</span>
                 <span>Bersihkan Riwayat Selesai</span>
             </button>
         @endif
     </div>
 
-    <!-- Reports Table -->
-    <div class="portal-table-shell overflow-x-auto">
-        <table class="portal-table">
+    <!-- Reports Table for Desktop & Tablet (No Horizontal Scrolling) -->
+    <div class="hidden md:block portal-table-shell overflow-hidden">
+        <table class="portal-table w-full table-fixed">
             <thead>
                 <tr>
-                    <th>Lowongan Terlapor</th>
-                    <th>Mitra UMKM</th>
-                    <th>Pelapor</th>
-                    <th>Kategori Alasan</th>
-                    <th>Status Laporan</th>
-                    <th>Tanggal Masuk</th>
-                    <th class="text-right">Aksi</th>
+                    <th class="w-4/12">Lowongan &amp; Mitra UMKM</th>
+                    <th class="w-4/12">Pengaduan &amp; Pelapor</th>
+                    <th class="w-2/12">Status Laporan</th>
+                    <th class="w-2/12 text-right">Aksi Navigasi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($reports as $report)
-                    <tr>
-                        <td>
-                            <div class="min-w-0 max-w-xs">
-                                <a href="{{ route('admin.jobs.show', ['job' => $report->job, 'return_to' => url()->full()]) }}" class="font-bold text-slate-900 hover:text-brand-700 dark:text-white block truncate">
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-850/40 transition">
+                        <!-- 1. Lowongan & Mitra UMKM -->
+                        <td class="align-top py-3.5">
+                            <div class="min-w-0 pr-2">
+                                <a href="{{ route('admin.jobs.show', ['job' => $report->job, 'return_to' => url()->full()]) }}" class="font-bold text-sm text-slate-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400 transition block truncate" title="{{ $report->job->title }}">
                                     {{ $report->job->title }}
                                 </a>
-                                <span class="text-xs text-slate-500 block truncate">
-                                    {{ $report->job->category->name }} · {{ $report->job->location }}
-                                </span>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                                    <span>{{ $report->job->category->name }}</span>
+                                    <span class="mx-1 text-slate-300 dark:text-slate-600">·</span>
+                                    <span>{{ $report->job->location }}</span>
+                                </div>
+                                <div class="text-xs mt-1 text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate">
+                                    <span class="text-slate-400 dark:text-slate-500 shrink-0">Mitra:</span>
+                                    <a href="{{ route('admin.users.show', ['user' => $report->job->employer, 'return_to' => url()->full()]) }}" class="font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline truncate" title="Buka profil mitra {{ $report->job->employer->business_name ?: $report->job->employer->name }}">
+                                        {{ $report->job->employer->business_name ?: $report->job->employer->name }}
+                                    </a>
+                                </div>
                             </div>
                         </td>
-                        <td>
+
+                        <!-- 2. Pengaduan & Pelapor -->
+                        <td class="align-top py-3.5">
+                            <div class="min-w-0 pr-2">
+                                <span class="font-bold text-xs text-rose-700 dark:text-rose-400 block truncate" title="{{ $report->reason }}">
+                                    {{ $report->reason }}
+                                </span>
+                                @if($report->details)
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-1 italic" title="{{ $report->details }}">
+                                        "{{ $report->details }}"
+                                    </p>
+                                @endif
+                                <div class="text-xs mt-1 text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate">
+                                    <span class="text-slate-400 dark:text-slate-500 shrink-0">Pelapor:</span>
+                                    <a href="{{ route('admin.users.show', ['user' => $report->reporter, 'return_to' => url()->full()]) }}" class="font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline truncate" title="Buka profil pelapor {{ $report->reporter->name }}">
+                                        {{ $report->reporter->name }}
+                                    </a>
+                                    <span class="text-slate-300 dark:text-slate-600 shrink-0">·</span>
+                                    <span class="text-[11px] text-slate-400 shrink-0">{{ $report->created_at->diffForHumans() }}</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- 3. Status Laporan -->
+                        <td class="align-top py-3.5">
                             <div class="min-w-0">
-                                <span class="font-bold text-xs text-slate-900 dark:text-white block truncate">
-                                    {{ $report->job->employer->business_name ?: $report->job->employer->name }}
+                                <span class="portal-badge {{ match($report->status) {
+                                    'action_taken' => 'bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900',
+                                    'resolved' => 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900',
+                                    'dismissed' => 'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+                                    'reviewed' => 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900',
+                                    default => 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900'
+                                } }} text-[10px]">
+                                    {{ match($report->status) {
+                                        'action_taken' => 'Ditindaklanjuti',
+                                        'resolved' => 'Selesai',
+                                        'dismissed' => 'Ditolak',
+                                        'reviewed' => 'Ditinjau',
+                                        default => 'Menunggu Tinjauan'
+                                    } }}
                                 </span>
-                                <span class="text-xs text-slate-500 block truncate">
-                                    {{ $report->job->employer->email }}
-                                </span>
+                                @if($report->action_taken)
+                                    <span class="block text-[10px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-1" title="{{ $report->action_taken }}">
+                                        {{ $report->action_taken }}
+                                    </span>
+                                @endif
                             </div>
                         </td>
-                        <td>
-                            <div>
-                                <span class="font-bold text-xs text-slate-900 dark:text-white block">
-                                    {{ $report->reporter->name }}
-                                </span>
-                                <span class="text-xs text-slate-500 block">
-                                    {{ $report->reporter->email }}
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="font-bold text-xs text-rose-700 dark:text-rose-400 block">
-                                {{ $report->reason }}
-                            </span>
-                            @if($report->details)
-                                <span class="text-[11px] text-slate-500 block max-w-[180px] truncate" title="{{ $report->details }}">
-                                    "{{ $report->details }}"
-                                </span>
-                            @endif
-                        </td>
-                        <td class="whitespace-nowrap">
-                            <span class="portal-badge {{ match($report->status) {
-                                'action_taken' => 'bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900',
-                                'resolved' => 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900',
-                                'dismissed' => 'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
-                                'reviewed' => 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900',
-                                default => 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900'
-                            } }} text-[10px]">
-                                {{ match($report->status) {
-                                    'action_taken' => 'Ditindaklanjuti',
-                                    'resolved' => 'Selesai',
-                                    'dismissed' => 'Ditolak',
-                                    'reviewed' => 'Ditinjau',
-                                    default => 'Menunggu Tinjauan'
-                                } }}
-                            </span>
-                            @if($report->action_taken)
-                                <span class="block text-[10px] text-slate-400 mt-0.5">
-                                    {{ $report->action_taken }}
-                                </span>
-                            @endif
-                        </td>
-                        <td class="whitespace-nowrap">
-                            <span class="text-xs text-slate-500">
-                                {{ $report->created_at->diffForHumans() }}
-                            </span>
-                        </td>
-                        <td class="whitespace-nowrap text-right">
-                            <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                                <a href="{{ route('admin.reports.show', $report) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs" title="Tinjau detail laporan">
-                                    <span class="material-symbols-outlined text-[15px]">policy</span>
+
+                        <!-- 4. Aksi Navigasi (Langsung di layar, tanpa perlu geser ke kanan) -->
+                        <td class="align-top py-3.5 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <!-- Teks Ringkas Biru untuk Navigasi Tinjau -->
+                                <a href="{{ route('admin.reports.show', $report) }}" class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline px-1 py-1 transition" title="Tinjau rincian laporan">
+                                    <span class="material-symbols-outlined text-[16px]">visibility</span>
                                     <span>Tinjau</span>
                                 </a>
 
+                                <!-- Tombol Selesaikan (Pill Hijau Ringkas) -->
                                 @if($report->status !== 'resolved' && $report->status !== 'dismissed')
                                     <button type="button" 
                                             onclick="openResolveModal({{ $report->id }}, '{{ addslashes($report->job?->title ?? 'Lowongan') }}')" 
-                                            class="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-2xs hover:bg-emerald-100 hover:border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition cursor-pointer" 
-                                            title="Selesaikan laporan ini dan hilangkan dari daftar laporan aktif">
-                                        <span class="material-symbols-outlined text-[15px]">check_circle</span>
-                                        <span class="hidden sm:inline">Selesaikan</span>
+                                            class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition cursor-pointer" 
+                                            title="Selesaikan laporan ini">
+                                        <span class="material-symbols-outlined text-[14px]">task_alt</span>
+                                        <span>Selesai</span>
                                     </button>
                                 @endif
 
+                                <!-- Tombol Hapus Riwayat -->
                                 <button type="button" 
                                         onclick="openDeleteModal({{ $report->id }}, '{{ addslashes($report->job?->title ?? 'Lowongan') }}', '{{ $report->status }}')" 
-                                        class="inline-flex items-center justify-center w-7 h-7 rounded-xl border border-slate-200 bg-white text-slate-500 shadow-2xs hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-300 transition cursor-pointer" 
+                                        class="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-slate-200 bg-white text-slate-400 shadow-2xs hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-300 transition cursor-pointer" 
                                         title="Hapus riwayat laporan ini dari panel admin">
-                                    <span class="material-symbols-outlined text-[16px]">delete_outline</span>
+                                    <span class="material-symbols-outlined text-[15px]">delete_outline</span>
                                 </button>
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="py-12 text-center text-slate-500">
+                        <td colspan="4" class="py-12 text-center text-slate-500">
                             <span class="material-symbols-outlined text-4xl text-slate-300 block mb-2">verified</span>
                             @if($currentStatus === 'active')
                                 Semua laporan pengaduan telah selesai ditangani. Tidak ada laporan aktif yang memerlukan tindakan.
@@ -254,11 +256,114 @@
         </table>
     </div>
 
-    <div class="mt-7">{{ $reports->links() }}</div>
+    <!-- Mobile Cards View (Bebas Geser Kanan) -->
+    <div class="block md:hidden space-y-3">
+        @forelse($reports as $report)
+            <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+                <!-- Top Status & Timestamp -->
+                <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <span class="portal-badge {{ match($report->status) {
+                        'action_taken' => 'bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900',
+                        'resolved' => 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900',
+                        'dismissed' => 'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+                        'reviewed' => 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900',
+                        default => 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900'
+                    } }} text-[10px]">
+                        {{ match($report->status) {
+                            'action_taken' => 'Ditindaklanjuti',
+                            'resolved' => 'Selesai',
+                            'dismissed' => 'Ditolak',
+                            'reviewed' => 'Ditinjau',
+                            default => 'Menunggu Tinjauan'
+                        } }}
+                    </span>
+                    <span class="text-[11px] text-slate-400">{{ $report->created_at->diffForHumans() }}</span>
+                </div>
 
+                <!-- Job Title & Meta -->
+                <div class="mt-2.5">
+                    <a href="{{ route('admin.jobs.show', ['job' => $report->job, 'return_to' => url()->full()]) }}" class="font-bold text-sm text-slate-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400 block transition">
+                        {{ $report->job->title }}
+                    </a>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        {{ $report->job->category->name }} · {{ $report->job->location }}
+                    </p>
+                    <div class="text-xs mt-1 text-slate-500 flex items-center gap-1">
+                        <span class="text-slate-400">Mitra:</span>
+                        <a href="{{ route('admin.users.show', ['user' => $report->job->employer, 'return_to' => url()->full()]) }}" class="font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline">
+                            {{ $report->job->employer->business_name ?: $report->job->employer->name }}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Reason & Reporter -->
+                <div class="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                    <span class="font-bold text-xs text-rose-700 dark:text-rose-400 block">
+                        {{ $report->reason }}
+                    </span>
+                    @if($report->details)
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2 italic">
+                            "{{ $report->details }}"
+                        </p>
+                    @endif
+                    <div class="text-xs mt-1 text-slate-500 flex items-center gap-1">
+                        <span class="text-slate-400">Pelapor:</span>
+                        <a href="{{ route('admin.users.show', ['user' => $report->reporter, 'return_to' => url()->full()]) }}" class="font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline">
+                            {{ $report->reporter->name }}
+                        </a>
+                    </div>
+                    @if($report->action_taken)
+                        <div class="text-[11px] text-slate-400 mt-1">
+                            Tindakan: {{ $report->action_taken }}
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Action Toolbar (Right on the card, no scroll needed) -->
+                <div class="mt-3.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                    <a href="{{ route('admin.reports.show', $report) }}" class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline py-1">
+                        <span class="material-symbols-outlined text-[16px]">visibility</span>
+                        <span>Tinjau Laporan</span>
+                    </a>
+
+                    <div class="flex items-center gap-1.5">
+                        @if($report->status !== 'resolved' && $report->status !== 'dismissed')
+                            <button type="button" 
+                                    onclick="openResolveModal({{ $report->id }}, '{{ addslashes($report->job?->title ?? 'Lowongan') }}')" 
+                                    class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-300 transition cursor-pointer">
+                                <span class="material-symbols-outlined text-[14px]">task_alt</span>
+                                <span>Selesaikan</span>
+                            </button>
+                        @endif
+
+                        <button type="button" 
+                                onclick="openDeleteModal({{ $report->id }}, '{{ addslashes($report->job?->title ?? 'Lowongan') }}', '{{ $report->status }}')" 
+                                class="inline-flex items-center justify-center w-7 h-7 rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:text-rose-300 transition cursor-pointer" 
+                                title="Hapus riwayat laporan">
+                            <span class="material-symbols-outlined text-[15px]">delete_outline</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+                <span class="material-symbols-outlined text-4xl text-slate-300 block mb-2">verified</span>
+                @if($currentStatus === 'active')
+                    Semua laporan pengaduan telah selesai ditangani.
+                @else
+                    Tidak ada riwayat laporan pengaduan.
+                @endif
+            </div>
+        @endforelse
+    </div>
+
+    <div class="mt-7">{{ $reports->links() }}</div>
+@endsection
+
+@push('modals')
     <!-- Modal: Selesaikan Laporan -->
-    <div id="resolveModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
+    <div id="resolveModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto" onclick="if(event.target === this) closeResolveModal()">
+        <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
             <div class="flex items-center gap-3 text-emerald-600 mb-3">
                 <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
                     <span class="material-symbols-outlined text-2xl">check_circle</span>
@@ -294,8 +399,8 @@
     </div>
 
     <!-- Modal: Hapus Riwayat Laporan -->
-    <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
+    <div id="deleteModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto" onclick="if(event.target === this) closeDeleteModal()">
+        <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
             <div class="flex items-center gap-3 text-rose-600 mb-3">
                 <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center border border-rose-200 dark:border-rose-800">
                     <span class="material-symbols-outlined text-2xl">delete</span>
@@ -326,8 +431,8 @@
     </div>
 
     <!-- Modal: Bersihkan Semua Riwayat Selesai -->
-    <div id="clearCompletedModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
+    <div id="clearCompletedModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto" onclick="if(event.target === this) closeClearCompletedModal()">
+        <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
             <div class="flex items-center gap-3 text-amber-600 mb-3">
                 <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center border border-amber-200 dark:border-amber-800">
                     <span class="material-symbols-outlined text-2xl">cleaning_services</span>
@@ -355,7 +460,7 @@
             </form>
         </div>
     </div>
-@endsection
+@endpush
 
 @push('scripts')
 <script>
@@ -369,6 +474,7 @@
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
         }
     }
 
@@ -377,6 +483,7 @@
         if (modal) {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            document.body.classList.remove('overflow-hidden');
         }
     }
 
@@ -390,6 +497,7 @@
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
         }
     }
 
@@ -398,6 +506,7 @@
         if (modal) {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            document.body.classList.remove('overflow-hidden');
         }
     }
 
@@ -406,6 +515,7 @@
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
         }
     }
 
@@ -414,7 +524,16 @@
         if (modal) {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            document.body.classList.remove('overflow-hidden');
         }
     }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeResolveModal();
+            closeDeleteModal();
+            closeClearCompletedModal();
+        }
+    });
 </script>
 @endpush

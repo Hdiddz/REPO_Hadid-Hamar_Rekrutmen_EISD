@@ -314,9 +314,11 @@
             </button>
         </section>
     </div>
+@endsection
 
+@push('modals')
     {{-- Modal Pratinjau, Cropping & Resizing Foto Profil (1080x1080) --}}
-    <div id="cropPhotoModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md transition-all duration-200" role="dialog" aria-modal="true" aria-labelledby="cropModalTitle">
+    <div id="cropPhotoModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md transition-all duration-200" role="dialog" aria-modal="true" aria-labelledby="cropModalTitle">
         <div class="relative w-full max-w-xl overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 animate-page-enter">
             <!-- Modal Header -->
             <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
@@ -428,7 +430,7 @@
             </div>
         </div>
     </div>
-@endsection
+@endpush
 
 @push('scripts')
 <script>
