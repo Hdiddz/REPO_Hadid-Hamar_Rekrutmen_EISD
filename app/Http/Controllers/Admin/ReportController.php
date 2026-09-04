@@ -451,7 +451,13 @@ class ReportController extends Controller
 
     public function destroy(Request $request, JobReport $report): RedirectResponse
     {
+        $reportId = $report->id;
         $report->update(['admin_hidden_at' => now()]);
+
+        // Clean up any unread notification for this report
+        DB::table('notifications')
+            ->where('data->report_id', $reportId)
+            ->delete();
 
         if ($report->reporter_hidden_at !== null) {
             $report->delete();
@@ -459,7 +465,7 @@ class ReportController extends Controller
 
         $targetUrl = session('admin_reports_return_to', route('admin.reports.index'));
 
-        if (str_contains(url()->previous(), '/admin/laporan/'.$report->id)) {
+        if (str_contains(url()->previous(), '/admin/laporan/'.$reportId)) {
             return redirect($targetUrl)->with('success', 'Riwayat laporan berhasil dihapus dari panel admin.');
         }
 
@@ -478,6 +484,13 @@ class ReportController extends Controller
         if ($count === 0) {
             return back()->with('info', 'Tidak ada riwayat laporan selesai untuk dibersihkan.');
         }
+
+        $reportIds = $completedReports->pluck('id')->all();
+
+        // Clean up notifications for cleared reports
+        DB::table('notifications')
+            ->whereIn('data->report_id', $reportIds)
+            ->delete();
 
         foreach ($completedReports as $rep) {
             $rep->update(['admin_hidden_at' => now()]);

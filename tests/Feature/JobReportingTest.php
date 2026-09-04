@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Job;
 use App\Models\JobReport;
 use App\Models\User;
+use App\Notifications\NewJobReportNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -540,5 +541,81 @@ class JobReportingTest extends TestCase
         $showResponse->assertOk()
             ->assertSee('Status: Laporan Telah Selesai Ditangani')
             ->assertSee('Sedang Dibuka');
+    }
+
+    public function test_user_can_report_job_with_reason_lainnya(): void
+    {
+        $jobseeker = User::factory()->jobseeker()->create();
+        $job = Job::factory()->create(['status' => 'open']);
+
+        $response = $this->actingAs($jobseeker)->post(route('jobs.report', $job), [
+            'reason' => 'Lainnya',
+            'details' => 'Ada ketidaksesuaian jam shift kerja di deskripsi dan fakta di lapangan.',
+        ]);
+
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('job_reports', [
+            'job_id' => $job->id,
+            'reporter_id' => $jobseeker->id,
+            'reason' => 'Lainnya',
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_admin_navbar_badge_count_updates_accurately_when_report_is_deleted(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $job = Job::factory()->create(['status' => 'open']);
+        $reporter = User::factory()->jobseeker()->create();
+
+        $report1 = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $reporter->id,
+            'reason' => 'Indikasi Percaloan / Pungutan Biaya Administrasi',
+            'details' => 'Laporan 1',
+            'status' => 'pending',
+        ]);
+
+        $report2 = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $reporter->id,
+            'reason' => 'Upah Tidak Transparan / Di Bawah Standar',
+            'details' => 'Laporan 2',
+            'status' => 'action_taken',
+        ]);
+
+        $report3 = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $reporter->id,
+            'reason' => 'Lainnya',
+            'details' => 'Laporan 3',
+            'status' => 'pending',
+        ]);
+
+        $admin->notify(new NewJobReportNotification($report3));
+        $this->assertDatabaseHas('notifications', ['data->report_id' => $report3->id]);
+
+        // Before deletion: 3 active reports visible to admin
+        $this->assertSame(3, JobReport::visibleToAdmin()->active()->count());
+
+        $indexResponse = $this->actingAs($admin)->get(route('admin.reports.index'));
+        $indexResponse->assertOk();
+        $indexResponse->assertSee('>3<', false); // Header badge shows 3
+
+        // Admin deletes report3
+        $deleteResponse = $this->actingAs($admin)->delete(route('admin.reports.destroy', $report3));
+        $deleteResponse->assertSessionHas('success');
+
+        // After deletion: Exactly 2 active reports remain
+        $this->assertSame(2, JobReport::visibleToAdmin()->active()->count());
+
+        // Associated notification for report3 is removed
+        $this->assertDatabaseMissing('notifications', ['data->report_id' => $report3->id]);
+
+        // Header badge on reports index now shows 2, perfectly consistent
+        $newIndexResponse = $this->actingAs($admin)->get(route('admin.reports.index'));
+        $newIndexResponse->assertOk();
+        $newIndexResponse->assertSee('>2<', false);
     }
 }

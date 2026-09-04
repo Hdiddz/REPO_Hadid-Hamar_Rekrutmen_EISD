@@ -28,7 +28,7 @@ class DashboardController extends Controller
                 ->count(),
             'employers' => User::where('role', 'employer')->count(),
             'jobseekers' => User::where('role', 'jobseeker')->count(),
-            'pending_reports' => JobReport::where('status', 'pending')->count(),
+            'pending_reports' => JobReport::visibleToAdmin()->where('status', 'pending')->count(),
         ];
 
         $recentJobs = Job::query()
@@ -44,7 +44,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $recentReports = JobReport::query()
+        $recentReports = JobReport::visibleToAdmin()
             ->with(['job:id,title', 'reporter:id,name'])
             ->latest('id')
             ->limit(5)

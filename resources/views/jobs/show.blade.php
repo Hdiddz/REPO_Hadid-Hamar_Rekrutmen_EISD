@@ -866,6 +866,7 @@
                             <option value="Jam Kerja Melebihi Batas Etis (>8 Jam/Hari)">Jam Kerja Melebihi Batas Etis Tanpa Lembur</option>
                             <option value="Identitas Usaha Palsu / Dugaan Penipuan">Identitas Usaha Palsu / Dugaan Penipuan</option>
                             <option value="Diskriminasi atau Pelanggaran Etika Lainnya">Diskriminasi SARA atau Pelanggaran Etika Lainnya</option>
+                            <option value="Lainnya">Lainnya</option>
                         </select>
                     </div>
 

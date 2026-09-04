@@ -7,8 +7,17 @@
 
 @section('content')
     <section class="grid gap-3 sm:gap-4 grid-cols-2 xl:grid-cols-4" data-reveal>
-        @foreach ([['work', $metrics['open_jobs'], 'Lowongan aktif'], ['group', $metrics['applications'], 'Total pelamar'], ['task_alt', $metrics['accepted'], 'Diterima'], ['payments', 'Rp '.number_format($metrics['accepted_wages'], 0, ',', '.'), 'Nilai upah diterima']] as $metric)
-            <div class="portal-stat-card"><span class="material-symbols-outlined text-brand-600 dark:text-brand-300">{{ $metric[0] }}</span><strong class="mt-5 block text-2xl font-bold">{{ $metric[1] }}</strong><span class="mt-1 block text-sm text-slate-500">{{ $metric[2] }}</span></div>
+        @foreach ([
+            ['work', $metrics['open_jobs'], 'Lowongan aktif', 'Lowongan yang sedang dibuka untuk pelamar'],
+            ['group', $metrics['applications'], 'Total pelamar', 'Seluruh berkas lamaran yang masuk'],
+            ['task_alt', $metrics['accepted'], 'Pekerja diterima', 'Kandidat yang telah lolos dan diterima bekerja'],
+            ['payments', 'Rp '.number_format($metrics['accepted_wages'], 0, ',', '.'), 'Alokasi upah pekerja', 'Total komitmen upah per periode untuk seluruh pekerja yang telah diterima']
+        ] as $metric)
+            <div class="portal-stat-card" title="{{ $metric[3] }}">
+                <span class="material-symbols-outlined text-brand-600 dark:text-brand-300">{{ $metric[0] }}</span>
+                <strong class="mt-5 block text-2xl font-bold">{{ $metric[1] }}</strong>
+                <span class="mt-1 block text-sm text-slate-500 dark:text-slate-400">{{ $metric[2] }}</span>
+            </div>
         @endforeach
     </section>
 

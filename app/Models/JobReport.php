@@ -42,6 +42,14 @@ class JobReport extends Model
         return $query->whereNull('reporter_hidden_at');
     }
 
+    /**
+     * Scope a query to only include active reports needing admin action.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereIn('status', ['pending', 'reviewed', 'action_taken']);
+    }
+
     public function isResolved(): bool
     {
         return $this->status === 'resolved';

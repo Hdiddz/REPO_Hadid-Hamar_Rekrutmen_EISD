@@ -23,7 +23,10 @@ class JobController extends Controller
 
         $jobs = Job::query()
             ->with(['employer:id,name,email,phone,business_name,banned_at,banned_until', 'category:id,name'])
-            ->withCount(['applications', 'reports'])
+            ->withCount([
+                'applications',
+                'reports' => fn ($q) => $q->visibleToAdmin(),
+            ])
             ->when($request->filled('category_id'), function ($query) use ($request): void {
                 $query->where('category_id', $request->integer('category_id'));
             })
@@ -36,7 +39,7 @@ class JobController extends Controller
                 } elseif ($status === 'closed') {
                     $query->where('status', 'closed')->where('closed_by_admin', false);
                 } elseif ($status === 'reported') {
-                    $query->has('reports');
+                    $query->whereHas('reports', fn ($q) => $q->visibleToAdmin());
                 }
             })
             ->when($request->filled('q'), function ($query) use ($request): void {
@@ -87,10 +90,13 @@ class JobController extends Controller
             'skills:id,name',
             'workplacePhotos',
             'applications' => fn ($q) => $q->with('user:id,name,username,email,phone,avatar,created_at,banned_at,banned_until,ban_reason')->latest('id'),
-            'reports' => fn ($q) => $q->with('reporter:id,name,email')->latest('id'),
+            'reports' => fn ($q) => $q->visibleToAdmin()->with('reporter:id,name,email')->latest('id'),
         ]);
 
-        $job->loadCount(['applications', 'reports']);
+        $job->loadCount([
+            'applications',
+            'reports' => fn ($q) => $q->visibleToAdmin(),
+        ]);
 
         return view('admin.jobs.show', compact('job', 'returnUrl'));
     }
