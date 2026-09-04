@@ -237,7 +237,7 @@
                                         Lihat Lowongan
                                     </a>
                                     @if($app->resume_file)
-                                        <button type="button" onclick="openPdfViewer('{{ route('admin.applications.resume.preview', $app) }}', '{{ addslashes($user->name) }}', '{{ route('admin.applications.resume', $app) }}')" class="portal-button-primary !py-1 !px-2.5 text-xs gap-1 cursor-pointer" title="Pratinjau CV/Resume kandidat di browser">
+                                        <button type="button" data-preview-url="{{ route('admin.applications.resume.preview', $app) }}" data-applicant-name="{{ $user->name }}" data-download-url="{{ route('admin.applications.resume', $app) }}" onclick="openPdfViewer(this.dataset.previewUrl, this.dataset.applicantName, this.dataset.downloadUrl)" class="portal-button-primary !py-1 !px-2.5 text-xs gap-1 cursor-pointer" title="Pratinjau CV/Resume kandidat di browser">
                                             <span class="material-symbols-outlined text-[16px]">visibility</span>
                                             Lihat Resume
                                         </button>

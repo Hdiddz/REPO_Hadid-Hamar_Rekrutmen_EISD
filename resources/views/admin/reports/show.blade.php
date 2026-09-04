@@ -5,6 +5,17 @@
 @section('portal_description', 'Analisis aduan pelamar, periksa integritas lowongan, dan ambil tindakan sanksi langsung demi standar kerja layak.')
 
 @section('portal_actions')
+    @if($report->status === 'pending')
+        <form action="{{ route('admin.reports.review', $report) }}" method="POST">
+            @csrf
+            @method('PATCH')
+            <button type="submit" class="portal-action-btn-primary !px-2.5 sm:!px-3" title="Tandai laporan sedang ditinjau">
+                <span class="material-symbols-outlined text-[17px]">visibility</span>
+                <span class="hidden sm:inline">Mulai Tinjauan</span>
+                <span class="sm:hidden">Tinjau</span>
+            </button>
+        </form>
+    @endif
     <a href="{{ $returnUrl ?? route('admin.reports.index') }}" 
        onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host) && !document.referrer.includes(window.location.pathname)) { history.back(); return false; }" 
        class="portal-action-btn !px-2.5 sm:!px-3" 

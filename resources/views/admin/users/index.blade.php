@@ -132,7 +132,7 @@
                                     </a>
 
                                     <!-- Delete Button (Trigger Pop-up Modal) -->
-                                    <button type="button" onclick="openDeleteUserModal('{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ route('admin.users.destroy', $user) }}')" class="portal-button-secondary !py-1 !px-2 text-xs !text-rose-600 hover:!bg-rose-50 cursor-pointer" title="Hapus pengguna">
+                                    <button type="button" data-user-name="{{ $user->name }}" data-user-email="{{ $user->email }}" data-delete-url="{{ route('admin.users.destroy', $user) }}" onclick="openDeleteUserModal(this.dataset.userName, this.dataset.userEmail, this.dataset.deleteUrl)" class="portal-button-secondary !py-1 !px-2 text-xs !text-rose-600 hover:!bg-rose-50 cursor-pointer" title="Hapus pengguna">
                                         <span class="material-symbols-outlined text-[16px]">delete</span>
                                     </button>
                                 @else

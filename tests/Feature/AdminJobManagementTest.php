@@ -57,6 +57,32 @@ class AdminJobManagementTest extends TestCase
         ]);
     }
 
+    public function test_admin_cannot_set_job_hours_above_eight(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $category = Category::factory()->create();
+        $job = Job::factory()->create(['work_hours_per_day' => 8]);
+
+        $response = $this->actingAs($admin)
+            ->from(route('admin.jobs.edit', $job))
+            ->put(route('admin.jobs.update', $job), [
+                'category_id' => $category->id,
+                'title' => 'Lowongan Dengan Jam Tidak Etis',
+                'description' => 'Deskripsi pekerjaan yang cukup panjang untuk melewati validasi minimum.',
+                'location' => 'Bandung',
+                'salary_type' => 'monthly',
+                'salary_amount' => 4500000,
+                'work_hours_per_day' => 9,
+                'status' => 'open',
+            ]);
+
+        $response->assertRedirect(route('admin.jobs.edit', $job))
+            ->assertSessionHasErrors([
+                'work_hours_per_day' => 'Jam kerja harus berada di antara 1 sampai 8 jam per hari.',
+            ]);
+        $this->assertSame(8, $job->fresh()->work_hours_per_day);
+    }
+
     public function test_admin_can_close_and_reopen_job_with_reason(): void
     {
         $admin = User::factory()->admin()->create();

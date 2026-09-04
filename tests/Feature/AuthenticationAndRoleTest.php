@@ -146,6 +146,29 @@ class AuthenticationAndRoleTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_display_name_cannot_be_used_as_non_unique_login_identifier(): void
+    {
+        User::factory()->jobseeker()->create([
+            'name' => 'Nama Sama',
+            'username' => 'akun_pertama',
+            'password' => Hash::make('REMOVED_CREDENTIAL'),
+        ]);
+        User::factory()->jobseeker()->create([
+            'name' => 'Nama Sama',
+            'username' => 'akun_kedua',
+            'password' => Hash::make('password456'),
+        ]);
+
+        $response = $this->post(route('login'), [
+            'email' => 'Nama Sama',
+            'password' => 'REMOVED_CREDENTIAL',
+        ]);
+
+        $response->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
     public function test_authenticated_jobseeker_is_redirected_to_jobs_page_from_home(): void
     {
         $jobseeker = User::factory()->jobseeker()->create();

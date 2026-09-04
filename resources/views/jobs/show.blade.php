@@ -47,7 +47,7 @@
         <div class="space-y-5">
             <section class="overflow-hidden rounded-3xl bg-brand-950 text-white shadow-xl shadow-brand-950/10" data-reveal>
                 @if($job->cover_image)
-                    <div class="relative w-full aspect-[16/9] sm:aspect-[21/9] max-h-[320px] overflow-hidden group cursor-zoom-in border-b border-white/10" onclick="openPhotoLightbox('{{ $job->cover_image_url }}', 'Foto Sampul Lowongan: {{ addslashes($job->title) }}')">
+                    <div class="relative w-full aspect-[16/9] sm:aspect-[21/9] max-h-[320px] overflow-hidden group cursor-zoom-in border-b border-white/10" data-photo-url="{{ $job->cover_image_url }}" data-photo-caption="Foto Sampul Lowongan: {{ $job->title }}" onclick="openPhotoLightbox(this.dataset.photoUrl, this.dataset.photoCaption)">
                         <img src="{{ $job->cover_image_url }}" alt="Cover {{ $job->title }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
                         <div class="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/20 to-transparent"></div>
                         <div class="absolute top-3 right-3 flex items-center gap-1.5 text-white/90 text-xs font-semibold backdrop-blur-md bg-black/40 px-2.5 py-1 rounded-xl border border-white/20 transition group-hover:bg-black/60">
@@ -135,7 +135,7 @@
                         <div id="workplaceCarouselViewport" class="relative w-full aspect-[4/5] overflow-hidden flex items-center justify-center bg-black/60 transition-all duration-300">
                             @foreach($job->workplacePhotos as $idx => $photo)
                                 <div class="carousel-slide absolute inset-0 transition-opacity duration-300 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}" data-slide-index="{{ $idx }}">
-                                    <img src="{{ $photo->photo_url }}" alt="{{ $photo->caption ?: 'Foto '.$job->title }}" class="h-full w-full object-cover bg-black/40 cursor-zoom-in" onclick="openPhotoLightbox('{{ $photo->photo_url }}', '{{ addslashes($photo->caption ?: 'Foto #'.($idx + 1)) }}')">
+                                    <img src="{{ $photo->photo_url }}" alt="{{ $photo->caption ?: 'Foto '.$job->title }}" class="h-full w-full object-cover bg-black/40 cursor-zoom-in" data-photo-url="{{ $photo->photo_url }}" data-photo-caption="{{ $photo->caption ?: 'Foto #'.($idx + 1) }}" onclick="openPhotoLightbox(this.dataset.photoUrl, this.dataset.photoCaption)">
                                     @if($photo->caption)
                                         <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 sm:p-4 text-white text-xs sm:text-sm">
                                             <p class="font-medium line-clamp-2 drop-shadow-sm">{{ $photo->caption }}</p>
@@ -377,7 +377,7 @@
                                 <form id="cancelApplicationForm-{{ $application->id }}" action="{{ route('applications.destroy', $application) }}" method="POST" class="pt-1">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="button" onclick="confirmCancelJobApplication('{{ $application->id }}', '{{ addslashes($job->title) }}')" class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/70 py-2.5 px-3 text-xs font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50 transition cursor-pointer">
+                                    <button type="button" data-application-id="{{ $application->id }}" data-job-title="{{ $job->title }}" onclick="confirmCancelJobApplication(this.dataset.applicationId, this.dataset.jobTitle)" class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/70 py-2.5 px-3 text-xs font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50 transition cursor-pointer">
                                         <span class="material-symbols-outlined text-[17px]">cancel</span>
                                         Batalkan Lamaran
                                     </button>
@@ -437,7 +437,7 @@
                                     <form id="cancelApplicationForm-{{ $application->id }}" action="{{ route('applications.destroy', $application) }}" method="POST" class="pt-1">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button" onclick="confirmCancelJobApplication('{{ $application->id }}', '{{ addslashes($job->title) }}')" class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/70 py-2.5 px-3 text-xs font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50 transition cursor-pointer">
+                                        <button type="button" data-application-id="{{ $application->id }}" data-job-title="{{ $job->title }}" onclick="confirmCancelJobApplication(this.dataset.applicationId, this.dataset.jobTitle)" class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/70 py-2.5 px-3 text-xs font-bold text-rose-700 hover:bg-rose-100 hover:border-rose-300 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50 transition cursor-pointer">
                                             <span class="material-symbols-outlined text-[17px]">cancel</span>
                                             Batalkan Lamaran
                                         </button>

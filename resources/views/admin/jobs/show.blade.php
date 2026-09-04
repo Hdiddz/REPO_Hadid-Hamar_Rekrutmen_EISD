@@ -20,7 +20,7 @@
     </a>
 
     @if($job->status === 'open')
-        <button type="button" onclick="openCloseJobModal({{ $job->id }}, '{{ addslashes($job->title) }}')" class="portal-action-btn-warning !px-2.5 sm:!px-3" title="Tutup Lowongan">
+        <button type="button" data-job-id="{{ $job->id }}" data-job-title="{{ $job->title }}" onclick="openCloseJobModal(this.dataset.jobId, this.dataset.jobTitle)" class="portal-action-btn-warning !px-2.5 sm:!px-3" title="Tutup Lowongan">
             <span class="material-symbols-outlined text-[17px]">lock</span>
             <span>Tutup<span class="hidden sm:inline"> Lowongan</span></span>
         </button>
@@ -240,7 +240,7 @@
 
                             <div class="flex items-center gap-2 shrink-0">
                                 @if($application->resume_file)
-                                    <button type="button" onclick="openPdfViewer('{{ route('admin.applications.resume.preview', $application) }}', '{{ addslashes($application->user->name) }}', '{{ route('admin.applications.resume', $application) }}')" class="portal-button-primary !py-1.5 !px-3 text-xs gap-1.5 cursor-pointer shadow-xs whitespace-nowrap" title="Pratinjau CV/Resume kandidat di browser">
+                                    <button type="button" data-preview-url="{{ route('admin.applications.resume.preview', $application) }}" data-applicant-name="{{ $application->user->name }}" data-download-url="{{ route('admin.applications.resume', $application) }}" onclick="openPdfViewer(this.dataset.previewUrl, this.dataset.applicantName, this.dataset.downloadUrl)" class="portal-button-primary !py-1.5 !px-3 text-xs gap-1.5 cursor-pointer shadow-xs whitespace-nowrap" title="Pratinjau CV/Resume kandidat di browser">
                                         <span class="material-symbols-outlined text-[16px]">visibility</span>
                                         <span>Lihat Resume</span>
                                     </button>

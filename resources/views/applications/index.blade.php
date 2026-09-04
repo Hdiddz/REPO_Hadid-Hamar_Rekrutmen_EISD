@@ -153,7 +153,7 @@
                             <form id="cancelAppForm-{{ $application->id }}" action="{{ route('applications.destroy', $application) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button type="button" onclick="confirmCancelApp('{{ $application->id }}', '{{ addslashes($application->job->title) }}')" class="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50/80 px-2.5 py-1.5 text-xs font-bold text-rose-700 shadow-xs hover:bg-rose-100 hover:border-rose-300 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50 transition cursor-pointer" title="Batalkan lamaran ini">
+                                <button type="button" data-application-id="{{ $application->id }}" data-job-title="{{ $application->job->title }}" onclick="confirmCancelApp(this.dataset.applicationId, this.dataset.jobTitle)" class="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50/80 px-2.5 py-1.5 text-xs font-bold text-rose-700 shadow-xs hover:bg-rose-100 hover:border-rose-300 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50 transition cursor-pointer" title="Batalkan lamaran ini">
                                     <span class="material-symbols-outlined text-[16px]">cancel</span>
                                     Batalkan
                                 </button>
@@ -175,7 +175,7 @@
                         <div class="mt-1 flex items-center gap-2">
                             <strong class="block">Resume PDF</strong>
                             @if($application->resume_file)
-                                <button type="button" onclick="openPdfViewer('{{ route('applications.resume.preview', $application) }}', '{{ addslashes(auth()->user()->name) }}')" class="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:text-brand-800 hover:underline cursor-pointer">
+                                <button type="button" data-preview-url="{{ route('applications.resume.preview', $application) }}" data-applicant-name="{{ auth()->user()->name }}" onclick="openPdfViewer(this.dataset.previewUrl, this.dataset.applicantName)" class="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:text-brand-800 hover:underline cursor-pointer">
                                     <span class="material-symbols-outlined text-[15px]">visibility</span>
                                     Lihat PDF
                                 </button>

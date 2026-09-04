@@ -207,9 +207,9 @@
     let currentPendingResignation = null;
     let currentOtherUser = null;
     const isEmployer = {{ Auth::user()?->role === 'employer' ? 'true' : 'false' }};
-    const employerName = "{{ addslashes(Auth::user()?->business_name ?: Auth::user()?->name) }}";
-    const currentUserInitials = "{{ $userInitials }}";
-    const csrfToken = "{{ csrf_token() }}";
+    const employerName = {{ Js::from(Auth::user()?->business_name ?: Auth::user()?->name) }};
+    const currentUserInitials = {{ Js::from($userInitials) }};
+    const csrfToken = {{ Js::from(csrf_token()) }};
 
     async function loadConversations() {
         try {
@@ -250,7 +250,7 @@
         list.innerHTML = conversations.map(user => {
             const isActive = user.id === activeUserId;
             return `
-                <div onclick="selectConversation(${user.id}, '${escapeHtml(user.name)}', '${escapeHtml(user.role_label)}', '${escapeHtml(user.initials)}')" 
+                <div data-conversation-id="${user.id}"
                      class="group relative p-3.5 sm:p-4 cursor-pointer transition-all flex items-start gap-3 ${isActive ? 'bg-white dark:bg-slate-900 border-l-4 border-teal-600' : 'bg-transparent hover:bg-white dark:hover:bg-slate-850'}">
                     <div class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-200 font-bold flex items-center justify-center shrink-0 text-xs">
                         ${escapeHtml(user.initials)}
@@ -269,13 +269,32 @@
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
                         ${user.unread_count > 0 ? '<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-2"></span>' : ''}
-                        <button type="button" onclick="event.stopPropagation(); removePersonConversation(${user.id}, '${escapeHtml(user.name)}')" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-opacity cursor-pointer" title="Hapus kontak ini dari daftar">
+                        <button type="button" data-remove-conversation-id="${user.id}" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-opacity cursor-pointer" title="Hapus kontak ini dari daftar">
                             <span class="material-symbols-outlined text-[17px]">person_remove</span>
                         </button>
                     </div>
                 </div>
             `;
         }).join('');
+
+        list.querySelectorAll('[data-conversation-id]').forEach(item => {
+            item.addEventListener('click', () => {
+                const user = conversations.find(conversation => conversation.id === Number(item.dataset.conversationId));
+                if (user) {
+                    selectConversation(user.id, user.name, user.role_label, user.initials);
+                }
+            });
+        });
+
+        list.querySelectorAll('[data-remove-conversation-id]').forEach(button => {
+            button.addEventListener('click', event => {
+                event.stopPropagation();
+                const user = conversations.find(conversation => conversation.id === Number(button.dataset.removeConversationId));
+                if (user) {
+                    removePersonConversation(user.id, user.name);
+                }
+            });
+        });
     }
 
     function filterConversations() {
@@ -389,9 +408,6 @@
             }
         }
 
-        const senderName = msg.is_me ? 'Anda' : otherUser.name;
-        const safeSnippet = escapeJs(msg.message);
-
         let resignActionBtns = '';
         if (!msg.is_me && isEmployer && currentPendingResignation && msg.message.includes('[Pengajuan Pengunduran Diri (Resign)]')) {
             resignActionBtns = `
@@ -412,10 +428,10 @@
             return `
                 <div data-msg-id="${msg.id}" class="group relative flex items-start justify-end gap-1.5 sm:gap-2 ml-auto max-w-xl">
                     <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
-                        <button type="button" onclick="startReply(${msg.id}, '${escapeHtml(senderName)}', '${safeSnippet}')" title="Balas pesan ini" class="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+                        <button type="button" data-chat-action="reply" title="Balas pesan ini" class="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
                             <span class="material-symbols-outlined text-[16px]">reply</span>
                         </button>
-                        <button type="button" onclick="deleteMessage(${msg.id})" title="Hapus pesan ini" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+                        <button type="button" data-chat-action="delete" title="Hapus pesan ini" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
                             <span class="material-symbols-outlined text-[16px]">delete</span>
                         </button>
                     </div>
@@ -425,7 +441,7 @@
                         <span class="text-[9px] text-teal-200 block text-right">${msg.time}</span>
                     </div>
                     <div class="w-8 h-8 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
-                        ${currentUserInitials}
+                        ${escapeHtml(currentUserInitials)}
                     </div>
                 </div>
             `;
@@ -442,16 +458,26 @@
                         <span class="text-[9px] text-slate-400 block text-right">${msg.time}</span>
                     </div>
                     <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
-                        <button type="button" onclick="startReply(${msg.id}, '${escapeHtml(senderName)}', '${safeSnippet}')" title="Balas pesan ini" class="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+                        <button type="button" data-chat-action="reply" title="Balas pesan ini" class="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
                             <span class="material-symbols-outlined text-[16px]">reply</span>
                         </button>
-                        <button type="button" onclick="deleteMessage(${msg.id})" title="Hapus pesan ini" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
+                        <button type="button" data-chat-action="delete" title="Hapus pesan ini" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer">
                             <span class="material-symbols-outlined text-[16px]">delete</span>
                         </button>
                     </div>
                 </div>
             `;
         }
+    }
+
+    function bindMessageActions(element, message, otherUser) {
+        element.querySelector('[data-chat-action="reply"]')?.addEventListener('click', () => {
+            const senderName = message.is_me ? 'Anda' : otherUser.name;
+            startReply(message.id, senderName, message.message);
+        });
+        element.querySelector('[data-chat-action="delete"]')?.addEventListener('click', () => {
+            deleteMessage(message.id);
+        });
     }
 
     window.handleResignInChat = function(decision) {
@@ -540,7 +566,9 @@
                 data.messages.forEach(msg => {
                     const temp = document.createElement('div');
                     temp.innerHTML = renderMessageHTML(msg, data.user).trim();
-                    container.appendChild(temp.firstElementChild);
+                    const element = temp.firstElementChild;
+                    bindMessageActions(element, msg, data.user);
+                    container.appendChild(element);
                 });
                 container.scrollTop = container.scrollHeight;
             } else {
@@ -551,6 +579,7 @@
                         const temp = document.createElement('div');
                         temp.innerHTML = renderMessageHTML(msg, data.user).trim();
                         const el = temp.firstElementChild;
+                        bindMessageActions(el, msg, data.user);
                         el.classList.add('animate-msg-popup');
                         container.appendChild(el);
                         hasNew = true;
@@ -756,16 +785,6 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
-    }
-
-    function escapeJs(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/\\/g, '\\\\')
-            .replace(/'/g, "\\'")
-            .replace(/"/g, '\\"')
-            .replace(/\n/g, ' ')
-            .replace(/\r/g, '');
     }
 
     document.addEventListener('DOMContentLoaded', () => {

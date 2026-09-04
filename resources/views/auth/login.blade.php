@@ -44,25 +44,32 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         @if(session('account_banned'))
-            const ban = @json(session('account_banned'));
+            const ban = {{ Js::from(session('account_banned')) }};
+            const escapeModalText = value => String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
             window.showAppAlert({
                 title: 'Akun Ditangguhkan / Kena Ban',
                 message: `<div class="space-y-2">
-                    <p>Akun Anda <strong>"${ban.name || ''}"</strong> (<span class="font-mono text-brand-700 dark:text-brand-300 font-semibold">@${ban.username || ''}</span>) sedang <strong>dibekukan / terkena sanksi pemblokiran</strong> oleh Administrator.</p>
+                    <p>Akun Anda <strong>"${escapeModalText(ban.name)}"</strong> (<span class="font-mono text-brand-700 dark:text-brand-300 font-semibold">@${escapeModalText(ban.username)}</span>) sedang <strong>dibekukan / terkena sanksi pemblokiran</strong> oleh Administrator.</p>
                     <div class="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200 text-xs space-y-1">
-                        <div><strong>Masa Berlaku:</strong> ${ban.duration || ''}</div>
-                        <div><strong>Alasan Pemblokiran:</strong> "${ban.reason || 'Pelanggaran ketentuan sistem.'}"</div>
+                        <div><strong>Masa Berlaku:</strong> ${escapeModalText(ban.duration)}</div>
+                        <div><strong>Alasan Pemblokiran:</strong> "${escapeModalText(ban.reason || 'Pelanggaran ketentuan sistem.')}"</div>
                     </div>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400">Selama masa penangguhan, Anda tidak dapat masuk atau mengakses layanan KerjaLokal. Hubungi tim administrator jika terdapat sanggahan atau kekeliruan.</p>
                 </div>`,
                 confirmText: 'Saya Mengerti',
                 type: 'danger',
-                icon: 'block'
+                icon: 'block',
+                allowHtml: true
             });
         @elseif(session('error'))
             window.showAppAlert({
                 title: 'Pemberitahuan Akun',
-                message: @json(session('error')),
+                message: {{ Js::from(session('error')) }},
                 confirmText: 'Tutup',
                 type: 'danger',
                 icon: 'error'
@@ -91,6 +98,8 @@
                     }
                 });
             }
+        }
+
         // Animasi Loading Masuk ke Dashboard
         const loginForm = document.getElementById('loginForm');
         const loginSubmitBtn = document.getElementById('loginSubmitBtn');

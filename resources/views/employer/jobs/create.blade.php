@@ -145,7 +145,7 @@
                 </div>
                 <button type="button" id="toggle-edit-skills-btn" class="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
                     <span class="material-symbols-outlined text-[17px]">tune</span>
-                    <span id="toggle-edit-text">Kelola / Edit Keterampilan</span>
+                    <span id="toggle-edit-text">Tambah Keterampilan</span>
                 </button>
             </div>
 
@@ -157,9 +157,6 @@
                             <input type="checkbox" name="skills[]" value="{{ $skill->id }}" @checked($selectedSkills->contains((string) $skill->id)) class="h-4 w-4 rounded text-brand-600 focus:ring-brand-500">
                             <span>{{ $skill->name }}</span>
                         </label>
-                        <button type="button" data-delete-skill="{{ $skill->id }}" data-skill-name="{{ $skill->name }}" class="manage-skill-action hidden shrink-0 rounded-lg p-1 text-rose-500 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/50" title="Hapus keterampilan ini">
-                            <span class="material-symbols-outlined text-[18px]">delete</span>
-                        </button>
                     </div>
                 @endforeach
                 @if(old('new_skills'))
@@ -457,8 +454,6 @@
         const input = document.getElementById('custom-skill-input');
         const btn = document.getElementById('add-custom-skill-btn');
         const grid = document.getElementById('skills-grid');
-        const csrfToken = document.querySelector('input[name="_token"]')?.value;
-
         let isManaging = false;
 
         const updateManageMode = () => {
@@ -475,7 +470,7 @@
                 document.querySelectorAll('.manage-skill-action').forEach(el => el.classList.add('hidden'));
                 toggleBtn?.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-600', 'hover:bg-emerald-700');
                 toggleBtn?.classList.add('bg-white', 'text-slate-700', 'dark:bg-slate-900', 'dark:text-slate-300');
-                if (toggleText) toggleText.textContent = 'Kelola / Edit Keterampilan';
+                if (toggleText) toggleText.textContent = 'Tambah Keterampilan';
                 if (toggleIcon) toggleIcon.textContent = 'tune';
             }
         };
@@ -485,65 +480,27 @@
             updateManageMode();
         });
 
-        // Handle delete skill
+        // Hapus hanya keterampilan baru yang belum tersimpan.
         grid?.addEventListener('click', async (e) => {
-            const deleteBtn = e.target.closest('[data-delete-skill], [data-delete-new]');
+            const deleteBtn = e.target.closest('[data-delete-new]');
             if (!deleteBtn) return;
 
             e.preventDefault();
             e.stopPropagation();
 
             const card = deleteBtn.closest('[data-skill-item]');
-            const skillId = deleteBtn.dataset.deleteSkill;
-            const skillName = deleteBtn.dataset.skillName || card?.querySelector('span')?.textContent?.trim() || 'keterampilan ini';
+            const skillName = card?.querySelector('span')?.textContent?.trim() || 'keterampilan ini';
 
             const confirmed = await window.showAppConfirm({
                 title: 'Hapus Keterampilan?',
-                message: `Hapus keterampilan "${skillName}" dari pilihan sistem?`,
+                message: `Hapus keterampilan baru "${skillName}" dari formulir ini?`,
                 confirmText: 'Ya, Hapus',
                 type: 'danger',
                 icon: 'delete'
             });
             if (!confirmed) return;
 
-            if (skillId) {
-                try {
-                    deleteBtn.disabled = true;
-                    const res = await fetch(`/mitra/keterampilan/${skillId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json',
-                        }
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                        card.style.transition = 'opacity 300ms ease, transform 300ms ease';
-                        card.style.opacity = '0';
-                        card.style.transform = 'scale(0.9)';
-                        setTimeout(() => card.remove(), 300);
-                    } else {
-                        await window.showAppAlert({
-                            title: 'Gagal',
-                            message: data.message || 'Gagal menghapus keterampilan.',
-                            type: 'danger',
-                            icon: 'error'
-                        });
-                        deleteBtn.disabled = false;
-                    }
-                } catch (err) {
-                    await window.showAppAlert({
-                        title: 'Kesalahan',
-                        message: 'Terjadi kesalahan saat menghapus.',
-                        type: 'danger',
-                        icon: 'error'
-                    });
-                    deleteBtn.disabled = false;
-                }
-            } else {
-                // Newly added element
-                card.remove();
-            }
+            card?.remove();
         });
 
         // Add new skill

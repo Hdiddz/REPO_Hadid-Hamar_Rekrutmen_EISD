@@ -164,7 +164,7 @@
                             <span class="material-symbols-outlined text-[18px]">chat</span>
                             Chat
                         </a>
-                        <button type="button" onclick="openPdfViewer('{{ route('employer.applications.resume.preview', $application) }}', '{{ addslashes($application->user->name) }}', '{{ route('employer.applications.resume', $application) }}')" class="portal-button-primary cursor-pointer">
+                        <button type="button" data-preview-url="{{ route('employer.applications.resume.preview', $application) }}" data-applicant-name="{{ $application->user->name }}" data-download-url="{{ route('employer.applications.resume', $application) }}" onclick="openPdfViewer(this.dataset.previewUrl, this.dataset.applicantName, this.dataset.downloadUrl)" class="portal-button-primary cursor-pointer">
                             <span class="material-symbols-outlined text-[18px]">visibility</span>
                             Lihat resume
                         </button>
@@ -199,13 +199,13 @@
                             </div>
                             <div class="flex items-center gap-2 shrink-0 self-start sm:self-center">
                                 <button type="button" 
-                                        onclick="openResignDecisionModal({ applicationId: '{{ $application->id }}', decision: 'approved', candidateName: '{{ addslashes($application->user->name) }}', jobTitle: '{{ addslashes($application->job->title) }}', employerName: '{{ addslashes(auth()->user()->business_name ?: auth()->user()->name) }}' })"
+                                        data-application-id="{{ $application->id }}" data-candidate-name="{{ $application->user->name }}" data-job-title="{{ $application->job->title }}" data-employer-name="{{ auth()->user()->business_name ?: auth()->user()->name }}" onclick="openResignDecisionModal({ applicationId: this.dataset.applicationId, decision: 'approved', candidateName: this.dataset.candidateName, jobTitle: this.dataset.jobTitle, employerName: this.dataset.employerName })"
                                         class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm shadow-emerald-600/25 hover:bg-emerald-700 active:translate-y-px transition cursor-pointer">
                                     <span class="material-symbols-outlined text-[16px]">check</span>
                                     Setujui Resign
                                 </button>
                                 <button type="button" 
-                                        onclick="openResignDecisionModal({ applicationId: '{{ $application->id }}', decision: 'rejected', candidateName: '{{ addslashes($application->user->name) }}', jobTitle: '{{ addslashes($application->job->title) }}', employerName: '{{ addslashes(auth()->user()->business_name ?: auth()->user()->name) }}' })"
+                                        data-application-id="{{ $application->id }}" data-candidate-name="{{ $application->user->name }}" data-job-title="{{ $application->job->title }}" data-employer-name="{{ auth()->user()->business_name ?: auth()->user()->name }}" onclick="openResignDecisionModal({ applicationId: this.dataset.applicationId, decision: 'rejected', candidateName: this.dataset.candidateName, jobTitle: this.dataset.jobTitle, employerName: this.dataset.employerName })"
                                         class="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-3 py-2 text-xs font-bold text-white shadow-sm shadow-rose-600/25 hover:bg-rose-700 active:translate-y-px transition cursor-pointer">
                                     <span class="material-symbols-outlined text-[16px]">close</span>
                                     Tolak Pengajuan

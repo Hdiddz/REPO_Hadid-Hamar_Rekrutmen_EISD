@@ -7,9 +7,11 @@ use App\Models\Job;
 use App\Models\JobApplication;
 use App\Models\User;
 use App\Notifications\NewChatMessageNotification;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ChatController extends Controller
@@ -149,13 +151,31 @@ class ChatController extends Controller
 
     public function sendMessage(Request $request, User $user): JsonResponse
     {
+        $authenticatedUserId = $request->user()->id;
+
         $validated = $request->validate([
             'message' => ['required', 'string', 'max:2000'],
-            'reply_to_id' => ['nullable', 'integer', 'exists:chat_messages,id'],
+            'reply_to_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('chat_messages', 'id')->where(function (Builder $query) use ($authenticatedUserId, $user): void {
+                    $query->where(function (Builder $conversation) use ($authenticatedUserId, $user): void {
+                        $conversation
+                            ->where('sender_id', $authenticatedUserId)
+                            ->where('receiver_id', $user->id);
+                    })->orWhere(function (Builder $conversation) use ($authenticatedUserId, $user): void {
+                        $conversation
+                            ->where('sender_id', $user->id)
+                            ->where('receiver_id', $authenticatedUserId);
+                    });
+                }),
+            ],
+        ], [
+            'reply_to_id.exists' => 'Pesan yang dibalas bukan bagian dari percakapan ini.',
         ]);
 
         $message = ChatMessage::create([
-            'sender_id' => $request->user()->id,
+            'sender_id' => $authenticatedUserId,
             'receiver_id' => $user->id,
             'reply_to_id' => $validated['reply_to_id'] ?? null,
             'message' => trim($validated['message']),

@@ -47,10 +47,15 @@ class JobReportingTest extends TestCase
             'status' => 'pending',
         ]);
 
-        // Admin views report details (marks as reviewed)
+        // Membuka detail bersifat read-only.
         $this->actingAs($admin)->get(route('admin.reports.show', $report))->assertOk();
         $report->refresh();
-        $this->assertSame('reviewed', $report->status);
+        $this->assertSame('pending', $report->status);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.reports.review', $report))
+            ->assertSessionHas('success');
+        $this->assertSame('reviewed', $report->fresh()->status);
 
         // Admin takes action: close job
         $actionResponse = $this->actingAs($admin)->post(route('admin.reports.action', $report), [
@@ -68,5 +73,20 @@ class JobReportingTest extends TestCase
         $this->assertSame('action_taken', $report->status);
         $this->assertSame('closed', $job->status);
         $this->assertTrue($job->closed_by_admin);
+    }
+
+    public function test_employer_cannot_report_another_employers_job(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $otherEmployer = User::factory()->employer()->create();
+        $job = Job::factory()->for($otherEmployer, 'employer')->create();
+
+        $response = $this->actingAs($employer)->post(route('jobs.report', $job), [
+            'reason' => 'Laporan kompetitor',
+            'details' => 'Mitra tidak boleh menggunakan jalur laporan milik pencari kerja.',
+        ]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseCount('job_reports', 0);
     }
 }

@@ -69,7 +69,7 @@
 
                 <div>
                     <label for="work_hours_per_day" class="portal-label">Jam Kerja per Hari (Maksimal 8 Jam Etis) <span class="text-rose-500">*</span></label>
-                    <input type="number" id="work_hours_per_day" name="work_hours_per_day" min="1" max="24" value="{{ old('work_hours_per_day', $job->work_hours_per_day) }}" required class="portal-input">
+                    <input type="number" id="work_hours_per_day" name="work_hours_per_day" min="1" max="8" value="{{ old('work_hours_per_day', $job->work_hours_per_day) }}" required class="portal-input">
                     @error('work_hours_per_day')
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror

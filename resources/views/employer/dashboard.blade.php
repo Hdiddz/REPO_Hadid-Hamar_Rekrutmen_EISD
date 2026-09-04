@@ -36,7 +36,7 @@
                         <form id="deleteEmployerJob-{{ $job->id }}" action="{{ route('employer.jobs.destroy', $job) }}" method="POST">
                             @csrf
                             @method('DELETE')
-                            <button type="button" onclick="confirmDeleteJob('{{ $job->id }}', '{{ addslashes($job->title) }}')" class="portal-icon-button text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer" title="Hapus lowongan">
+                            <button type="button" data-job-id="{{ $job->id }}" data-job-title="{{ $job->title }}" onclick="confirmDeleteJob(this.dataset.jobId, this.dataset.jobTitle)" class="portal-icon-button text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer" title="Hapus lowongan">
                                 <span class="material-symbols-outlined text-[18px]">delete</span>
                             </button>
                         </form>
@@ -145,13 +145,13 @@
                     <div class="flex items-center gap-2 self-end sm:self-center shrink-0 flex-wrap">
                         @if($worker->resignation_status === 'pending')
                             <button type="button" 
-                                    onclick="openResignDecisionModal({ applicationId: '{{ $worker->id }}', decision: 'approved', candidateName: '{{ addslashes($worker->user->name) }}', jobTitle: '{{ addslashes($worker->job->title) }}', employerName: '{{ addslashes(auth()->user()->business_name ?: auth()->user()->name) }}' })"
+                                    data-application-id="{{ $worker->id }}" data-candidate-name="{{ $worker->user->name }}" data-job-title="{{ $worker->job->title }}" data-employer-name="{{ auth()->user()->business_name ?: auth()->user()->name }}" onclick="openResignDecisionModal({ applicationId: this.dataset.applicationId, decision: 'approved', candidateName: this.dataset.candidateName, jobTitle: this.dataset.jobTitle, employerName: this.dataset.employerName })"
                                     class="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition cursor-pointer" title="Setujui permohonan resign">
                                 <span class="material-symbols-outlined text-[16px]">check</span>
                                 Setujui Resign
                             </button>
                             <button type="button" 
-                                    onclick="openResignDecisionModal({ applicationId: '{{ $worker->id }}', decision: 'rejected', candidateName: '{{ addslashes($worker->user->name) }}', jobTitle: '{{ addslashes($worker->job->title) }}', employerName: '{{ addslashes(auth()->user()->business_name ?: auth()->user()->name) }}' })"
+                                    data-application-id="{{ $worker->id }}" data-candidate-name="{{ $worker->user->name }}" data-job-title="{{ $worker->job->title }}" data-employer-name="{{ auth()->user()->business_name ?: auth()->user()->name }}" onclick="openResignDecisionModal({ applicationId: this.dataset.applicationId, decision: 'rejected', candidateName: this.dataset.candidateName, jobTitle: this.dataset.jobTitle, employerName: this.dataset.employerName })"
                                     class="inline-flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition cursor-pointer" title="Tolak permohonan resign">
                                 <span class="material-symbols-outlined text-[16px]">close</span>
                                 Tolak
@@ -161,7 +161,7 @@
                             <span class="material-symbols-outlined text-[17px]">chat</span>
                             Chat Peserta
                         </a>
-                        <button type="button" onclick="openPdfViewer('{{ route('employer.applications.resume.preview', $worker) }}', '{{ addslashes($worker->user->name) }}', '{{ route('employer.applications.resume', $worker) }}')" class="portal-button-secondary !py-2 !px-3 text-xs font-semibold gap-1.5 cursor-pointer" title="Lihat resume PDF">
+                        <button type="button" data-preview-url="{{ route('employer.applications.resume.preview', $worker) }}" data-applicant-name="{{ $worker->user->name }}" data-download-url="{{ route('employer.applications.resume', $worker) }}" onclick="openPdfViewer(this.dataset.previewUrl, this.dataset.applicantName, this.dataset.downloadUrl)" class="portal-button-secondary !py-2 !px-3 text-xs font-semibold gap-1.5 cursor-pointer" title="Lihat resume PDF">
                             <span class="material-symbols-outlined text-[17px]">visibility</span>
                             Resume
                         </button>

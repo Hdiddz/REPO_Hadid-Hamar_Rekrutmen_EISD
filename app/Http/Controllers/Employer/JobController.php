@@ -9,7 +9,6 @@ use App\Models\Category;
 use App\Models\Job;
 use App\Models\Skill;
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -219,17 +218,5 @@ class JobController extends Controller
         $job->update($validated);
 
         return back()->with('success', 'Status lowongan berhasil diperbarui.');
-    }
-
-    public function destroySkill(Skill $skill): JsonResponse
-    {
-        $name = $skill->name;
-        $skill->jobs()->detach();
-        $skill->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => "Keterampilan '{$name}' berhasil dihapus.",
-        ]);
     }
 }

@@ -33,7 +33,8 @@
         confirmText = 'Ya, Lanjutkan',
         cancelText = 'Batal',
         type = 'danger',
-        icon = 'delete'
+        icon = 'delete',
+        allowHtml = false
     } = {}) {
         return new Promise((resolve) => {
             const modal = document.getElementById('appConfirmModal');
@@ -52,7 +53,13 @@
             const cancelBtn = document.getElementById('appConfirmCancelBtn');
 
             if (titleEl) titleEl.textContent = title;
-            if (msgEl) msgEl.innerHTML = message;
+            if (msgEl) {
+                if (allowHtml) {
+                    msgEl.innerHTML = message;
+                } else {
+                    msgEl.textContent = message;
+                }
+            }
             if (iconEl) iconEl.textContent = icon;
             if (actionText) actionText.textContent = confirmText;
             if (cancelBtn) {
@@ -124,7 +131,8 @@
         message = '',
         confirmText = 'Mengerti',
         type = 'primary',
-        icon = 'info'
+        icon = 'info',
+        allowHtml = false
     } = {}) {
         return new Promise((resolve) => {
             const modal = document.getElementById('appConfirmModal');
@@ -143,7 +151,13 @@
             const cancelBtn = document.getElementById('appConfirmCancelBtn');
 
             if (titleEl) titleEl.textContent = title;
-            if (msgEl) msgEl.innerHTML = message;
+            if (msgEl) {
+                if (allowHtml) {
+                    msgEl.innerHTML = message;
+                } else {
+                    msgEl.textContent = message;
+                }
+            }
             if (iconEl) iconEl.textContent = icon;
             if (actionText) actionText.textContent = confirmText;
             if (cancelBtn) cancelBtn.style.display = 'none';

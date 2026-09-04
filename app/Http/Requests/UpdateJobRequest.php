@@ -2,9 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Job;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateJobRequest extends FormRequest
 {
@@ -26,6 +29,9 @@ class UpdateJobRequest extends FormRequest
      */
     public function rules(): array
     {
+        $job = $this->route('job');
+        $jobId = $job instanceof Job ? $job->id : 0;
+
         return [
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'title' => ['required', 'string', 'max:255'],
@@ -44,17 +50,42 @@ class UpdateJobRequest extends FormRequest
             'workplace_photos' => ['nullable', 'array', 'max:6'],
             'workplace_photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'delete_workplace_photo_ids' => ['nullable', 'array'],
-            'delete_workplace_photo_ids.*' => ['integer', 'exists:job_workplace_photos,id'],
+            'delete_workplace_photo_ids.*' => [
+                'integer',
+                Rule::exists('job_workplace_photos', 'id')->where('job_id', $jobId),
+            ],
         ];
     }
 
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
-        $validator->after(function ($v): void {
+        $validator->after(function (Validator $validator): void {
             $hasSkills = ! empty($this->input('skills'));
             $hasNewSkills = ! empty(array_filter((array) $this->input('new_skills', [])));
             if (! $hasSkills && ! $hasNewSkills) {
-                $v->errors()->add('skills', 'Pilih minimal satu keahlian yang dibutuhkan atau tambahkan keahlian baru.');
+                $validator->errors()->add('skills', 'Pilih minimal satu keahlian yang dibutuhkan atau tambahkan keahlian baru.');
+            }
+
+            if ($validator->errors()->hasAny(['workplace_photos', 'workplace_photos.*', 'delete_workplace_photo_ids', 'delete_workplace_photo_ids.*'])) {
+                return;
+            }
+
+            $job = $this->route('job');
+            if (! $job instanceof Job) {
+                return;
+            }
+
+            $deletePhotoIds = collect((array) $this->input('delete_workplace_photo_ids', []))
+                ->map(fn ($id): int => (int) $id)
+                ->unique()
+                ->all();
+            $remainingPhotoCount = $job->workplacePhotos()
+                ->when($deletePhotoIds !== [], fn (Builder $query): Builder => $query->whereNotIn('id', $deletePhotoIds))
+                ->count();
+            $newPhotoCount = count((array) $this->file('workplace_photos', []));
+
+            if ($remainingPhotoCount + $newPhotoCount > 6) {
+                $validator->errors()->add('workplace_photos', 'Total foto lingkungan kerja maksimal 6 foto, termasuk foto yang sudah tersimpan.');
             }
         });
     }

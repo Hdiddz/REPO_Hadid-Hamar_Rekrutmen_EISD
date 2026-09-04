@@ -43,10 +43,10 @@ class AuthController extends Controller
         $remember = $request->boolean('remember');
         $isEmail = (bool) filter_var($input, FILTER_VALIDATE_EMAIL);
 
-        // Cari data pengguna di sistem
+        // Cari data pengguna menggunakan identitas unik agar akun bernama sama tidak tertukar.
         $user = $isEmail
             ? User::where('email', $input)->first()
-            : User::where('username', $input)->orWhere('name', $input)->first();
+            : User::where('username', $input)->first();
 
         // 1. Kasus Akun Terhapus / Tidak Ditemukan (cukup warning di bawah kolom input, tanpa pop-up)
         if (! $user) {

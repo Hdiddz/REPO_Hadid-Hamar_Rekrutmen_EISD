@@ -45,8 +45,6 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/chat/messages/{user}', [ChatController::class, 'sendMessage'])->name('chat.send');
     Route::delete('/chat/messages/{message}', [ChatController::class, 'deleteMessage'])->name('chat.messages.delete');
     Route::delete('/chat/clear/{user}', [ChatController::class, 'clearChat'])->name('chat.clear');
-    Route::post('/lowongan/{job}/lapor', [JobReportController::class, 'store'])->name('jobs.report');
-
     Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifikasi/{id}/baca', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::delete('/notifikasi/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
@@ -55,6 +53,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/profil', [ProfileController::class, 'show'])->name('profile.index');
 
     Route::middleware('role:jobseeker')->group(function (): void {
+        Route::post('/lowongan/{job}/lapor', [JobReportController::class, 'store'])->name('jobs.report');
         Route::post('/lowongan/{job}/lamar', [JobApplicationController::class, 'store'])->name('applications.store');
         Route::get('/riwayat-lamaran', [JobApplicationController::class, 'index'])->name('applications.index');
         Route::redirect('/lamaran', '/riwayat-lamaran')->name('applications.alias');
@@ -75,7 +74,6 @@ Route::middleware('auth')->group(function (): void {
         Route::patch('/pelamar/{application}/resign-decision', [EmployerApplicationController::class, 'resignDecision'])->name('applications.resignDecision');
         Route::get('/pelamar/{application}/resume', [EmployerApplicationController::class, 'download'])->name('applications.resume');
         Route::get('/pelamar/{application}/resume/preview', [EmployerApplicationController::class, 'preview'])->name('applications.resume.preview');
-        Route::delete('/keterampilan/{skill}', [EmployerJobController::class, 'destroySkill'])->name('skills.destroy');
     });
 
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function (): void {
@@ -91,6 +89,7 @@ Route::middleware('auth')->group(function (): void {
         Route::patch('/lowongan/{job}/status', [AdminJobController::class, 'updateStatus'])->name('jobs.status');
         Route::get('/laporan', [AdminReportController::class, 'index'])->name('reports.index');
         Route::get('/laporan/{report}', [AdminReportController::class, 'show'])->name('reports.show');
+        Route::patch('/laporan/{report}/tinjau', [AdminReportController::class, 'markReviewed'])->name('reports.review');
         Route::post('/laporan/{report}/tindak-lanjut', [AdminReportController::class, 'action'])->name('reports.action');
         Route::get('/master-data', [AdminCategoryController::class, 'index'])->name('master');
         Route::resource('categories', AdminCategoryController::class)->only(['store', 'update', 'destroy']);

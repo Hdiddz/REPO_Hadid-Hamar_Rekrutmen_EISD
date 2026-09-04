@@ -66,11 +66,18 @@ class ReportController extends Controller
 
         $report->job->loadCount('applications');
 
-        if ($report->status === 'pending') {
-            $report->update(['status' => 'reviewed']);
+        return view('admin.reports.show', compact('report', 'returnUrl'));
+    }
+
+    public function markReviewed(JobReport $report): RedirectResponse
+    {
+        if ($report->status !== 'pending') {
+            return back()->with('warning', 'Laporan ini sudah pernah ditinjau atau ditindaklanjuti.');
         }
 
-        return view('admin.reports.show', compact('report', 'returnUrl'));
+        $report->update(['status' => 'reviewed']);
+
+        return back()->with('success', 'Laporan ditandai sedang ditinjau oleh Administrator.');
     }
 
     public function action(Request $request, JobReport $report): RedirectResponse

@@ -182,6 +182,43 @@ class ChatTest extends TestCase
         $fetchResponse->assertJsonPath('messages.1.reply_to.id', $originalMsg->id);
     }
 
+    public function test_user_cannot_reply_to_message_from_another_conversation(): void
+    {
+        $sender = User::factory()->jobseeker()->create();
+        $receiver = User::factory()->employer()->create();
+        $unrelatedUser = User::factory()->employer()->create();
+        $unrelatedMessage = ChatMessage::create([
+            'sender_id' => $sender->id,
+            'receiver_id' => $unrelatedUser->id,
+            'message' => 'Pesan dari percakapan lain yang bersifat privat.',
+        ]);
+
+        $response = $this->actingAs($sender)->postJson(route('chat.send', $receiver), [
+            'message' => 'Mencoba membalas pesan yang tidak terkait.',
+            'reply_to_id' => $unrelatedMessage->id,
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors('reply_to_id');
+        $this->assertDatabaseMissing('chat_messages', [
+            'receiver_id' => $receiver->id,
+            'message' => 'Mencoba membalas pesan yang tidak terkait.',
+        ]);
+    }
+
+    public function test_chat_views_do_not_embed_user_content_in_inline_event_handlers(): void
+    {
+        $user = User::factory()->jobseeker()->create();
+
+        $response = $this->actingAs($user)->get(route('chat.index'));
+
+        $response->assertOk()
+            ->assertDontSee('onclick="selectConversation', false)
+            ->assertDontSee('onclick="startReply', false)
+            ->assertDontSee('onclick="openPopupChatDetail', false)
+            ->assertDontSee('onclick="startPopupReply', false);
+    }
+
     public function test_user_can_remove_conversation_person(): void
     {
         $userA = User::factory()->create(['role' => 'jobseeker']);

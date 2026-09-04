@@ -128,10 +128,12 @@ class JobController extends Controller
             'location' => ['required', 'string', 'max:100'],
             'salary_type' => ['nullable', 'in:hourly,daily,monthly'],
             'salary_amount' => ['nullable', 'numeric', 'min:0'],
-            'work_hours_per_day' => ['required', 'integer', 'min:1', 'max:24'],
+            'work_hours_per_day' => ['required', 'integer', 'between:1,8'],
             'status' => ['required', 'in:open,closed'],
             'skills' => ['nullable', 'array'],
             'skills.*' => ['exists:skills,id'],
+        ], [
+            'work_hours_per_day.between' => 'Jam kerja harus berada di antara 1 sampai 8 jam per hari.',
         ]);
 
         $job->update([

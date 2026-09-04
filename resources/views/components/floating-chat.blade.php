@@ -151,8 +151,8 @@
     let listPollInterval = null;
     let popupReply = null;
     const currentUserId = {{ Auth::id() }};
-    const currentUserInitials = "{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}";
-    const csrfToken = "{{ csrf_token() }}";
+    const currentUserInitials = {{ Js::from(strtoupper(substr(Auth::user()->name ?? 'U', 0, 2))) }};
+    const csrfToken = {{ Js::from(csrf_token()) }};
 
     function showPopupChatList() {
         activeChatUserId = null;
@@ -211,7 +211,7 @@
             }
 
             container.innerHTML = users.map(user => `
-                <div onclick="openPopupChatDetail(${user.id}, '${escapeHtml(user.name)}', '${escapeHtml(user.role_label)}')" class="group p-3 hover:bg-teal-50/60 cursor-pointer transition-colors flex items-start gap-2.5">
+                <div data-popup-conversation-id="${user.id}" class="group p-3 hover:bg-teal-50/60 cursor-pointer transition-colors flex items-start gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-teal-700 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
                         ${escapeHtml(user.initials)}
                     </div>
@@ -225,12 +225,31 @@
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
                         ${user.unread_count > 0 ? '<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1.5"></span>' : ''}
-                        <button type="button" onclick="event.stopPropagation(); removePopupConversationById(${user.id}, '${escapeHtml(user.name)}')" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-opacity cursor-pointer" title="Hapus kontak ini">
+                        <button type="button" data-remove-popup-conversation-id="${user.id}" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-opacity cursor-pointer" title="Hapus kontak ini">
                             <span class="material-symbols-outlined text-[15px]">person_remove</span>
                         </button>
                     </div>
                 </div>
             `).join('');
+
+            container.querySelectorAll('[data-popup-conversation-id]').forEach(item => {
+                item.addEventListener('click', () => {
+                    const user = users.find(conversation => conversation.id === Number(item.dataset.popupConversationId));
+                    if (user) {
+                        openPopupChatDetail(user.id, user.name, user.role_label);
+                    }
+                });
+            });
+
+            container.querySelectorAll('[data-remove-popup-conversation-id]').forEach(button => {
+                button.addEventListener('click', event => {
+                    event.stopPropagation();
+                    const user = users.find(conversation => conversation.id === Number(button.dataset.removePopupConversationId));
+                    if (user) {
+                        removePopupConversationById(user.id, user.name);
+                    }
+                });
+            });
         } catch (e) {
             console.error(e);
         }
@@ -303,17 +322,14 @@
             }
         }
 
-        const senderName = msg.is_me ? 'Anda' : otherUser.name;
-        const safeSnippet = escapeJs(msg.message);
-
         if (msg.is_me) {
             return `
                 <div data-msg-id="${msg.id}" class="group relative flex items-start justify-end gap-1 ml-auto max-w-[90%]">
                     <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
-                        <button type="button" onclick="startPopupReply(${msg.id}, '${escapeHtml(senderName)}', '${safeSnippet}')" title="Balas pesan ini" class="p-1 text-slate-400 hover:text-teal-700 hover:bg-slate-100 rounded cursor-pointer">
+                        <button type="button" data-popup-chat-action="reply" title="Balas pesan ini" class="p-1 text-slate-400 hover:text-teal-700 hover:bg-slate-100 rounded cursor-pointer">
                             <span class="material-symbols-outlined text-[15px]">reply</span>
                         </button>
-                        <button type="button" onclick="deletePopupMessage(${msg.id})" title="Hapus pesan ini" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded cursor-pointer">
+                        <button type="button" data-popup-chat-action="delete" title="Hapus pesan ini" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded cursor-pointer">
                             <span class="material-symbols-outlined text-[15px]">delete</span>
                         </button>
                     </div>
@@ -323,7 +339,7 @@
                         <span class="text-[8px] text-teal-200 block text-right">${msg.time}</span>
                     </div>
                     <div class="w-6 h-6 rounded-lg bg-slate-800 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
-                        ${currentUserInitials}
+                        ${escapeHtml(currentUserInitials)}
                     </div>
                 </div>
             `;
@@ -339,16 +355,26 @@
                         <span class="text-[8px] text-slate-400 block text-right">${msg.time}</span>
                     </div>
                     <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
-                        <button type="button" onclick="startPopupReply(${msg.id}, '${escapeHtml(senderName)}', '${safeSnippet}')" title="Balas pesan ini" class="p-1 text-slate-400 hover:text-teal-700 hover:bg-slate-100 rounded cursor-pointer">
+                        <button type="button" data-popup-chat-action="reply" title="Balas pesan ini" class="p-1 text-slate-400 hover:text-teal-700 hover:bg-slate-100 rounded cursor-pointer">
                             <span class="material-symbols-outlined text-[15px]">reply</span>
                         </button>
-                        <button type="button" onclick="deletePopupMessage(${msg.id})" title="Hapus pesan dari pengguna ini" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded cursor-pointer">
+                        <button type="button" data-popup-chat-action="delete" title="Hapus pesan dari pengguna ini" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded cursor-pointer">
                             <span class="material-symbols-outlined text-[15px]">delete</span>
                         </button>
                     </div>
                 </div>
             `;
         }
+    }
+
+    function bindPopupMessageActions(element, message, otherUser) {
+        element.querySelector('[data-popup-chat-action="reply"]')?.addEventListener('click', () => {
+            const senderName = message.is_me ? 'Anda' : otherUser.name;
+            startPopupReply(message.id, senderName, message.message);
+        });
+        element.querySelector('[data-popup-chat-action="delete"]')?.addEventListener('click', () => {
+            deletePopupMessage(message.id);
+        });
     }
 
     async function fetchChatMessages() {
@@ -392,7 +418,9 @@
                 data.messages.forEach(msg => {
                     const temp = document.createElement('div');
                     temp.innerHTML = renderPopupMessageHTML(msg, data.user).trim();
-                    stream.appendChild(temp.firstElementChild);
+                    const element = temp.firstElementChild;
+                    bindPopupMessageActions(element, msg, data.user);
+                    stream.appendChild(element);
                 });
                 stream.scrollTop = stream.scrollHeight;
             } else {
@@ -403,6 +431,7 @@
                         const temp = document.createElement('div');
                         temp.innerHTML = renderPopupMessageHTML(msg, data.user).trim();
                         const el = temp.firstElementChild;
+                        bindPopupMessageActions(el, msg, data.user);
                         el.classList.add('animate-msg-popup');
                         stream.appendChild(el);
                         hasNew = true;
@@ -591,16 +620,6 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
-    }
-
-    function escapeJs(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/\\/g, '\\\\')
-            .replace(/'/g, "\\'")
-            .replace(/"/g, '\\"')
-            .replace(/\n/g, ' ')
-            .replace(/\r/g, '');
     }
 
     document.addEventListener('DOMContentLoaded', () => {

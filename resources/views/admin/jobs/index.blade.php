@@ -146,7 +146,7 @@
 
                                 <!-- Close / Reopen Button -->
                                 @if($job->status === 'open')
-                                    <button type="button" onclick="openCloseJobModal({{ $job->id }}, '{{ addslashes($job->title) }}')" class="portal-button-secondary !py-1 !px-2 text-xs text-amber-700 hover:!bg-amber-50" title="Tutup lowongan ini">
+                                    <button type="button" data-job-id="{{ $job->id }}" data-job-title="{{ $job->title }}" onclick="openCloseJobModal(this.dataset.jobId, this.dataset.jobTitle)" class="portal-button-secondary !py-1 !px-2 text-xs text-amber-700 hover:!bg-amber-50" title="Tutup lowongan ini">
                                         <span class="material-symbols-outlined text-[16px]">lock</span>
                                         Tutup
                                     </button>
@@ -161,7 +161,7 @@
                                 @endif
 
                                 <!-- Delete Button (Triggers Pop-up Modal) -->
-                                <button type="button" onclick="openDeleteJobModal('{{ addslashes($job->title) }}', '{{ route('admin.jobs.destroy', $job) }}')" class="portal-button-secondary !py-1 !px-2 text-xs !text-rose-600 hover:!bg-rose-50 cursor-pointer" title="Hapus lowongan">
+                                <button type="button" data-job-title="{{ $job->title }}" data-delete-url="{{ route('admin.jobs.destroy', $job) }}" onclick="openDeleteJobModal(this.dataset.jobTitle, this.dataset.deleteUrl)" class="portal-button-secondary !py-1 !px-2 text-xs !text-rose-600 hover:!bg-rose-50 cursor-pointer" title="Hapus lowongan">
                                     <span class="material-symbols-outlined text-[16px]">delete</span>
                                 </button>
                             </div>

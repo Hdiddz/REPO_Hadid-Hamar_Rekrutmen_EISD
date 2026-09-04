@@ -111,16 +111,15 @@ class EmployerJobTest extends TestCase
             ->assertSee('Status Pembaruan Mitra:');
     }
 
-    public function test_employer_can_destroy_skill_via_api(): void
+    public function test_employer_cannot_destroy_global_skill(): void
     {
         $employer = User::factory()->employer()->create();
-        $skill = Skill::factory()->create(['name' => 'Keahlian Obsolet']);
+        $skill = Skill::factory()->create(['name' => 'Keahlian Bersama']);
 
-        $response = $this->actingAs($employer)->deleteJson(route('employer.skills.destroy', $skill));
+        $response = $this->actingAs($employer)->deleteJson("/mitra/keterampilan/{$skill->id}");
 
-        $response->assertOk()
-            ->assertJson(['success' => true]);
-        $this->assertDatabaseMissing('skills', ['id' => $skill->id]);
+        $response->assertNotFound();
+        $this->assertModelExists($skill);
     }
 
     public function test_employer_can_close_and_reopen_job_status(): void
@@ -371,6 +370,46 @@ class EmployerJobTest extends TestCase
         $this->assertDatabaseHas('job_workplace_photos', ['id' => $photo2->id]);
         Storage::disk('public')->assertMissing('jobs/workplace/photo1.jpg');
         Storage::disk('public')->assertExists('jobs/workplace/photo2.jpg');
+    }
+
+    public function test_employer_cannot_exceed_six_total_workplace_photos_when_updating_job(): void
+    {
+        Storage::fake('public');
+
+        $employer = User::factory()->employer()->create();
+        $skill = Skill::factory()->create();
+        $job = Job::factory()->for($employer, 'employer')->create();
+
+        foreach (range(1, 5) as $index) {
+            $job->workplacePhotos()->create([
+                'photo_path' => "jobs/workplace/existing-{$index}.jpg",
+                'sort_order' => $index,
+            ]);
+        }
+
+        $response = $this->actingAs($employer)
+            ->from(route('employer.jobs.edit', $job))
+            ->put(route('employer.jobs.update', $job), [
+                'category_id' => $job->category_id,
+                'title' => $job->title,
+                'status' => 'open',
+                'description' => $job->description,
+                'location' => $job->location,
+                'salary_type' => $job->salary_type,
+                'salary_amount' => $job->salary_amount,
+                'work_hours_per_day' => $job->work_hours_per_day,
+                'skills' => [$skill->id],
+                'workplace_photos' => [
+                    UploadedFile::fake()->create('new-1.jpg', 100, 'image/jpeg'),
+                    UploadedFile::fake()->create('new-2.jpg', 100, 'image/jpeg'),
+                ],
+            ]);
+
+        $response->assertRedirect(route('employer.jobs.edit', $job))
+            ->assertSessionHasErrors([
+                'workplace_photos' => 'Total foto lingkungan kerja maksimal 6 foto, termasuk foto yang sudah tersimpan.',
+            ]);
+        $this->assertCount(5, $job->workplacePhotos()->get());
     }
 
     public function test_job_public_views_render_cover_and_workplace_photos_carousel(): void
