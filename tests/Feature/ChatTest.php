@@ -336,4 +336,39 @@ class ChatTest extends TestCase
         $jobseekerResp->assertJsonPath('profile.owner_name', 'Budi Santoso');
         $this->assertNotEmpty($jobseekerResp->json('profile.open_jobs'));
     }
+
+    public function test_jobseeker_can_open_chat_page_with_specific_employer_from_job(): void
+    {
+        $employer = User::factory()->create([
+            'role' => 'employer',
+            'business_name' => 'Kedai Kopi Bahagia',
+            'name' => 'Budi Raharjo',
+        ]);
+        $jobseeker = User::factory()->create(['role' => 'jobseeker']);
+
+        $response = $this->actingAs($jobseeker)->get(route('chat.index', ['user' => $employer->id]));
+
+        $response->assertOk();
+        $response->assertSee('chatActionMenuDropdown');
+        $response->assertSee((string) $employer->id);
+    }
+
+    public function test_conversations_api_includes_employer_when_requested_with_param(): void
+    {
+        $employer = User::factory()->create([
+            'role' => 'employer',
+            'business_name' => 'Kedai Kopi Bahagia',
+            'name' => 'Budi Raharjo',
+        ]);
+        $jobseeker = User::factory()->create(['role' => 'jobseeker']);
+
+        // Without prior messages or applications, passing ?with={employer->id} brings employer into conversation list
+        $response = $this->actingAs($jobseeker)->getJson('/chat/conversations?with='.$employer->id);
+
+        $response->assertOk();
+        $response->assertJsonFragment([
+            'id' => $employer->id,
+            'business_name' => 'Kedai Kopi Bahagia',
+        ]);
+    }
 }

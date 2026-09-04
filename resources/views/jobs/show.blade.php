@@ -43,7 +43,7 @@
         </div>
     @endif
 
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] pb-24 lg:pb-0">
         <div class="space-y-5">
             <section class="overflow-hidden rounded-3xl bg-brand-950 text-white shadow-xl shadow-brand-950/10" data-reveal>
                 @if($job->cover_image)
@@ -808,6 +808,8 @@
 
 @push('scripts')
 <script>
+    window.currentJobEmployerId = {{ (int) $job->employer_id }};
+
     document.addEventListener('DOMContentLoaded', () => {
         const updateRelativeTimes = () => {
             document.querySelectorAll('[data-relative-time]').forEach(el => {

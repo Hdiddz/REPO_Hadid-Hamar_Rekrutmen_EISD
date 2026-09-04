@@ -429,6 +429,16 @@
     }
 
     function showChatContactList() {
+        if (pollMessagesTimer) {
+            clearInterval(pollMessagesTimer);
+            pollMessagesTimer = null;
+        }
+        activeUserId = null;
+        activeUserName = '';
+        cancelReply();
+        if (window.history.replaceState) {
+            window.history.replaceState({}, '', '{{ route("chat.index") }}');
+        }
         const leftPane = document.getElementById('chatLeftPane');
         const rightPane = document.getElementById('chatRightPane');
         if (leftPane) leftPane.classList.remove('hidden');
@@ -439,7 +449,7 @@
     }
 
     async function selectConversation(userId, name, roleLabel, initials) {
-        activeUserId = userId;
+        activeUserId = Number(userId);
         activeUserName = name;
         cancelReply();
 
@@ -467,7 +477,9 @@
         const input = document.getElementById('chatInput');
         const sendBtn = document.getElementById('chatSendBtn');
         const actionMenuBtn = document.getElementById('chatActionMenuBtn');
-        if (avatar) avatar.textContent = initials || name.substring(0, 2).toUpperCase();
+        const actionMenuDropdown = document.getElementById('chatActionMenuDropdown');
+
+        if (avatar) avatar.textContent = initials || (name ? name.substring(0, 2).toUpperCase() : 'KL');
         if (nameEl) nameEl.textContent = name;
         if (badge) {
             badge.textContent = roleLabel;
@@ -486,7 +498,9 @@
         if (input) {
             input.disabled = false;
             input.placeholder = `Tulis pesan ke ${name}...`;
-            input.focus();
+            if (window.innerWidth >= 1024) {
+                input.focus();
+            }
         }
         if (sendBtn) sendBtn.disabled = false;
 
@@ -520,7 +534,7 @@
                 return `
                     <div data-msg-id="${msg.id}" data-msg-deleted="true" class="relative flex items-start gap-1.5 sm:gap-2 max-w-xl">
                         <div class="w-8 h-8 rounded-xl bg-teal-700 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5 opacity-60">
-                            ${escapeHtml(otherUser.initials)}
+                            ${escapeHtml(otherUser?.initials || 'KL')}
                         </div>
                         <div class="bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-2xs text-xs space-y-1 text-left min-w-[90px] italic flex items-center gap-1.5">
                             <span class="material-symbols-outlined text-[15px] opacity-60 not-italic">block</span>
@@ -598,7 +612,7 @@
             return `
                 <div data-msg-id="${msg.id}" class="group relative flex items-start gap-1.5 sm:gap-2 max-w-xl">
                     <div class="w-8 h-8 rounded-xl bg-teal-700 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
-                        ${escapeHtml(otherUser.initials)}
+                        ${escapeHtml(otherUser?.initials || 'KL')}
                     </div>
                     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-sm p-3 sm:p-3.5 shadow-2xs text-xs space-y-1 text-left min-w-[90px]">
                         ${replyHtml}
@@ -657,6 +671,43 @@
             currentInterviewInvitation = data.interview_invitation || null;
             currentProfile = data.profile || null;
             currentOtherUser = data.user || null;
+
+            // Handle Contact Details Header Update if loaded dynamically
+            if (data.user) {
+                const nameEl = document.getElementById('activeChatName');
+                const badge = document.getElementById('activeChatRoleBadge');
+                const avatar = document.getElementById('activeChatAvatar');
+                const input = document.getElementById('chatInput');
+                const displayName = data.user.business_name || data.user.name;
+
+                if (nameEl && (!activeUserName || activeUserName === 'Kontak Obrolan')) {
+                    activeUserName = displayName;
+                    nameEl.textContent = displayName;
+                    if (input) input.placeholder = `Tulis pesan ke ${displayName}...`;
+                }
+                if (badge && data.user.role_label) {
+                    badge.textContent = data.user.role_label;
+                    badge.classList.remove('hidden');
+                }
+                if (avatar && (avatar.textContent === '--' || avatar.textContent === 'KL')) {
+                    avatar.textContent = data.user.initials || displayName.substring(0, 2).toUpperCase();
+                }
+
+                if (!allConversations.some(c => c.id === data.user.id)) {
+                    allConversations.unshift({
+                        id: data.user.id,
+                        name: data.user.name,
+                        business_name: data.user.business_name,
+                        role: data.user.role,
+                        role_label: data.user.role_label,
+                        initials: data.user.initials,
+                        last_message: null,
+                        last_time: null,
+                        unread_count: 0
+                    });
+                    renderConversations(allConversations);
+                }
+            }
 
             // Handle Profile Button in Chat Header
             const profileBtn = document.getElementById('chatViewProfileBtn');

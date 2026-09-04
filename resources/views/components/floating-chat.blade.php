@@ -268,7 +268,8 @@
         if (!container) return;
 
         try {
-            const res = await fetch('/chat/conversations', {
+            const employerParam = window.currentJobEmployerId ? `?with=${window.currentJobEmployerId}` : '';
+            const res = await fetch(`/chat/conversations${employerParam}`, {
                 headers: { 'Accept': 'application/json' }
             });
             if (!res.ok) return;
