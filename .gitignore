@@ -6,12 +6,23 @@
 .phpactor.json
 .phpunit.result.cache
 /.codex
+/.agents
+/.ai
+/.amp
+/.claude
 /.cursor/
 /.idea
 /.nova
 /.phpunit.cache
 /.vscode
 /.zed
+/Frontend STITCH
+/scratch
+/AGENTS.md
+/CLAUDE.md
+/.mcp.json
+/boost.json
+/opencode.json
 /auth.json
 /node_modules
 /public/build
