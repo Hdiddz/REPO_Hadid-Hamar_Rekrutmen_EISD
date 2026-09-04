@@ -37,7 +37,7 @@
         <p class="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">Belum punya akun? <a href="{{ route('register') }}" class="font-bold text-brand-700 hover:text-brand-900 hover:underline dark:text-brand-300">Daftar gratis</a></p>
     </div>
 
-    <x-auth-loading-overlay title="Masuk ke Dashboard..." subtitle="Memverifikasi kredensial dan menyiapkan sesi akun Anda." />
+    <x-auth-loading-overlay title="Sedang masuk..." />
 @endsection
 
 @push('scripts')
@@ -125,6 +125,7 @@
                     authLoadingOverlay.classList.remove('hidden');
                     authLoadingOverlay.classList.add('flex');
                 }
+
             });
 
             window.addEventListener('pageshow', (event) => {

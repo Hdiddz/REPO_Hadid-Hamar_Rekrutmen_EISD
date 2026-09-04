@@ -10,7 +10,7 @@
             <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Pilih pencari kerja untuk melamar atau mitra UMKM untuk membuka lowongan.</p>
         </div>
 
-        <form action="{{ route('register') }}" method="POST" class="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-40px_rgba(15,23,42,0.45)] dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+        <form id="registerForm" action="{{ route('register') }}" method="POST" class="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-40px_rgba(15,23,42,0.45)] dark:border-slate-800 dark:bg-slate-900 sm:p-7">
             @csrf
             <fieldset>
                 <legend class="mb-2 text-sm font-bold text-slate-800 dark:text-slate-100">Daftar sebagai</legend>
@@ -64,7 +64,7 @@
         <p class="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">Sudah punya akun? <a href="{{ route('login') }}" class="font-bold text-brand-700 hover:text-brand-900 hover:underline dark:text-brand-300">Masuk</a></p>
     </div>
 
-    <x-auth-loading-overlay id="registerLoadingOverlay" title="Menyiapkan Akun Anda..." subtitle="Mendaftarkan peran dan menyiapkan dashboard kerja Anda." />
+    <x-auth-loading-overlay id="registerLoadingOverlay" title="Menyiapkan akun..." />
 @endsection
 
 @push('scripts')
