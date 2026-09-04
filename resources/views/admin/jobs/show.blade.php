@@ -76,10 +76,10 @@
                         {{ $job->isClosedByAdmin() ? 'Ditutup Admin' : ($job->status === 'open' ? 'Dibuka' : 'Ditutup') }}
                     </span>
                     @if($job->reports_count > 0)
-                        <span class="portal-badge bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold">
-                            <span class="material-symbols-outlined text-[13px] mr-1">flag</span>
-                            {{ $job->reports_count }} Laporan Masuk
-                        </span>
+                        <a href="{{ route('admin.reports.index', ['q' => $job->title, 'status' => 'all']) }}" class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition" title="Lihat laporan masuk">
+                            <span class="material-symbols-outlined text-[15px]">flag</span>
+                            <span>{{ $job->reports_count }} laporan masuk</span>
+                        </a>
                     @endif
                 </div>
 

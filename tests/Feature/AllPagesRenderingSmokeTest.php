@@ -27,12 +27,20 @@ class AllPagesRenderingSmokeTest extends TestCase
         $this->get(route('jobs.show', $job))->assertOk();
         $this->get(route('login'))->assertOk();
         $this->get(route('register'))->assertOk();
+
+        // Protected redirects for guests
+        $this->get('/pesan')->assertRedirect(route('login'));
+        $this->get('/lamaran')->assertRedirect(route('login'));
     }
 
     public function test_home_page_featured_jobs_carousel_renders_slides(): void
     {
         $employer = User::factory()->employer()->create(['business_name' => 'Mitra Usaha']);
-        Job::factory()->create(['employer_id' => $employer->id, 'title' => 'Admin Penjualan']);
+        Job::factory()->create([
+            'employer_id' => $employer->id,
+            'title' => 'Admin Penjualan',
+            'cover_image' => 'jobs/covers/sample.jpg',
+        ]);
         Job::factory()->create(['employer_id' => $employer->id, 'title' => 'Operator Percetakan']);
 
         $response = $this->get(route('home'))->assertOk();
@@ -40,6 +48,8 @@ class AllPagesRenderingSmokeTest extends TestCase
         $response->assertSee('transition-opacity');
         $response->assertSee('Admin Penjualan');
         $response->assertSee('Operator Percetakan');
+        $response->assertSee('jobs/covers/sample.jpg');
+        $response->assertSee('bg-brand-950/80');
         $response->assertDontSee('featuredCarouselProgress');
         $response->assertDontSee('1 / 2');
     }
@@ -57,7 +67,10 @@ class AllPagesRenderingSmokeTest extends TestCase
         $this->actingAs($jobseeker)->get(route('profile.index'))->assertOk();
         $this->actingAs($jobseeker)->get(route('settings.index'))->assertOk();
         $this->actingAs($jobseeker)->get(route('applications.index'))->assertOk();
+        $this->actingAs($jobseeker)->get(route('reports.index'))->assertOk();
+        $this->actingAs($jobseeker)->get(route('notifications.index'))->assertOk();
         $this->actingAs($jobseeker)->get(route('chat.index'))->assertOk();
+        $this->actingAs($jobseeker)->get(route('chat.conversations'))->assertOk();
         $this->actingAs($jobseeker)->get(route('jobs.show', $job))->assertOk();
     }
 
@@ -75,8 +88,12 @@ class AllPagesRenderingSmokeTest extends TestCase
         $this->actingAs($employer)->get(route('employer.jobs.create'))->assertOk();
         $this->actingAs($employer)->get(route('employer.jobs.edit', $job))->assertOk();
         $this->actingAs($employer)->get(route('employer.applications.index'))->assertOk();
+        $this->actingAs($employer)->get(route('profile.index'))->assertOk();
+        $this->actingAs($employer)->get(route('reports.index'))->assertOk();
+        $this->actingAs($employer)->get(route('notifications.index'))->assertOk();
         $this->actingAs($employer)->get(route('settings.index'))->assertOk();
         $this->actingAs($employer)->get(route('chat.index'))->assertOk();
+        $this->actingAs($employer)->get(route('chat.conversations'))->assertOk();
         $this->actingAs($employer)->get(route('jobs.show', $job))->assertOk();
     }
 
@@ -110,7 +127,10 @@ class AllPagesRenderingSmokeTest extends TestCase
         $this->actingAs($admin)->get(route('admin.reports.index'))->assertOk();
         $this->actingAs($admin)->get(route('admin.reports.show', $report))->assertOk();
         $this->actingAs($admin)->get(route('admin.master'))->assertOk();
+        $this->actingAs($admin)->get(route('profile.index'))->assertOk();
+        $this->actingAs($admin)->get(route('notifications.index'))->assertOk();
         $this->actingAs($admin)->get(route('settings.index'))->assertOk();
         $this->actingAs($admin)->get(route('chat.index'))->assertOk();
+        $this->actingAs($admin)->get(route('chat.conversations'))->assertOk();
     }
 }

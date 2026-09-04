@@ -255,8 +255,12 @@
             }
 
             const actionBtn = document.getElementById('notifDetailActionBtn');
-            if (d.url) {
-                actionBtn.href = d.url;
+            let targetUrl = d.url;
+            if (d.job_id && (d.type === 'employer_action' || d.type === 'action_taken' || d.type === 'reviewed' || d.type === 'dismissed' || (d.status && String(d.status).startsWith('report_')))) {
+                targetUrl = `/lowongan/${d.job_id}`;
+            }
+            if (targetUrl) {
+                actionBtn.href = targetUrl;
                 actionBtn.classList.remove('hidden');
             } else {
                 actionBtn.classList.add('hidden');

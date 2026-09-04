@@ -41,6 +41,7 @@ class JobReportStatusUpdatedNotification extends Notification
         $icon = match ($this->type) {
             'reviewed' => 'visibility',
             'action_taken' => 'verified',
+            'resolved' => 'check_circle',
             'employer_action' => 'gavel',
             'dismissed' => 'info',
             default => 'notifications',
@@ -48,7 +49,7 @@ class JobReportStatusUpdatedNotification extends Notification
 
         $color = match ($this->type) {
             'reviewed' => 'amber',
-            'action_taken' => 'emerald',
+            'action_taken', 'resolved' => 'emerald',
             'employer_action' => 'rose',
             'dismissed' => 'slate',
             default => 'brand',

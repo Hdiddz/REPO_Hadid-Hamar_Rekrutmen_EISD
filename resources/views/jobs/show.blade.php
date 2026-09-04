@@ -43,7 +43,69 @@
         </div>
     @endif
 
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] pb-24 lg:pb-0">
+    @if($job->status !== 'open')
+        @if($job->isClosedByAdmin())
+            <div class="mb-6 rounded-3xl bg-rose-500/10 border border-rose-500/30 p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 text-rose-950 dark:text-rose-100 shadow-sm" data-reveal>
+                <div class="flex items-start gap-3.5">
+                    <div class="grid h-12 w-12 place-items-center rounded-2xl bg-rose-600 text-white shrink-0 shadow-sm">
+                        <span class="material-symbols-outlined text-[26px]">gavel</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="font-extrabold text-base sm:text-lg tracking-tight">Lowongan Dinonaktifkan oleh Tim Pengawas</h3>
+                            <span class="rounded-lg bg-rose-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-xs">Tindakan Resmi Diterapkan</span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-rose-900/90 dark:text-rose-200 mt-1 leading-relaxed">
+                            Lowongan ini sedang dinonaktifkan oleh Tim Pengawas / Administrator KerjaLokal sehubungan dengan pengawasan kepatuhan etis atau tindak lanjut pengaduan.
+                        </p>
+                        @if($job->closed_until)
+                            <p class="text-xs font-semibold text-rose-800 dark:text-rose-300 mt-1.5 flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[16px]">schedule</span>
+                                Penonaktifan berlaku hingga: <strong>{{ $job->closed_until->translatedFormat('d F Y, H:i') }} WIB</strong>
+                            </p>
+                        @endif
+                        @if($job->closed_reason)
+                            <div class="mt-2.5 rounded-xl bg-rose-100/70 dark:bg-rose-950/60 p-3 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-900 dark:text-rose-200">
+                                <strong class="font-bold block mb-0.5 text-rose-950 dark:text-rose-100">Keterangan / Catatan Pengawas:</strong>
+                                <p class="italic">"{{ $job->closed_reason }}"</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                @auth
+                    @if(auth()->user()->hasRole('admin'))
+                        <a href="{{ route('admin.jobs.show', $job) }}" class="portal-button-primary !bg-rose-700 hover:!bg-rose-800 text-xs !py-2.5 !px-3.5 gap-1.5 shrink-0 w-fit">
+                            <span class="material-symbols-outlined text-[16px]">admin_panel_settings</span>
+                            Panel Pengawas
+                        </a>
+                    @endif
+                @endauth
+            </div>
+        @else
+            <div class="mb-6 rounded-3xl bg-amber-500/10 border border-amber-500/30 p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 text-amber-950 dark:text-amber-100 shadow-sm" data-reveal>
+                <div class="flex items-start gap-3.5">
+                    <div class="grid h-12 w-12 place-items-center rounded-2xl bg-amber-600 text-white shrink-0 shadow-sm">
+                        <span class="material-symbols-outlined text-[26px]">lock</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="font-extrabold text-base sm:text-lg tracking-tight">Lowongan Ini Telah Ditutup</h3>
+                            <span class="rounded-lg bg-amber-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-xs">Ditutup</span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-900/90 dark:text-amber-200 mt-1 leading-relaxed">
+                            Mitra UMKM saat ini tidak lagi menerima pendaftaran atau lamaran baru untuk posisi pekerjaan ini.
+                        </p>
+                        @if($job->closed_reason)
+                            <div class="mt-2.5 rounded-xl bg-amber-100/70 dark:bg-amber-950/60 p-3 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200">
+                                <strong class="font-bold block mb-0.5 text-amber-950 dark:text-amber-100">Keterangan:</strong>
+                                <p class="italic">"{{ $job->closed_reason }}"</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endif
         <div class="space-y-5">
             <section class="overflow-hidden rounded-3xl bg-brand-950 text-white shadow-xl shadow-brand-950/10" data-reveal>
                 @if($job->cover_image)
@@ -60,7 +122,22 @@
                 <div class="p-5 sm:p-9">
                     <div class="flex flex-wrap items-center gap-2">
                         <span class="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-brand-100">{{ $job->category->name }}</span>
-                        <span class="rounded-lg bg-emerald-400/15 px-2.5 py-1 text-xs font-bold text-emerald-200">{{ $job->status === 'open' ? 'Masih dibuka' : 'Ditutup' }}</span>
+                        @if($job->isClosedByAdmin())
+                            <span class="inline-flex items-center gap-1 rounded-lg bg-rose-500/25 border border-rose-400/40 px-2.5 py-1 text-xs font-bold text-rose-200">
+                                <span class="material-symbols-outlined text-[14px]">gavel</span>
+                                Ditangguhkan Pengawas
+                            </span>
+                        @elseif($job->status === 'closed')
+                            <span class="inline-flex items-center gap-1 rounded-lg bg-amber-400/20 border border-amber-300/30 px-2.5 py-1 text-xs font-bold text-amber-200">
+                                <span class="material-symbols-outlined text-[14px]">lock</span>
+                                Ditutup
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 rounded-lg bg-emerald-400/15 px-2.5 py-1 text-xs font-bold text-emerald-200">
+                                <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                Masih dibuka
+                            </span>
+                        @endif
                     </div>
                     <h1 class="mt-4 sm:mt-6 text-2xl sm:text-4xl font-bold tracking-tight">{{ $job->title }}</h1>
                     <p class="mt-1.5 sm:mt-2 text-sm sm:text-base text-brand-100">{{ $job->employer->business_name }}</p>
@@ -185,7 +262,45 @@
         <aside id="job-apply-section" class="lg:sticky lg:top-24 lg:self-start">
             <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-6" data-reveal>
                 @guest
-                    <div class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300"><span class="material-symbols-outlined">login</span></div><h2 class="mt-5 text-xl font-bold">Masuk untuk melamar</h2><p class="mt-2 text-sm leading-6 text-slate-500">Buat akun pencari kerja untuk mengirim resume dan memantau status seleksi.</p><a href="{{ route('login') }}" class="portal-button-primary mt-6 w-full">Masuk</a><a href="{{ route('register') }}" class="portal-button-secondary mt-2 w-full">Daftar</a>
+                    @if($job->status !== 'open')
+                        <div class="grid h-12 w-12 place-items-center rounded-2xl {{ $job->isClosedByAdmin() ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">
+                            <span class="material-symbols-outlined text-[24px]">{{ $job->isClosedByAdmin() ? 'gavel' : 'lock' }}</span>
+                        </div>
+                        <h2 class="mt-4 text-xl font-bold text-slate-950 dark:text-white">
+                            {{ $job->isClosedByAdmin() ? 'Lowongan Dinonaktifkan' : 'Lowongan Ditutup' }}
+                        </h2>
+                        <div class="mt-3 p-3.5 rounded-2xl border {{ $job->isClosedByAdmin() ? 'bg-rose-50/60 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60' : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200/80 dark:border-slate-800' }} space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 dark:text-slate-400">Status Lowongan:</span>
+                                @if($job->isClosedByAdmin())
+                                    <span class="inline-flex items-center gap-1 font-bold text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/80 px-2.5 py-0.5 rounded-lg border border-rose-200 dark:border-rose-900">
+                                        <span class="material-symbols-outlined text-[14px]">gavel</span>
+                                        Ditangguhkan Pengawas
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                                        <span class="material-symbols-outlined text-[14px]">lock</span>
+                                        Sedang Ditutup
+                                    </span>
+                                @endif
+                            </div>
+                            @if($job->closed_until)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Hingga:</span>
+                                    <span class="font-semibold text-rose-800 dark:text-rose-300">{{ $job->closed_until->translatedFormat('d M Y, H:i') }} WIB</span>
+                                </div>
+                            @endif
+                        </div>
+                        <p class="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                            {{ $job->isClosedByAdmin() ? 'Lowongan ini sedang tidak aktif karena tindakan pengawasan resmi.' : 'Mitra UMKM saat ini tidak menerima lamaran baru untuk lowongan ini.' }}
+                        </p>
+                        <a href="{{ route('jobs.index') }}" class="portal-button-primary mt-5 w-full justify-center gap-2">
+                            <span class="material-symbols-outlined text-[18px]">search</span>
+                            Cari Lowongan Lain
+                        </a>
+                    @else
+                        <div class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300"><span class="material-symbols-outlined">login</span></div><h2 class="mt-5 text-xl font-bold">Masuk untuk melamar</h2><p class="mt-2 text-sm leading-6 text-slate-500">Buat akun pencari kerja untuk mengirim resume dan memantau status seleksi.</p><a href="{{ route('login') }}" class="portal-button-primary mt-6 w-full">Masuk</a><a href="{{ route('register') }}" class="portal-button-secondary mt-2 w-full">Daftar</a>
+                    @endif
                 @elseif(auth()->user()->hasRole('jobseeker'))
                     @if($hasApplied)
                         @if($application?->status === 'resigned' || $application?->resignation_status === 'approved')
@@ -504,17 +619,57 @@
                             <button class="portal-button-primary w-full"><span class="material-symbols-outlined text-[18px]">send</span>Kirim lamaran</button>
                         </form>
                     @else
-                        <div class="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                            <span class="material-symbols-outlined text-[24px]">lock</span>
+                        <div class="grid h-12 w-12 place-items-center rounded-2xl {{ $job->isClosedByAdmin() ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">
+                            <span class="material-symbols-outlined text-[24px]">{{ $job->isClosedByAdmin() ? 'gavel' : 'lock' }}</span>
                         </div>
-                        <h2 class="mt-4 text-xl font-bold">Lowongan Ditutup</h2>
-                        <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                        <h2 class="mt-4 text-xl font-bold text-slate-950 dark:text-white">
+                            {{ $job->isClosedByAdmin() ? 'Lowongan Dinonaktifkan Pengawas' : 'Lowongan Ditutup' }}
+                        </h2>
+                        <div class="mt-3 p-3.5 rounded-2xl border {{ $job->isClosedByAdmin() ? 'bg-rose-50/60 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60' : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200/80 dark:border-slate-800' }} space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 dark:text-slate-400">Status Lowongan:</span>
+                                @if($job->isClosedByAdmin())
+                                    <span class="inline-flex items-center gap-1 font-bold text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/80 px-2.5 py-0.5 rounded-lg border border-rose-200 dark:border-rose-900">
+                                        <span class="material-symbols-outlined text-[14px]">gavel</span>
+                                        Ditangguhkan Pengawas
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                                        <span class="material-symbols-outlined text-[14px]">lock</span>
+                                        Sedang Ditutup
+                                    </span>
+                                @endif
+                            </div>
+                            @if($job->closed_until)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 dark:text-slate-400">Hingga:</span>
+                                    <span class="font-semibold text-rose-800 dark:text-rose-300">{{ $job->closed_until->translatedFormat('d M Y, H:i') }} WIB</span>
+                                </div>
+                            @endif
+                        </div>
+                        <p class="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                             @if($job->isClosedByAdmin())
-                                Lowongan ini dinonaktifkan oleh Administrator. {{ $job->closed_reason ? 'Keterangan: "'.$job->closed_reason.'"' : '' }}
+                                Lowongan ini dinonaktifkan oleh Administrator KerjaLokal sehubungan dengan pengawasan kepatuhan atau tindak lanjut pengaduan.
                             @else
                                 Mitra saat ini tidak lagi menerima lamaran baru untuk posisi pekerjaan ini.
                             @endif
                         </p>
+                        @if($job->closed_reason)
+                            <div class="mt-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 p-3 text-xs text-slate-600 dark:text-slate-300">
+                                <span class="font-bold block mb-0.5 text-slate-800 dark:text-slate-200">Keterangan:</span>
+                                <p class="italic">"{{ $job->closed_reason }}"</p>
+                            </div>
+                        @endif
+                        <div class="mt-5 space-y-2">
+                            <a href="{{ route('jobs.index') }}" class="portal-button-primary w-full justify-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">search</span>
+                                Cari Lowongan Lain
+                            </a>
+                            <a href="{{ route('reports.index') }}" class="portal-button-secondary w-full justify-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">flag</span>
+                                Riwayat Laporan Saya
+                            </a>
+                        </div>
                     @endif
                 @else
                     @if(auth()->user()->id === $job->employer_id)

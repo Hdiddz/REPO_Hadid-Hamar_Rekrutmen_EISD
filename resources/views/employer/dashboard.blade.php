@@ -27,7 +27,26 @@
         <div class="divide-y divide-slate-100 dark:divide-slate-800">
             @forelse($jobs as $job)
                 <article class="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
-                    <div><div class="flex flex-wrap items-center gap-2"><span class="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ $job->category->name }}</span><span class="rounded-md px-2 py-1 text-[11px] font-bold {{ $job->status === 'open' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">{{ $job->status === 'open' ? 'Dibuka' : 'Ditutup' }}</span></div><h3 class="mt-2 text-base font-bold text-slate-950 dark:text-white">{{ $job->title }}</h3><p class="mt-1 text-xs text-slate-500">{{ $job->location }} · Rp {{ number_format($job->salary_amount, 0, ',', '.') }} / {{ $job->salary_type === 'monthly' ? 'bulan' : 'hari' }} · {{ $job->applications_count }} pelamar</p></div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ $job->category->name }}</span>
+                            @if($job->isClosedByAdmin())
+                                <span class="inline-flex items-center gap-1 rounded-md bg-rose-50 border border-rose-200 px-2 py-1 text-[11px] font-bold text-rose-700 dark:bg-rose-950/40 dark:border-rose-900/60 dark:text-rose-300">
+                                    <span class="material-symbols-outlined text-[13px]">gavel</span>
+                                    Ditutup Pengawas
+                                </span>
+                            @else
+                                <span class="rounded-md px-2 py-1 text-[11px] font-bold {{ $job->status === 'open' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">{{ $job->status === 'open' ? 'Dibuka' : 'Ditutup' }}</span>
+                            @endif
+                        </div>
+                        <h3 class="mt-2 text-base font-bold text-slate-950 dark:text-white">{{ $job->title }}</h3>
+                        <p class="mt-1 text-xs text-slate-500">{{ $job->location }} · Rp {{ number_format($job->salary_amount, 0, ',', '.') }} / {{ $job->salary_type === 'monthly' ? 'bulan' : 'hari' }} · {{ $job->applications_count }} pelamar</p>
+                        @if($job->isClosedByAdmin() && $job->closed_reason)
+                            <p class="mt-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium line-clamp-1" title="{{ $job->closed_reason }}">
+                                <span class="font-bold">Catatan Pengawas:</span> {{ $job->closed_reason }}
+                            </p>
+                        @endif
+                    </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <a href="{{ route('jobs.show', $job) }}" class="portal-icon-button" title="Lihat detail lowongan">
                             <span class="material-symbols-outlined text-[18px]">visibility</span>

@@ -26,7 +26,7 @@ class HomeController extends Controller
         }
 
         $featuredJobs = Job::query()
-            ->select(['id', 'employer_id', 'category_id', 'title', 'location', 'salary_amount', 'salary_type', 'created_at'])
+            ->select(['id', 'employer_id', 'category_id', 'title', 'cover_image', 'location', 'salary_amount', 'salary_type', 'created_at'])
             ->where('status', 'open')
             ->with([
                 'category:id,name,slug',

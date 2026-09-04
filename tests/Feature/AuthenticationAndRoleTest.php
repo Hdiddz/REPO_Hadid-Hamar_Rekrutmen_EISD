@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\AuthController;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -231,5 +232,110 @@ class AuthenticationAndRoleTest extends TestCase
         $response->assertDontSee('atau hadids');
         $response->assertDontSee('hadids');
         $response->assertSee('placeholder="nama@email.com"', false);
+    }
+
+    public function test_login_with_remember_me_sets_saved_device_cookie(): void
+    {
+        $user = User::factory()->jobseeker()->create([
+            'email' => 'jobseeker@example.test',
+            'password' => Hash::make('REMOVED_CREDENTIAL'),
+        ]);
+
+        $response = $this->post(route('login'), [
+            'email' => 'jobseeker@example.test',
+            'password' => 'REMOVED_CREDENTIAL',
+            'remember' => '1',
+        ]);
+
+        $response->assertRedirect(route('jobs.index'));
+        $response->assertCookie(AuthController::SAVED_DEVICE_COOKIE);
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_logout_redirects_to_login_page_with_status_message(): void
+    {
+        $user = User::factory()->jobseeker()->create();
+
+        $response = $this->actingAs($user)->post(route('logout'));
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('status', 'Anda telah berhasil keluar dari akun.');
+        $this->assertGuest();
+    }
+
+    public function test_login_page_displays_saved_profile_when_cookie_is_present(): void
+    {
+        $user = User::factory()->jobseeker()->create([
+            'name' => 'Hadid Hamar',
+            'email' => 'hadid@example.test',
+            'password' => Hash::make('REMOVED_CREDENTIAL'),
+        ]);
+
+        $payload = json_encode([
+            'id' => $user->id,
+            'hash' => hash_hmac('sha256', $user->id.'|'.$user->password, config('app.key')),
+        ]);
+
+        $response = $this->withCookie(AuthController::SAVED_DEVICE_COOKIE, $payload)
+            ->get(route('login'));
+
+        $response->assertOk();
+        $response->assertSee('Selamat Datang Kembali');
+        $response->assertSee('Hadid Hamar');
+        $response->assertSee('Masuk ke dashboard');
+        $response->assertSee('Keluar Akun');
+        $response->assertSee('Gunakan akun lain');
+    }
+
+    public function test_quick_login_successfully_logs_in_user_to_dashboard(): void
+    {
+        $user = User::factory()->employer()->create([
+            'name' => 'Mitra Berkah',
+            'email' => 'mitra@example.test',
+            'password' => Hash::make('REMOVED_CREDENTIAL'),
+        ]);
+
+        $payload = json_encode([
+            'id' => $user->id,
+            'hash' => hash_hmac('sha256', $user->id.'|'.$user->password, config('app.key')),
+        ]);
+
+        $response = $this->withCookie(AuthController::SAVED_DEVICE_COOKIE, $payload)
+            ->post(route('login.quick'));
+
+        $response->assertRedirect(route('employer.dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_forget_device_clears_saved_cookie_and_redirects_to_login(): void
+    {
+        $response = $this->post(route('login.forget_device'));
+
+        $response->assertRedirect(route('login'));
+        $response->assertCookieExpired(AuthController::SAVED_DEVICE_COOKIE);
+        $response->assertSessionHas('status', 'Akun telah berhasil dikeluarkan dari perangkat ini.');
+    }
+
+    public function test_banned_user_cannot_quick_login(): void
+    {
+        $bannedUser = User::factory()->jobseeker()->create([
+            'name' => 'Pelanggar',
+            'banned_at' => now()->subDay(),
+            'banned_until' => now()->addDays(3),
+            'ban_reason' => 'Pelanggaran ketentuan.',
+            'password' => Hash::make('REMOVED_CREDENTIAL'),
+        ]);
+
+        $payload = json_encode([
+            'id' => $bannedUser->id,
+            'hash' => hash_hmac('sha256', $bannedUser->id.'|'.$bannedUser->password, config('app.key')),
+        ]);
+
+        $response = $this->withCookie(AuthController::SAVED_DEVICE_COOKIE, $payload)
+            ->post(route('login.quick'));
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('account_banned');
+        $this->assertGuest();
     }
 }

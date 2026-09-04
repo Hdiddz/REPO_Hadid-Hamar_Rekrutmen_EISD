@@ -16,6 +16,21 @@
             </button>
         </form>
     @endif
+
+    @if($report->status !== 'resolved' && $report->status !== 'dismissed')
+        <button type="button" onclick="openResolveModal()" class="portal-action-btn-primary !bg-emerald-600 hover:!bg-emerald-700 !border-emerald-600 !px-2.5 sm:!px-3" title="Selesaikan laporan ini">
+            <span class="material-symbols-outlined text-[17px]">check_circle</span>
+            <span class="hidden sm:inline">Selesaikan Laporan</span>
+            <span class="sm:hidden">Selesai</span>
+        </button>
+    @endif
+
+    <button type="button" onclick="openDeleteModal()" class="portal-action-btn !text-rose-600 hover:!bg-rose-50 hover:!border-rose-300 dark:!text-rose-400 dark:hover:!bg-rose-950/40 !px-2.5 sm:!px-3" title="Hapus riwayat laporan ini dari panel admin">
+        <span class="material-symbols-outlined text-[17px]">delete_outline</span>
+        <span class="hidden sm:inline">Hapus Riwayat</span>
+        <span class="sm:hidden">Hapus</span>
+    </button>
+
     <a href="{{ $returnUrl ?? route('admin.reports.index') }}" 
        onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host) && !document.referrer.includes(window.location.pathname)) { history.back(); return false; }" 
        class="portal-action-btn !px-2.5 sm:!px-3" 
@@ -29,17 +44,38 @@
 
 @section('content')
     <!-- Status Header Banner -->
-    <div class="mb-6 rounded-2xl p-4 sm:p-5 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs {{ match($report->status) {'action_taken' => 'bg-rose-50/90 border-rose-200 text-rose-900 dark:bg-rose-950/40 dark:border-rose-900/50 dark:text-rose-200', 'dismissed' => 'bg-slate-100 border-slate-200 text-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200', default => 'bg-amber-50/90 border-amber-200 text-amber-950 dark:bg-amber-950/40 dark:border-amber-900/50 dark:text-amber-200'} }}">
+    <div class="mb-6 rounded-2xl p-4 sm:p-5 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs {{ match($report->status) {
+        'action_taken' => 'bg-rose-50/90 border-rose-200 text-rose-900 dark:bg-rose-950/40 dark:border-rose-900/50 dark:text-rose-200',
+        'resolved' => 'bg-emerald-50/90 border-emerald-200 text-emerald-950 dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-200',
+        'dismissed' => 'bg-slate-100 border-slate-200 text-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200',
+        default => 'bg-amber-50/90 border-amber-200 text-amber-950 dark:bg-amber-950/40 dark:border-amber-900/50 dark:text-amber-200'
+    } }}">
         <div class="flex items-center gap-3.5 min-w-0">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs {{ match($report->status) {'action_taken' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300', 'dismissed' => 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300', default => 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'} }}">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs {{ match($report->status) {
+                'action_taken' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300',
+                'resolved' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300',
+                'dismissed' => 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
+                default => 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'
+            } }}">
                 <span class="material-symbols-outlined text-[22px]">
-                    {{ match($report->status) {'action_taken' => 'gavel', 'dismissed' => 'check_circle', default => 'policy'} }}
+                    {{ match($report->status) {
+                        'action_taken' => 'gavel',
+                        'resolved' => 'check_circle',
+                        'dismissed' => 'check_circle',
+                        default => 'policy'
+                    } }}
                 </span>
             </div>
             <div class="min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
                     <strong class="text-sm sm:text-base font-bold">
-                        Status: {{ match($report->status) {'action_taken' => 'Sanksi Telah Diberikan', 'dismissed' => 'Laporan Ditolak / Tidak Ditemukan Pelanggaran', 'reviewed' => 'Sedang Ditinjau Administrator', default => 'Menunggu Tindakan'} }}
+                        Status: {{ match($report->status) {
+                            'action_taken' => 'Sanksi Telah Diberikan',
+                            'resolved' => 'Laporan Telah Selesai Ditangani',
+                            'dismissed' => 'Laporan Ditolak / Tidak Ditemukan Pelanggaran',
+                            'reviewed' => 'Sedang Ditinjau Administrator',
+                            default => 'Menunggu Tindakan'
+                        } }}
                     </strong>
                     <span class="font-mono text-xs opacity-75 bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded-md font-semibold">
                         #REP-{{ str_pad($report->id, 5, '0', STR_PAD_LEFT) }}
@@ -131,6 +167,7 @@
                             <option value="ban_employer">2. Bekukan Akun Mitra UMKM (Ban Akun &amp; Tutup Semua Lowongan)</option>
                             <option value="delete_job">3. Hapus Lowongan Permanen dari Sistem</option>
                             <option value="dismiss">4. Tolak Laporan (Tidak Ada Pelanggaran Terbukti)</option>
+                            <option value="resolve">5. Selesaikan Laporan (Tandai Penanganan Tuntas)</option>
                         </select>
                     </div>
 
@@ -425,10 +462,111 @@
         </div>
 
     </div>
+
+    <!-- Modal: Selesaikan Laporan -->
+    <div id="resolveModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
+            <div class="flex items-center gap-3 text-emerald-600 mb-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+                    <span class="material-symbols-outlined text-2xl">check_circle</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-base text-slate-950 dark:text-white">Selesaikan Laporan</h3>
+                    <p class="text-xs text-slate-500">Tandai pengaduan ini telah tuntas ditangani</p>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                Laporan untuk lowongan <strong class="text-slate-900 dark:text-white">"{{ $report->job?->title ?? 'Lowongan Ini' }}"</strong> akan ditandai berstatus <strong>Selesai (Resolved)</strong> dan dikeluarkan dari daftar laporan aktif.
+            </p>
+
+            <form method="POST" action="{{ route('admin.reports.resolve', $report) }}">
+                @csrf
+                @method('PATCH')
+                
+                <div class="mb-4">
+                    <label for="resolve_admin_notes" class="portal-label">Catatan Penyelesaian (Opsional)</label>
+                    <textarea id="resolve_admin_notes" name="admin_notes" rows="2" placeholder="Tuliskan keterangan penutupan untuk pelapor..." class="portal-input text-xs"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeResolveModal()" class="portal-button-secondary !py-2 !px-4 text-xs">Batal</button>
+                    <button type="submit" class="portal-button-primary !py-2 !px-4 text-xs !bg-emerald-600 hover:!bg-emerald-700 !border-emerald-600">
+                        <span class="material-symbols-outlined text-[16px]">task_alt</span>
+                        <span>Ya, Selesaikan Laporan</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Hapus Riwayat Laporan -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-150">
+            <div class="flex items-center gap-3 text-rose-600 mb-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center border border-rose-200 dark:border-rose-800">
+                    <span class="material-symbols-outlined text-2xl">delete</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-base text-slate-950 dark:text-white">Hapus Riwayat Laporan</h3>
+                    <p class="text-xs text-slate-500">Hapus pengaduan dari tampilan panel admin</p>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                Apakah Anda yakin ingin menghapus riwayat laporan ini dari panel admin? Riwayat ini tidak akan ditampilkan lagi di daftar laporan admin.
+            </p>
+
+            <form method="POST" action="{{ route('admin.reports.destroy', $report) }}">
+                @csrf
+                @method('DELETE')
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeDeleteModal()" class="portal-button-secondary !py-2 !px-4 text-xs">Batal</button>
+                    <button type="submit" class="portal-button-primary !py-2 !px-4 text-xs !bg-rose-600 hover:!bg-rose-700 !border-rose-600">
+                        <span class="material-symbols-outlined text-[16px]">delete</span>
+                        <span>Ya, Hapus Riwayat</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
+    function openResolveModal() {
+        const modal = document.getElementById('resolveModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    function closeResolveModal() {
+        const modal = document.getElementById('resolveModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    function openDeleteModal() {
+        const modal = document.getElementById('deleteModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
     function handleActionTypeChange(val) {
         const closeOpts = document.getElementById('closeJobOptions');
         const banOpts = document.getElementById('banEmployerOptions');

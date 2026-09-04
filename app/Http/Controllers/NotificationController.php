@@ -43,6 +43,12 @@ class NotificationController extends Controller
         $notification->markAsRead();
 
         $targetUrl = $notification->data['url'] ?? route('home');
+        if (! empty($notification->data['job_id']) && (
+            in_array($notification->data['type'] ?? '', ['employer_action', 'action_taken', 'reviewed', 'dismissed'], true) ||
+            str_starts_with($notification->data['status'] ?? '', 'report_')
+        )) {
+            $targetUrl = route('jobs.show', $notification->data['job_id']);
+        }
 
         if ($request->wantsJson()) {
             return response()->json([

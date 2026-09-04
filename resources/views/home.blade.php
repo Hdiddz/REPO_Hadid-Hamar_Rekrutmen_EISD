@@ -108,7 +108,15 @@
                            data-job-id="{{ $job->id }}"
                            class="featured-cover-slide absolute inset-0 flex flex-col justify-between p-6 sm:p-9 text-white transition-opacity duration-700 ease-in-out {{ $loop->first ? 'opacity-100 pointer-events-auto z-10' : 'opacity-0 pointer-events-none z-0' }}"
                            aria-label="Lowongan unggulan: {{ $job->title }} di {{ $job->location }}">
-                            
+
+                            @if($job->cover_image)
+                                <!-- Background Cover Image with Darkened Overlay -->
+                                <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                                    <img src="{{ $job->cover_image_url }}" alt="" class="h-full w-full object-cover object-center transition-transform duration-1000 ease-out group-hover/cover:scale-105" loading="lazy" aria-hidden="true">
+                                    <div class="absolute inset-0 bg-brand-950/80 bg-gradient-to-t from-brand-950 via-brand-950/75 to-brand-950/65"></div>
+                                </div>
+                            @endif
+
                             <!-- Header: Category -->
                             <div class="relative flex items-center gap-2 z-10">
                                 <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-brand-50 backdrop-blur-xs">

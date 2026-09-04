@@ -31,14 +31,18 @@ class JobReportController extends Controller
             'pending' => (clone $userReports)->where('status', 'pending')->count(),
             'reviewed' => (clone $userReports)->where('status', 'reviewed')->count(),
             'action_taken' => (clone $userReports)->where('status', 'action_taken')->count(),
-            'dismissed' => (clone $userReports)->where('status', 'dismissed')->count(),
+            'dismissed' => (clone $userReports)->whereIn('status', ['resolved', 'dismissed'])->count(),
         ];
 
         $reports = JobReport::query()
             ->where('reporter_id', $request->user()->id)
             ->whereNull('reporter_hidden_at')
-            ->when($status && in_array($status, ['pending', 'reviewed', 'action_taken', 'dismissed']), function ($query) use ($status) {
-                $query->where('status', $status);
+            ->when($status, function ($query) use ($status): void {
+                if ($status === 'dismissed' || $status === 'resolved') {
+                    $query->whereIn('status', ['resolved', 'dismissed']);
+                } elseif (in_array($status, ['pending', 'reviewed', 'action_taken'], true)) {
+                    $query->where('status', $status);
+                }
             })
             ->with(['job.category:id,name', 'job.employer:id,name,business_name'])
             ->latest('id')

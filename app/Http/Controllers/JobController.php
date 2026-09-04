@@ -48,13 +48,6 @@ class JobController extends Controller
             : null;
         $hasApplied = $application !== null;
 
-        if ($job->status !== 'open'
-            && ! $request->user()?->hasRole('admin')
-            && $job->employer_id !== $request->user()?->id
-            && ! $hasApplied) {
-            abort(404);
-        }
-
         $job->load(['category:id,name', 'employer:id,name,email,phone,business_name', 'skills:id,name', 'workplacePhotos'])
             ->loadCount('applications');
 

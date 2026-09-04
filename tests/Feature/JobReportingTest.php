@@ -268,4 +268,231 @@ class JobReportingTest extends TestCase
         $this->assertNotNull($dismissNotif);
         $this->assertSame('Hasil Tinjauan Laporan ℹ️', $dismissNotif->data['title']);
     }
+
+    public function test_reporter_and_visitors_can_view_job_details_when_job_is_closed_by_admin(): void
+    {
+        $employer = User::factory()->employer()->create(['business_name' => 'Toko Barokah Jaya']);
+        $job = Job::factory()->for($employer, 'employer')->create([
+            'status' => 'closed',
+            'closed_by_admin' => true,
+            'closed_reason' => 'Dinonaktifkan oleh Pengawas untuk crosscheck laporan',
+            'closed_until' => now()->addDays(1),
+            'title' => 'Admin Gudang Retail',
+        ]);
+        $reporter = User::factory()->jobseeker()->create();
+
+        // 1. Reporter can view the reported job without 404
+        $reporterResponse = $this->actingAs($reporter)->get(route('jobs.show', [
+            'job' => $job,
+            'return_to' => route('reports.index'),
+        ]));
+
+        $reporterResponse->assertOk()
+            ->assertSee('Admin Gudang Retail')
+            ->assertSee('Lowongan Dinonaktifkan oleh Tim Pengawas')
+            ->assertSee('Tindakan Resmi Diterapkan')
+            ->assertSee('Ditangguhkan Pengawas')
+            ->assertSee('Dinonaktifkan oleh Pengawas untuk crosscheck laporan');
+
+        // 2. Guest can also view without 404
+        $guestResponse = $this->get(route('jobs.show', $job));
+        $guestResponse->assertOk()
+            ->assertSee('Lowongan Dinonaktifkan oleh Tim Pengawas')
+            ->assertSee('Ditangguhkan Pengawas');
+
+        // 3. Regular closed job also works without 404
+        $job->update([
+            'closed_by_admin' => false,
+            'closed_reason' => 'Sudah memenuhi kuota pelamar',
+        ]);
+
+        $regularClosedResponse = $this->actingAs($reporter)->get(route('jobs.show', $job));
+        $regularClosedResponse->assertOk()
+            ->assertSee('Lowongan Ini Telah Ditutup')
+            ->assertSee('Ditutup')
+            ->assertSee('Sudah memenuhi kuota pelamar');
+    }
+
+    public function test_sanction_notifications_direct_to_job_page_and_dashboard_displays_proper_badges(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $employer = User::factory()->employer()->create(['business_name' => 'Kedai Kopi Mantap']);
+        $job = Job::factory()->for($employer, 'employer')->create(['status' => 'open', 'title' => 'Barista Kafe']);
+        $reporter = User::factory()->jobseeker()->create();
+
+        $report = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $reporter->id,
+            'reason' => 'Indikasi Percaloan / Pungutan Biaya Administrasi',
+            'details' => 'Meminta biaya registrasi tambahan.',
+            'status' => 'pending',
+        ]);
+
+        // 1. Admin executes close_job action
+        $this->actingAs($admin)->post(route('admin.reports.action', $report), [
+            'action_type' => 'close_job',
+            'close_duration' => '7_days',
+            'admin_notes' => 'Kami menonaktifkan loker ini untuk 7 hari investigasi.',
+        ])->assertRedirect(route('admin.reports.index'));
+
+        // Employer notification directs to job page
+        $employerNotif = $employer->fresh()->notifications()->first();
+        $this->assertNotNull($employerNotif);
+        $this->assertSame('Lowongan Ditutup oleh Pengawas ⚠️', $employerNotif->data['title']);
+        $this->assertSame(route('jobs.show', $job), $employerNotif->data['url']);
+
+        // Notification markAsRead directs to job page
+        $readResponse = $this->actingAs($employer)->postJson(route('notifications.read', $employerNotif->id));
+        $readResponse->assertOk()
+            ->assertJson(['target_url' => route('jobs.show', $job)]);
+
+        // Reporter notification directs to job page with return_to
+        $reporterNotif = $reporter->fresh()->notifications()->first();
+        $this->assertNotNull($reporterNotif);
+        $this->assertSame('Laporan Selesai Ditindaklanjuti 🛡️', $reporterNotif->data['title']);
+        $this->assertSame(route('jobs.show', ['job' => $job, 'return_to' => route('reports.index')]), $reporterNotif->data['url']);
+
+        // Employer dashboard displays Ditutup Pengawas and supervisor note
+        $dashboardResponse = $this->actingAs($employer)->get(route('employer.dashboard'));
+        $dashboardResponse->assertOk()
+            ->assertSee('Ditutup Pengawas')
+            ->assertSee('Catatan Pengawas:');
+
+        // Employer edit form displays supervisor notice
+        $editResponse = $this->actingAs($employer)->get(route('employer.jobs.edit', $job));
+        $editResponse->assertOk()
+            ->assertSee('Lowongan Sedang Dinonaktifkan oleh Tim Pengawas')
+            ->assertSee('Lihat Tampilan Publik');
+    }
+
+    public function test_admin_can_resolve_report_and_it_disappears_from_active_list(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $job = Job::factory()->create(['title' => 'Staf Gudang Logistik']);
+        $reporter = User::factory()->jobseeker()->create(['name' => 'Budi Santoso']);
+
+        $report = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $reporter->id,
+            'reason' => 'Indikasi Percaloan / Pungutan Biaya Administrasi',
+            'details' => 'Dipungut biaya seragam kerja di awal.',
+            'status' => 'action_taken',
+            'action_taken' => 'Lowongan ditutup oleh Admin',
+        ]);
+
+        // 1. Report appears in active list default
+        $indexResponse = $this->actingAs($admin)->get(route('admin.reports.index'));
+        $indexResponse->assertOk()
+            ->assertSee('Staf Gudang Logistik')
+            ->assertSee('Ditindaklanjuti');
+
+        // 2. Admin resolves report
+        $resolveResponse = $this->actingAs($admin)->patch(route('admin.reports.resolve', $report), [
+            'admin_notes' => 'Kasus penipuan telah selesai diproses bersama pihak kepolisian.',
+        ]);
+
+        $resolveResponse->assertSessionHas('success');
+        $report->refresh();
+
+        $this->assertSame('resolved', $report->status);
+        $this->assertSame('Kasus penipuan telah selesai diproses bersama pihak kepolisian.', $report->admin_notes);
+
+        // 3. Notification & chat message sent to reporter
+        $reporterNotif = $reporter->fresh()->notifications()->first();
+        $this->assertNotNull($reporterNotif);
+        $this->assertSame('Laporan Telah Diselesaikan ✔️', $reporterNotif->data['title']);
+
+        // 4. Report is now GONE from the active list
+        $activeListResponse = $this->actingAs($admin)->get(route('admin.reports.index'));
+        $activeListResponse->assertOk()
+            ->assertDontSee('Staf Gudang Logistik');
+
+        // 5. Report is visible in the resolved / completed tab
+        $resolvedTabResponse = $this->actingAs($admin)->get(route('admin.reports.index', ['status' => 'resolved']));
+        $resolvedTabResponse->assertOk()
+            ->assertSee('Staf Gudang Logistik')
+            ->assertSee('Selesai');
+    }
+
+    public function test_admin_can_remove_report_from_history(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $job = Job::factory()->create(['title' => 'Kasir Restoran']);
+        $reporter = User::factory()->jobseeker()->create();
+
+        $report = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $reporter->id,
+            'reason' => 'Upah Tidak Transparan',
+            'details' => 'Gaji tidak sesuai.',
+            'status' => 'resolved',
+        ]);
+
+        // 1. Admin deletes/removes report from admin panel
+        $deleteResponse = $this->actingAs($admin)->delete(route('admin.reports.destroy', $report));
+        $deleteResponse->assertSessionHas('success');
+
+        $report->refresh();
+        $this->assertNotNull($report->admin_hidden_at);
+
+        // 2. Report no longer appears anywhere in admin panel (even status=all)
+        $allResponse = $this->actingAs($admin)->get(route('admin.reports.index', ['status' => 'all']));
+        $allResponse->assertOk()
+            ->assertDontSee('Kasir Restoran');
+
+        // 3. Accessing detail directly yields 404
+        $detailResponse = $this->actingAs($admin)->get(route('admin.reports.show', $report));
+        $detailResponse->assertNotFound();
+    }
+
+    public function test_admin_can_bulk_clear_completed_reports_history(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $job = Job::factory()->create();
+        $reporter = User::factory()->jobseeker()->create();
+
+        $activeReport = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $reporter->id,
+            'reason' => 'Laporan Aktif',
+            'status' => 'pending',
+        ]);
+
+        $resolvedReport = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $reporter->id,
+            'reason' => 'Laporan Selesai',
+            'status' => 'resolved',
+        ]);
+
+        $dismissedReport = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $reporter->id,
+            'reason' => 'Laporan Ditolak',
+            'status' => 'dismissed',
+        ]);
+
+        $clearResponse = $this->actingAs($admin)->post(route('admin.reports.clearCompleted'));
+        $clearResponse->assertSessionHas('success');
+
+        $this->assertNull($activeReport->fresh()->admin_hidden_at);
+        $this->assertNotNull($resolvedReport->fresh()->admin_hidden_at);
+        $this->assertNotNull($dismissedReport->fresh()->admin_hidden_at);
+    }
+
+    public function test_non_admin_cannot_resolve_or_delete_reports_from_admin_panel(): void
+    {
+        $jobseeker = User::factory()->jobseeker()->create();
+        $job = Job::factory()->create();
+        $report = JobReport::create([
+            'job_id' => $job->id,
+            'reporter_id' => $jobseeker->id,
+            'reason' => 'Uji Otorisasi',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($jobseeker)->patch(route('admin.reports.resolve', $report))->assertForbidden();
+        $this->actingAs($jobseeker)->delete(route('admin.reports.destroy', $report))->assertForbidden();
+        $this->actingAs($jobseeker)->post(route('admin.reports.clearCompleted'))->assertForbidden();
+    }
 }

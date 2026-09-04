@@ -60,19 +60,20 @@
                 @forelse($jobs as $job)
                     <tr>
                         <td>
-                            <div>
-                                <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="font-bold text-slate-950 hover:text-brand-700 dark:text-white dark:hover:text-brand-400 block truncate max-w-xs">
+                            <div class="min-w-0 max-w-xs sm:max-w-sm">
+                                <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="font-bold text-slate-950 hover:text-brand-700 dark:text-white dark:hover:text-brand-400 block truncate" title="{{ $job->title }}">
                                     {{ $job->title }}
                                 </a>
-                                <span class="mt-0.5 block text-xs text-slate-500 truncate">
-                                    {{ $job->category->name }} · {{ $job->location }}
-                                </span>
-                                @if($job->reports_count > 0)
-                                    <span class="mt-1.5 inline-flex items-center gap-1 rounded-md bg-rose-100 px-2 py-0.5 text-[10px] font-black text-rose-800 dark:bg-rose-950 dark:text-rose-300">
-                                        <span class="material-symbols-outlined text-[12px]">flag</span>
-                                        {{ $job->reports_count }} Laporan Masuk
-                                    </span>
-                                @endif
+                                <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
+                                    <span class="truncate">{{ $job->category->name }} · {{ $job->location }}</span>
+                                    @if($job->reports_count > 0)
+                                        <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">·</span>
+                                        <a href="{{ route('admin.reports.index', ['q' => $job->title, 'status' => 'all']) }}" class="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition shrink-0" title="Lihat {{ $job->reports_count }} laporan masuk">
+                                            <span class="material-symbols-outlined text-[13px]">flag</span>
+                                            <span>{{ $job->reports_count }} laporan masuk</span>
+                                        </a>
+                                    @endif
+                                </div>
                             </div>
                         </td>
                         <td>
@@ -90,7 +91,7 @@
                                 @endif
                             </div>
                         </td>
-                        <td>
+                        <td class="whitespace-nowrap">
                             <span class="font-bold text-xs text-slate-900 dark:text-white block">
                                 Rp {{ number_format($job->salary_amount, 0, ',', '.') }}
                                 <span class="text-[10px] text-slate-500 font-normal">/ {{ $job->salary_type === 'monthly' ? 'bln' : 'hari' }}</span>
@@ -99,7 +100,7 @@
                                 {{ $job->work_hours_per_day }} jam / hari
                             </span>
                         </td>
-                        <td>
+                        <td class="whitespace-nowrap">
                             @if($job->isClosedByAdmin())
                                 <div>
                                     <span class="portal-badge bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/50">
@@ -126,14 +127,14 @@
                                 </span>
                             @endif
                         </td>
-                        <td>
+                        <td class="whitespace-nowrap">
                             <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}#pelamar" class="inline-flex items-center gap-1 text-xs font-bold text-brand-700 dark:text-brand-300 hover:underline">
                                 <span class="material-symbols-outlined text-[16px]">groups</span>
                                 {{ $job->applications_count }}
                             </a>
                         </td>
-                        <td>
-                            <div class="flex items-center justify-end gap-1.5">
+                        <td class="whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
                                 <!-- Detail Button -->
                                 <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2 text-xs" title="Lihat detail lowongan dan pelamar">
                                     Detail

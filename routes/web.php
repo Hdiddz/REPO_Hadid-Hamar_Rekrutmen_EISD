@@ -26,6 +26,8 @@ Route::get('/lowongan/{job}', [JobController::class, 'show'])->name('jobs.show')
 Route::middleware('guest')->group(function (): void {
     Route::get('/masuk', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/masuk', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('/masuk/quick', [AuthController::class, 'quickLogin'])->name('login.quick');
+    Route::post('/masuk/lupakan-perangkat', [AuthController::class, 'forgetDevice'])->name('login.forget_device');
     Route::get('/daftar', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/daftar', [AuthController::class, 'register']);
 });
@@ -96,7 +98,10 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/laporan', [AdminReportController::class, 'index'])->name('reports.index');
         Route::get('/laporan/{report}', [AdminReportController::class, 'show'])->name('reports.show');
         Route::patch('/laporan/{report}/tinjau', [AdminReportController::class, 'markReviewed'])->name('reports.review');
+        Route::patch('/laporan/{report}/selesaikan', [AdminReportController::class, 'resolve'])->name('reports.resolve');
         Route::post('/laporan/{report}/tindak-lanjut', [AdminReportController::class, 'action'])->name('reports.action');
+        Route::delete('/laporan/{report}', [AdminReportController::class, 'destroy'])->name('reports.destroy');
+        Route::post('/laporan/bersihkan-selesai', [AdminReportController::class, 'clearCompleted'])->name('reports.clearCompleted');
         Route::get('/master-data', [AdminCategoryController::class, 'index'])->name('master');
         Route::resource('categories', AdminCategoryController::class)->only(['store', 'update', 'destroy']);
         Route::resource('skills', AdminSkillController::class)->only(['store', 'update', 'destroy']);

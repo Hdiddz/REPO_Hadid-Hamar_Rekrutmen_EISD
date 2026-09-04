@@ -90,6 +90,11 @@
                         'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800',
                         'icon' => 'verified',
                     ],
+                    'resolved' => [
+                        'label' => 'Laporan Selesai Ditangani',
+                        'class' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800',
+                        'icon' => 'task_alt',
+                    ],
                     'reviewed' => [
                         'label' => 'Sedang Ditinjau Pengawas',
                         'class' => 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800',
@@ -140,7 +145,7 @@
                             <span>{{ $statusConfig['label'] }}</span>
                         </span>
                         @if($report->job)
-                            <a href="{{ route('jobs.show', $report->job) }}" class="portal-button-secondary !py-1.5 !px-3 text-xs font-bold gap-1.5 shadow-xs" title="Lihat detail lowongan yang dilaporkan">
+                            <a href="{{ route('jobs.show', ['job' => $report->job, 'return_to' => route('reports.index')]) }}" class="portal-button-secondary !py-1.5 !px-3 text-xs font-bold gap-1.5 shadow-xs" title="Lihat detail lowongan yang dilaporkan">
                                 <span class="material-symbols-outlined text-[16px]">visibility</span>
                                 <span>Lihat Lowongan</span>
                             </a>

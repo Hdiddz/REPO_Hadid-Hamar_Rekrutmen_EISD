@@ -13,15 +13,109 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
     /**
+     * Nama cookie perangkat yang diingat.
+     */
+    public const SAVED_DEVICE_COOKIE = 'kl_saved_device';
+
+    /**
+     * Hitung hash verifikasi integritas kredensial perangkat.
+     */
+    protected function generateDeviceHash(User $user): string
+    {
+        return hash_hmac('sha256', $user->id.'|'.$user->password, config('app.key'));
+    }
+
+    /**
+     * Cari dan validasi pengguna yang tersimpan di perangkat ini melalui cookie aman.
+     */
+    protected function resolveSavedUser(Request $request, bool $allowBanned = false): ?User
+    {
+        $raw = $request->cookie(self::SAVED_DEVICE_COOKIE);
+        if (! $raw) {
+            return null;
+        }
+
+        $data = json_decode($raw, true);
+        if (! is_array($data) || empty($data['id']) || empty($data['hash'])) {
+            return null;
+        }
+
+        $user = User::find($data['id']);
+        if (! $user) {
+            return null;
+        }
+
+        if (! hash_equals($this->generateDeviceHash($user), (string) $data['hash'])) {
+            return null;
+        }
+
+        if (! $allowBanned && $user->isBanned()) {
+            return null;
+        }
+
+        return $user;
+    }
+
+    /**
      * Tampilkan formulir masuk (Login).
      */
-    public function showLoginForm(): View|RedirectResponse
+    public function showLoginForm(Request $request): View|RedirectResponse
     {
         if (Auth::check()) {
             return $this->redirectBasedOnRole(Auth::user());
         }
 
-        return view('auth.login');
+        $savedUser = $this->resolveSavedUser($request, allowBanned: true);
+
+        return view('auth.login', compact('savedUser'));
+    }
+
+    /**
+     * Proses autentikasi masuk cepat 1-klik untuk akun tersimpan di perangkat ini.
+     */
+    public function quickLogin(Request $request): RedirectResponse
+    {
+        $user = $this->resolveSavedUser($request, allowBanned: true);
+
+        if (! $user) {
+            return redirect()->route('login')
+                ->withCookie(cookie()->forget(self::SAVED_DEVICE_COOKIE))
+                ->withErrors(['email' => 'Sesi akun tersimpan telah kedaluwarsa atau tidak valid. Silakan masuk kembali dengan email dan kata sandi Anda.']);
+        }
+
+        // Periksa jika akun dibekukan
+        if ($user->isBanned()) {
+            $duration = $user->banned_until
+                ? 'sampai '.$user->banned_until->translatedFormat('d F Y, H:i').' WIB'
+                : 'secara permanen';
+            $reason = $user->ban_reason ?: 'Pelanggaran standar etika rekrutmen KerjaLokal.';
+
+            return redirect()->route('login')
+                ->with('account_banned', [
+                    'name' => $user->name,
+                    'username' => $user->username,
+                    'duration' => $duration,
+                    'reason' => $reason,
+                    'until' => $user->banned_until?->translatedFormat('d F Y, H:i') ?: 'Permanen',
+                ])
+                ->with('error', "Akun Anda ({$user->name}) sedang dibekukan oleh Administrator {$duration}. Alasan: {$reason}")
+                ->withErrors(['email' => "Akun Anda ({$user->name}) sedang dibekukan oleh Administrator {$duration}."]);
+        }
+
+        Auth::login($user, remember: true);
+        $request->session()->regenerate();
+
+        return $this->redirectBasedOnRole($user, "Selamat datang kembali, {$user->name}!");
+    }
+
+    /**
+     * Hapus / keluarkan akun tersimpan dari perangkat ini.
+     */
+    public function forgetDevice(Request $request): RedirectResponse
+    {
+        return redirect()->route('login')
+            ->withCookie(cookie()->forget(self::SAVED_DEVICE_COOKIE))
+            ->with('status', 'Akun telah berhasil dikeluarkan dari perangkat ini.');
     }
 
     /**
@@ -79,7 +173,18 @@ class AuthController extends Controller
         if (Auth::attempt(['id' => $user->id, 'password' => $password], $remember)) {
             $request->session()->regenerate();
 
-            return $this->redirectBasedOnRole($user, "Selamat datang kembali, {$user->name}!");
+            $redirect = $this->redirectBasedOnRole($user, "Selamat datang kembali, {$user->name}!");
+
+            if ($remember) {
+                $payload = json_encode([
+                    'id' => $user->id,
+                    'hash' => $this->generateDeviceHash($user),
+                ]);
+
+                return $redirect->withCookie(cookie(self::SAVED_DEVICE_COOKIE, $payload, 60 * 24 * 30));
+            }
+
+            return $redirect->withCookie(cookie()->forget(self::SAVED_DEVICE_COOKIE));
         }
 
         return back()->withErrors([
@@ -138,7 +243,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('home')->with('status', 'Anda telah berhasil keluar dari akun.');
+        return redirect()->route('login')->with('status', 'Anda telah berhasil keluar dari akun.');
     }
 
     /**

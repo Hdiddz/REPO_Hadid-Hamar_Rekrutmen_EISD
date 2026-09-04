@@ -17,9 +17,31 @@ class ReportController extends Controller
 {
     public function index(Request $request): View
     {
+        $baseQuery = JobReport::query()->whereNull('admin_hidden_at');
+
+        $counts = [
+            'active' => (clone $baseQuery)->whereIn('status', ['pending', 'reviewed', 'action_taken'])->count(),
+            'pending' => (clone $baseQuery)->where('status', 'pending')->count(),
+            'reviewed' => (clone $baseQuery)->where('status', 'reviewed')->count(),
+            'action_taken' => (clone $baseQuery)->where('status', 'action_taken')->count(),
+            'resolved' => (clone $baseQuery)->whereIn('status', ['resolved', 'dismissed'])->count(),
+            'all' => (clone $baseQuery)->count(),
+        ];
+
+        $currentStatus = $request->query('status', 'active');
+
         $reports = JobReport::query()
-            ->with(['job.employer', 'reporter'])
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->whereNull('admin_hidden_at')
+            ->with(['job.employer', 'job.category', 'reporter'])
+            ->when($currentStatus === 'active', function ($q): void {
+                $q->whereIn('status', ['pending', 'reviewed', 'action_taken']);
+            })
+            ->when($currentStatus === 'resolved', function ($q): void {
+                $q->whereIn('status', ['resolved', 'dismissed']);
+            })
+            ->when(in_array($currentStatus, ['pending', 'reviewed', 'action_taken', 'dismissed'], true), function ($q) use ($currentStatus): void {
+                $q->where('status', $currentStatus);
+            })
             ->when($request->filled('q'), function ($query) use ($request): void {
                 $term = $request->string('q')->toString();
                 $query->where(function ($nested) use ($term): void {
@@ -33,17 +55,15 @@ class ReportController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $counts = [
-            'pending' => JobReport::where('status', 'pending')->count(),
-            'action_taken' => JobReport::where('status', 'action_taken')->count(),
-            'dismissed' => JobReport::where('status', 'dismissed')->count(),
-        ];
-
-        return view('admin.reports.index', compact('reports', 'counts'));
+        return view('admin.reports.index', compact('reports', 'counts', 'currentStatus'));
     }
 
     public function show(Request $request, JobReport $report): View
     {
+        if ($report->admin_hidden_at !== null) {
+            abort(404, 'Laporan ini telah dihapus dari riwayat panel admin.');
+        }
+
         $previousUrl = url()->previous();
         if ($request->filled('return_to')) {
             $returnTo = $request->string('return_to')->toString();
@@ -88,7 +108,7 @@ class ReportController extends Controller
                 type: 'reviewed',
                 title: 'Laporan Sedang Ditinjau 🔍',
                 message: "Laporan Anda mengenai lowongan '{$report->job?->title}' sedang dalam proses peninjauan dan investigasi oleh Tim Administrator KerjaLokal.",
-                url: route('reports.index', ['status' => 'reviewed'])
+                url: $report->job ? route('jobs.show', ['job' => $report->job, 'return_to' => route('reports.index')]) : route('reports.index', ['status' => 'reviewed'])
             ));
 
             // 2. Kirim pesan chat resmi ke pelapor jika admin tersedia
@@ -105,10 +125,68 @@ class ReportController extends Controller
         return back()->with('success', 'Laporan ditandai sedang ditinjau oleh Administrator. Pemberitahuan telah dikirimkan ke pelapor.');
     }
 
+    public function resolve(Request $request, JobReport $report): RedirectResponse
+    {
+        if ($report->admin_hidden_at !== null) {
+            abort(404);
+        }
+
+        if ($report->status === 'resolved') {
+            return back()->with('info', 'Laporan ini sudah berstatus selesai.');
+        }
+
+        $notes = $request->string('admin_notes')->trim()->toString();
+
+        $updateData = [
+            'status' => 'resolved',
+        ];
+
+        if (! $report->action_taken) {
+            $updateData['action_taken'] = 'Laporan diselesaikan oleh Admin';
+        }
+
+        if ($notes !== '') {
+            $updateData['admin_notes'] = $notes;
+        }
+
+        $report->update($updateData);
+        $report->loadMissing(['job', 'reporter']);
+
+        $admin = auth()->user();
+
+        // Kirim notifikasi database ke pelapor
+        if ($report->reporter) {
+            $report->reporter->notify(new JobReportStatusUpdatedNotification(
+                report: $report,
+                type: 'resolved',
+                title: 'Laporan Telah Diselesaikan ✔️',
+                message: "Laporan Anda mengenai lowongan '{$report->job?->title}' telah selesai ditangani oleh Tim Administrator KerjaLokal.",
+                url: $report->job ? route('jobs.show', ['job' => $report->job, 'return_to' => route('reports.index')]) : route('reports.index', ['status' => 'dismissed'])
+            ));
+
+            if ($admin) {
+                $chatMsg = "✔️ [Laporan Selesai Ditangani]\n\nHalo {$report->reporter->name}, laporan pengaduan Anda terkait lowongan \"{$report->job?->title}\" telah selesai ditangani oleh Tim Administrator KerjaLokal.";
+                if ($notes !== '') {
+                    $chatMsg .= "\n\n• Catatan Administrator: \"{$notes}\"";
+                }
+                $chatMsg .= "\n\nTerima kasih atas partisipasi aktif Anda dalam menjaga lingkungan kerja yang aman, transparan, dan terpercaya.";
+
+                ChatMessage::create([
+                    'sender_id' => $admin->id,
+                    'receiver_id' => $report->reporter_id,
+                    'message' => $chatMsg,
+                    'is_read' => false,
+                ]);
+            }
+        }
+
+        return back()->with('success', 'Laporan #REP-'.str_pad((string) $report->id, 5, '0', STR_PAD_LEFT).' berhasil diselesaikan dan dipindahkan dari daftar laporan aktif.');
+    }
+
     public function action(Request $request, JobReport $report): RedirectResponse
     {
         $validated = $request->validate([
-            'action_type' => ['required', 'in:close_job,ban_employer,delete_job,dismiss'],
+            'action_type' => ['required', 'in:close_job,ban_employer,delete_job,dismiss,resolve'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
             'ban_duration' => ['nullable', 'required_if:action_type,ban_employer', 'in:3_days,7_days,14_days,30_days,custom,permanent'],
             'ban_custom_days' => ['nullable', 'required_if:ban_duration,custom', 'integer', 'min:1'],
@@ -156,7 +234,7 @@ class ReportController extends Controller
                     type: 'employer_action',
                     title: 'Lowongan Ditutup oleh Pengawas ⚠️',
                     message: "Lowongan Anda '{$report->job->title}' telah ditutup oleh Administrator berdasarkan hasil investigasi kepatuhan etis.".($notes ? " Catatan: {$notes}" : ''),
-                    url: route('employer.dashboard')
+                    url: route('jobs.show', $report->job)
                 ));
             }
 
@@ -174,7 +252,7 @@ class ReportController extends Controller
                     type: 'action_taken',
                     title: 'Laporan Selesai Ditindaklanjuti 🛡️',
                     message: "Laporan Anda mengenai lowongan '{$report->job->title}' telah selesai diinvestigasi: Administrator telah menutup lowongan terkait.",
-                    url: route('reports.index', ['status' => 'action_taken'])
+                    url: route('jobs.show', ['job' => $report->job, 'return_to' => route('reports.index')])
                 ));
             }
 
@@ -225,7 +303,7 @@ class ReportController extends Controller
                 type: 'employer_action',
                 title: 'Sanksi Pembekuan Akun Mitra ⚠️',
                 message: 'Akun Anda telah dibekukan sementara oleh Administrator berdasarkan hasil investigasi laporan pelanggaran etika ketenagakerjaan.'.($notes ? " Catatan: {$notes}" : ''),
-                url: route('employer.dashboard')
+                url: route('jobs.show', $report->job)
             ));
 
             // Kirim pesan & notifikasi konfirmasi ke Pelapor jika ada
@@ -242,7 +320,7 @@ class ReportController extends Controller
                     type: 'action_taken',
                     title: 'Laporan Selesai Ditindaklanjuti 🛡️',
                     message: "Laporan Anda terhadap mitra '{$employer->name}' telah selesai ditindaklanjuti: Pihak terkait telah diberikan sanksi pembekuan akun.",
-                    url: route('reports.index', ['status' => 'action_taken'])
+                    url: route('jobs.show', ['job' => $report->job, 'return_to' => route('reports.index')])
                 ));
             }
 
@@ -321,13 +399,82 @@ class ReportController extends Controller
                     type: 'dismissed',
                     title: 'Hasil Tinjauan Laporan ℹ️',
                     message: "Laporan yang Anda kirimkan terkait lowongan '{$report->job->title}' telah selesai ditinjau. Saat ini belum ditemukan unsur pelanggaran sehingga laporan dinyatakan selesai.".($notes ? " Catatan: {$notes}" : ''),
-                    url: route('reports.index', ['status' => 'dismissed'])
+                    url: route('jobs.show', ['job' => $report->job, 'return_to' => route('reports.index')])
                 ));
             }
 
             return redirect()->route('admin.reports.index')->with('success', 'Laporan telah ditandai selesai (Ditolak/Tidak Ditemukan Pelanggaran).');
         }
 
+        if ($actionType === 'resolve') {
+            $report->update([
+                'status' => 'resolved',
+                'action_taken' => $report->action_taken ?: 'Laporan diselesaikan oleh Admin',
+                'admin_notes' => $notes ?: $report->admin_notes,
+            ]);
+
+            $report->loadMissing(['job', 'reporter']);
+
+            if ($report->reporter_id && $report->reporter) {
+                ChatMessage::create([
+                    'sender_id' => $admin->id,
+                    'receiver_id' => $report->reporter_id,
+                    'message' => "✔️ [Laporan Selesai Ditangani]\n\nHalo {$report->reporter->name}, laporan pengaduan Anda terkait lowongan \"{$report->job->title}\" telah selesai ditangani oleh Tim Administrator KerjaLokal.".($notes ? "\n\n• Catatan Administrator: \"{$notes}\"" : '')."\n\nTerima kasih atas kontribusi Anda dalam menjaga kepatuhan etis di KerjaLokal.",
+                    'is_read' => false,
+                ]);
+
+                $report->reporter->notify(new JobReportStatusUpdatedNotification(
+                    report: $report,
+                    type: 'resolved',
+                    title: 'Laporan Telah Diselesaikan ✔️',
+                    message: "Laporan Anda mengenai lowongan '{$report->job->title}' telah selesai ditangani oleh Administrator.".($notes ? " Catatan: {$notes}" : ''),
+                    url: route('jobs.show', ['job' => $report->job, 'return_to' => route('reports.index')])
+                ));
+            }
+
+            return redirect()->route('admin.reports.index')->with('success', 'Laporan telah ditandai selesai ditangani.');
+        }
+
         return back();
+    }
+
+    public function destroy(Request $request, JobReport $report): RedirectResponse
+    {
+        $report->update(['admin_hidden_at' => now()]);
+
+        if ($report->reporter_hidden_at !== null) {
+            $report->delete();
+        }
+
+        $targetUrl = session('admin_reports_return_to', route('admin.reports.index'));
+
+        if (str_contains(url()->previous(), '/admin/laporan/'.$report->id)) {
+            return redirect($targetUrl)->with('success', 'Riwayat laporan berhasil dihapus dari panel admin.');
+        }
+
+        return back()->with('success', 'Riwayat laporan berhasil dihapus dari panel admin.');
+    }
+
+    public function clearCompleted(Request $request): RedirectResponse
+    {
+        $completedReports = JobReport::query()
+            ->whereNull('admin_hidden_at')
+            ->whereIn('status', ['resolved', 'dismissed'])
+            ->get();
+
+        $count = $completedReports->count();
+
+        if ($count === 0) {
+            return back()->with('info', 'Tidak ada riwayat laporan selesai untuk dibersihkan.');
+        }
+
+        foreach ($completedReports as $rep) {
+            $rep->update(['admin_hidden_at' => now()]);
+            if ($rep->reporter_hidden_at !== null) {
+                $rep->delete();
+            }
+        }
+
+        return back()->with('success', "Berhasil membersihkan {$count} riwayat laporan selesai dari panel admin.");
     }
 }

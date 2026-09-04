@@ -7,6 +7,41 @@
 @section('portal_actions')<a href="{{ $isEditing ? route('jobs.show', $job) : route('employer.dashboard') }}" class="portal-button-secondary"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Kembali</a>@endsection
 
 @section('content')
+    @if($isEditing && $job?->isClosedByAdmin())
+        <div class="mx-auto max-w-4xl mb-6 rounded-3xl bg-rose-500/10 border border-rose-500/30 p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 text-rose-950 dark:text-rose-100 shadow-sm" data-reveal>
+            <div class="flex items-start gap-3.5">
+                <div class="grid h-11 w-11 place-items-center rounded-2xl bg-rose-600 text-white shrink-0 shadow-sm">
+                    <span class="material-symbols-outlined text-[24px]">gavel</span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h3 class="font-extrabold text-base tracking-tight">Lowongan Sedang Dinonaktifkan oleh Tim Pengawas</h3>
+                        <span class="rounded-lg bg-rose-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-xs">Tindakan Resmi Diterapkan</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-rose-900/90 dark:text-rose-200 mt-1 leading-relaxed">
+                        Lowongan ini ditutup oleh Administrator sehubungan dengan investigasi kepatuhan etis. Anda tetap dapat memperbarui informasi kualifikasi atau data lowongan ini.
+                    </p>
+                    @if($job->closed_until)
+                        <p class="text-xs font-semibold text-rose-800 dark:text-rose-300 mt-1.5 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px]">schedule</span>
+                            Penonaktifan berlaku hingga: <strong>{{ $job->closed_until->translatedFormat('d F Y, H:i') }} WIB</strong>
+                        </p>
+                    @endif
+                    @if($job->closed_reason)
+                        <div class="mt-2.5 rounded-xl bg-rose-100/70 dark:bg-rose-950/60 p-3 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-900 dark:text-rose-200">
+                            <strong class="font-bold block mb-0.5 text-rose-950 dark:text-rose-100">Catatan Pengawas:</strong>
+                            <p class="italic">"{{ $job->closed_reason }}"</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            <a href="{{ route('jobs.show', $job) }}" class="portal-button-secondary !py-2 !px-3.5 text-xs font-bold shrink-0 self-start sm:self-auto gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">visibility</span>
+                Lihat Tampilan Publik
+            </a>
+        </div>
+    @endif
+
     <form action="{{ $isEditing ? route('employer.jobs.update', $job) : route('employer.jobs.store') }}" method="POST" enctype="multipart/form-data" class="mx-auto max-w-4xl space-y-6">@csrf @if($isEditing)@method('PUT')@endif
         <section class="portal-panel p-5 sm:p-7" data-reveal><div class="mb-6"><h2 class="text-lg font-bold">Informasi utama</h2><p class="mt-1 text-sm text-slate-500">Judul, kategori, dan lokasi membantu lowongan mudah ditemukan.</p></div>
             <div class="grid gap-5 sm:grid-cols-2">
