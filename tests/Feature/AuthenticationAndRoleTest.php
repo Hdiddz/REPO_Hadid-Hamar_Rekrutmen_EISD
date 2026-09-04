@@ -186,4 +186,50 @@ class AuthenticationAndRoleTest extends TestCase
 
         $response->assertRedirect(route('employer.dashboard'));
     }
+
+    public function test_registration_rejects_phone_number_exceeding_13_characters(): void
+    {
+        $response = $this->from(route('register'))->post(route('register'), [
+            'name' => 'Budi Santoso',
+            'email' => 'budi.santoso@example.test',
+            'role' => 'jobseeker',
+            'phone' => '08123456789012', // 14 digits
+            'password' => 'REMOVED_CREDENTIAL',
+            'password_confirmation' => 'REMOVED_CREDENTIAL',
+        ]);
+
+        $response->assertRedirect(route('register'))
+            ->assertSessionHasErrors(['phone']);
+        $this->assertGuest();
+    }
+
+    public function test_registration_accepts_phone_number_up_to_13_characters(): void
+    {
+        $response = $this->post(route('register'), [
+            'name' => 'Budi Santoso',
+            'email' => 'budi.santoso13@example.test',
+            'role' => 'jobseeker',
+            'phone' => '0812345678901', // 13 characters
+            'password' => 'REMOVED_CREDENTIAL',
+            'password_confirmation' => 'REMOVED_CREDENTIAL',
+        ]);
+
+        $response->assertRedirect(route('jobs.index'))
+            ->assertSessionHas('success');
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'email' => 'budi.santoso13@example.test',
+            'phone' => '0812345678901',
+        ]);
+    }
+
+    public function test_login_page_does_not_mention_hadids_in_placeholder(): void
+    {
+        $response = $this->get(route('login'));
+
+        $response->assertOk();
+        $response->assertDontSee('atau hadids');
+        $response->assertDontSee('hadids');
+        $response->assertSee('placeholder="nama@email.com"', false);
+    }
 }

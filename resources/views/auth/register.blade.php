@@ -30,7 +30,7 @@
                 </div>
                 <div>
                     <label for="phone" class="mb-1.5 block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">Nomor telepon</label>
-                    <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" autocomplete="tel" placeholder="081234567890" class="min-h-11 sm:min-h-12 w-full rounded-xl border bg-slate-50 px-4 py-2.5 sm:py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-900 dark:focus:ring-brand-900/60 {{ $errors->has('phone') ? 'border-rose-500' : 'border-slate-200' }}">
+                    <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" autocomplete="tel" placeholder="081234567890" maxlength="13" class="min-h-11 sm:min-h-12 w-full rounded-xl border bg-slate-50 px-4 py-2.5 sm:py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-900 dark:focus:ring-brand-900/60 {{ $errors->has('phone') ? 'border-rose-500' : 'border-slate-200' }}">
                     @error('phone')<p class="mt-1.5 text-xs font-semibold text-rose-600" role="alert">{{ $message }}</p>@enderror
                 </div>
             </div>

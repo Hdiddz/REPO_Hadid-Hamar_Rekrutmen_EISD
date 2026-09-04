@@ -173,10 +173,6 @@
                                     <a href="{{ route('reports.index') }}" class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"><span class="material-symbols-outlined text-[19px] text-slate-500 dark:text-slate-400">flag</span>Riwayat Laporan</a>
                                 @endif
                                 <a href="{{ route('settings.index') }}" class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"><span class="material-symbols-outlined text-[19px] text-slate-500 dark:text-slate-400">settings</span>Pengaturan</a>
-                                <button type="button" data-theme-toggle class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 text-left">
-                                    <span class="material-symbols-outlined text-[19px] theme-toggle-icon text-slate-500 dark:text-slate-400">dark_mode</span>
-                                    <span class="theme-toggle-text">Mode Gelap</span>
-                                </button>
                             </div>
                             <div class="border-t border-slate-100 pt-1 dark:border-slate-800">
                                 <button type="button" data-bs-toggle="modal" data-bs-target="#logoutModal" class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40"><span class="material-symbols-outlined text-[19px]">logout</span>Keluar dari akun</button>
@@ -294,11 +290,7 @@
                     </a>
                 </div>
 
-                <div class="mt-3.5 border-t border-slate-100 pt-3 dark:border-slate-800 flex items-center justify-between gap-3">
-                    <button type="button" data-stay-open data-theme-toggle class="inline-flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition">
-                        <span class="material-symbols-outlined text-[19px] theme-toggle-icon">dark_mode</span>
-                        <span class="theme-toggle-text">Ganti Tema</span>
-                    </button>
+                <div class="mt-3.5 border-t border-slate-100 pt-3 dark:border-slate-800 flex items-center justify-end">
                     <button type="button" data-bs-toggle="modal" data-bs-target="#logoutModal" class="inline-flex min-h-10 items-center gap-2 rounded-xl bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50 transition">
                         <span class="material-symbols-outlined text-[18px]">logout</span>
                         <span>Keluar</span>
@@ -325,13 +317,6 @@
                         <span class="material-symbols-outlined text-[18px]">person_add</span>
                         <span>Daftar Akun</span>
                     </a>
-                </div>
-
-                <div class="mt-3 text-center">
-                    <button type="button" data-stay-open data-theme-toggle class="inline-flex min-h-9 items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition">
-                        <span class="material-symbols-outlined text-[17px] theme-toggle-icon">dark_mode</span>
-                        <span class="theme-toggle-text">Ganti Tema (Gelap/Terang)</span>
-                    </button>
                 </div>
             @endauth
         </nav>

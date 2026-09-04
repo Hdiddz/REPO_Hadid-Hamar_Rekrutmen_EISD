@@ -93,7 +93,7 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
-            'phone' => ['nullable', 'string', 'max:25'],
+            'phone' => ['nullable', 'string', 'max:13'],
             'business_name' => ['nullable', 'string', 'max:255'],
         ], [
             'username.required' => 'Username wajib diisi.',
@@ -105,6 +105,7 @@ class UserController extends Controller
             'email.required' => 'Email wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email ini sudah terdaftar pada akun lain.',
+            'phone.max' => 'Nomor telepon maksimal 13 karakter.',
         ]);
 
         $oldUsername = $user->username;

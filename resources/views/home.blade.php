@@ -87,40 +87,85 @@
             </a>
         </div>
 
-        @forelse ($featuredJobs->take(1) as $featuredJob)
+        @if ($featuredJobs->isNotEmpty())
             <div class="grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_60px_-48px_rgba(15,23,42,0.5)] lg:grid-cols-[1.05fr_0.95fr] dark:border-slate-800 dark:bg-slate-900">
-                <a href="{{ route('jobs.show', $featuredJob) }}" class="group relative flex min-h-[320px] flex-col justify-between overflow-hidden bg-brand-950 p-6 text-white sm:p-9">
-                    <div class="absolute -right-16 -top-24 h-72 w-72 rounded-full border-[52px] border-brand-700/25" aria-hidden="true"></div>
-                    <div class="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-brand-700/20 blur-3xl" aria-hidden="true"></div>
+                
+                <!-- Left Column: Rotating Featured Job Cover (3s Auto Rotation) -->
+                <div id="featuredJobsCover" 
+                     class="group/cover relative flex min-h-[400px] sm:min-h-[464px] flex-col justify-between overflow-hidden bg-brand-950 p-6 text-white sm:p-9"
+                     onmouseenter="featuredCarouselPause()" 
+                     onmouseleave="featuredCarouselResume()">
+                    
+                    <!-- Decorative background patterns -->
+                    <div class="absolute -right-16 -top-24 h-72 w-72 rounded-full border-[52px] border-brand-700/25 pointer-events-none" aria-hidden="true"></div>
+                    <div class="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-brand-700/20 blur-3xl pointer-events-none" aria-hidden="true"></div>
+                    <div class="absolute top-1/3 -right-12 h-44 w-44 rounded-full bg-teal-500/10 blur-2xl pointer-events-none" aria-hidden="true"></div>
 
-                    <div class="relative">
-                        <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-brand-50">
-                            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">work</span>
-                            {{ $featuredJob->category->name }}
-                        </span>
-                        <h3 class="mt-8 max-w-md text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{{ $featuredJob->title }}</h3>
-                        <p class="mt-3 text-sm font-semibold text-brand-100">{{ $featuredJob->employer->business_name ?: $featuredJob->employer->name }}</p>
-                    </div>
+                    <!-- Slide Items -->
+                    @foreach ($featuredJobs as $index => $job)
+                        <a href="{{ route('jobs.show', $job) }}"
+                           data-featured-slide="{{ $index }}"
+                           data-job-id="{{ $job->id }}"
+                           class="featured-cover-slide absolute inset-0 flex flex-col justify-between p-6 sm:p-9 text-white transition-opacity duration-700 ease-in-out {{ $loop->first ? 'opacity-100 pointer-events-auto z-10' : 'opacity-0 pointer-events-none z-0' }}"
+                           aria-label="Lowongan unggulan: {{ $job->title }} di {{ $job->location }}">
+                            
+                            <!-- Header: Category -->
+                            <div class="relative flex items-center gap-2 z-10">
+                                <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-brand-50 backdrop-blur-xs">
+                                    <span class="material-symbols-outlined text-[16px]" aria-hidden="true">{{ match ($job->category->slug) { 'kuliner-kedai-kopi' => 'local_cafe', 'kreatif-dan-media' => 'movie_edit', 'ritel-toko' => 'storefront', 'logistik-gudang' => 'inventory_2', 'administrasi-keuangan' => 'contract', default => 'work' } }}</span>
+                                    {{ $job->category->name }}
+                                </span>
+                            </div>
 
-                    <div class="relative mt-10 grid gap-5 sm:grid-cols-2">
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.14em] text-brand-200">Lokasi</p>
-                            <p class="mt-1 font-bold">{{ $featuredJob->location }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.14em] text-brand-200">Upah</p>
-                            <p class="mt-1 font-bold">Rp {{ number_format($featuredJob->salary_amount, 0, ',', '.') }} / {{ $featuredJob->salary_type === 'monthly' ? 'bulan' : ($featuredJob->salary_type === 'daily' ? 'hari' : 'jam') }}</p>
-                        </div>
-                        <span class="inline-flex items-center gap-2 text-sm font-bold text-white sm:col-span-2">
-                            Lihat detail
-                            <span class="material-symbols-outlined text-[19px] transition group-hover:translate-x-1" aria-hidden="true">arrow_forward</span>
-                        </span>
-                    </div>
-                </a>
+                            <!-- Body: Title and Employer -->
+                            <div class="relative my-auto py-5 z-10">
+                                <h3 class="max-w-md text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-white group-hover/cover:text-brand-200 transition-colors">
+                                    {{ $job->title }}
+                                </h3>
+                                <p class="mt-3 text-sm sm:text-base font-semibold text-brand-100 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px] text-brand-300">storefront</span>
+                                    <span>{{ $job->employer->business_name ?: $job->employer->name }}</span>
+                                </p>
+                            </div>
 
+                            <!-- Footer: Location, Salary, CTA -->
+                            <div class="relative z-10">
+                                <div class="grid gap-5 sm:grid-cols-2 pt-4 border-t border-white/10">
+                                    <div>
+                                        <p class="text-[11px] uppercase tracking-[0.14em] text-brand-200 font-medium">Lokasi</p>
+                                        <p class="mt-1 font-bold text-white flex items-center gap-1 text-sm sm:text-base">
+                                            <span class="material-symbols-outlined text-[16px] text-brand-300">location_on</span>
+                                            <span>{{ $job->location }}</span>
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[11px] uppercase tracking-[0.14em] text-brand-200 font-medium">Upah</p>
+                                        <p class="mt-1 font-bold text-white text-sm sm:text-base">
+                                            Rp {{ number_format($job->salary_amount, 0, ',', '.') }}
+                                            <span class="text-xs font-normal text-brand-200">/ {{ $job->salary_type === 'monthly' ? 'bulan' : ($job->salary_type === 'daily' ? 'hari' : 'jam') }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 flex items-center justify-between">
+                                    <span class="inline-flex items-center gap-2 text-sm font-bold text-white group-hover/cover:text-brand-200 transition-colors">
+                                        Lihat detail
+                                        <span class="material-symbols-outlined text-[19px] transition-transform duration-200 group-hover/cover:translate-x-1.5" aria-hidden="true">arrow_forward</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+
+                <!-- Right Column: Other Featured Jobs List -->
                 <div class="divide-y divide-slate-200 dark:divide-slate-800">
                     @foreach ($featuredJobs->skip(1) as $job)
-                        <a href="{{ route('jobs.show', $job) }}" class="group flex min-h-[116px] items-center gap-4 px-5 py-5 transition hover:bg-brand-50/70 sm:px-7 dark:hover:bg-brand-950/30">
+                        <a href="{{ route('jobs.show', $job) }}" 
+                           data-featured-right-job="{{ $job->id }}"
+                           onmouseenter="featuredCarouselHoverJob({{ $job->id }})"
+                           onmouseleave="featuredCarouselResume()"
+                           class="featured-right-item group flex min-h-[116px] items-center gap-4 px-5 py-5 transition-all duration-300 hover:bg-brand-50/70 sm:px-7 dark:hover:bg-brand-950/30">
                             <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-700 group-hover:text-white dark:bg-brand-950 dark:text-brand-300 dark:group-hover:bg-brand-500 dark:group-hover:text-brand-950">
                                 <span class="material-symbols-outlined text-[21px]" aria-hidden="true">{{ match ($job->category->slug) { 'kuliner-kedai-kopi' => 'local_cafe', 'kreatif-dan-media' => 'movie_edit', 'ritel-toko' => 'storefront', 'logistik-gudang' => 'inventory_2', 'administrasi-keuangan' => 'contract', default => 'handyman' } }}</span>
                             </span>
@@ -133,14 +178,15 @@
                         </a>
                     @endforeach
                 </div>
+
             </div>
-        @empty
+        @else
             <div class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center dark:border-slate-700 dark:bg-slate-900">
                 <span class="material-symbols-outlined text-4xl text-slate-400" aria-hidden="true">work_off</span>
                 <p class="mt-3 font-bold text-slate-900 dark:text-white">Belum ada lowongan aktif</p>
                 <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Silakan kembali lagi untuk melihat peluang terbaru.</p>
             </div>
-        @endforelse
+        @endif
     </section>
 
     <section class="overflow-hidden rounded-3xl bg-brand-950 text-white" aria-labelledby="about-title">
@@ -191,3 +237,83 @@
         </div>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        const slides = document.querySelectorAll('.featured-cover-slide');
+        const rightItems = document.querySelectorAll('.featured-right-item');
+        const total = slides.length;
+        if (total <= 1) return;
+
+        let currentIndex = 0;
+        let timer = null;
+        let isPaused = false;
+        const ROTATION_INTERVAL = 3000; // 3 detik per lowongan
+
+        function showSlide(index) {
+            if (index < 0) index = total - 1;
+            if (index >= total) index = 0;
+            currentIndex = index;
+
+            slides.forEach((slide, i) => {
+                if (i === currentIndex) {
+                    slide.classList.remove('opacity-0', 'pointer-events-none', 'z-0');
+                    slide.classList.add('opacity-100', 'pointer-events-auto', 'z-10');
+                } else {
+                    slide.classList.remove('opacity-100', 'pointer-events-auto', 'z-10');
+                    slide.classList.add('opacity-0', 'pointer-events-none', 'z-0');
+                }
+            });
+
+            const currentJobId = slides[currentIndex]?.dataset.jobId;
+            rightItems.forEach(item => {
+                if (item.dataset.featuredRightJob === currentJobId) {
+                    item.classList.add('bg-brand-50/90', 'dark:bg-brand-950/60', 'border-l-4', 'border-brand-600', 'dark:border-brand-400');
+                } else {
+                    item.classList.remove('bg-brand-50/90', 'dark:bg-brand-950/60', 'border-l-4', 'border-brand-600', 'dark:border-brand-400');
+                }
+            });
+        }
+
+        function startRotation() {
+            stopRotation();
+            timer = setInterval(() => {
+                if (!isPaused) {
+                    showSlide(currentIndex + 1);
+                }
+            }, ROTATION_INTERVAL);
+        }
+
+        function stopRotation() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+        }
+
+        window.featuredCarouselPause = function () {
+            isPaused = true;
+            stopRotation();
+        };
+
+        window.featuredCarouselResume = function () {
+            isPaused = false;
+            startRotation();
+        };
+
+        window.featuredCarouselHoverJob = function (jobId) {
+            const targetIndex = Array.from(slides).findIndex(s => s.dataset.jobId == jobId);
+            if (targetIndex !== -1) {
+                isPaused = true;
+                stopRotation();
+                showSlide(targetIndex);
+            }
+        };
+
+        // Start on ready
+        showSlide(0);
+        startRotation();
+    })();
+</script>
+@endpush

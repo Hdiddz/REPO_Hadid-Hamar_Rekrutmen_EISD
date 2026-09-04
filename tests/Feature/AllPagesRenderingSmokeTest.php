@@ -29,6 +29,21 @@ class AllPagesRenderingSmokeTest extends TestCase
         $this->get(route('register'))->assertOk();
     }
 
+    public function test_home_page_featured_jobs_carousel_renders_slides(): void
+    {
+        $employer = User::factory()->employer()->create(['business_name' => 'Mitra Usaha']);
+        Job::factory()->create(['employer_id' => $employer->id, 'title' => 'Admin Penjualan']);
+        Job::factory()->create(['employer_id' => $employer->id, 'title' => 'Operator Percetakan']);
+
+        $response = $this->get(route('home'))->assertOk();
+        $response->assertSee('featured-cover-slide');
+        $response->assertSee('transition-opacity');
+        $response->assertSee('Admin Penjualan');
+        $response->assertSee('Operator Percetakan');
+        $response->assertDontSee('featuredCarouselProgress');
+        $response->assertDontSee('1 / 2');
+    }
+
     public function test_jobseeker_pages_render_successfully(): void
     {
         $jobseeker = User::factory()->jobseeker()->create();

@@ -79,9 +79,10 @@ class ChatController extends Controller
                 'initials' => strtoupper(substr($user->name, 0, 2)),
                 'last_message' => $lastMsg ? ($lastMsg->is_deleted ? 'Pesan ini telah dihapus' : $lastMsg->message) : null,
                 'last_time' => $lastMsg ? $lastMsg->created_at->diffForHumans() : null,
+                'last_time_raw' => $lastMsg?->created_at?->timestamp ?? 0,
                 'unread_count' => $unreadCount,
             ];
-        });
+        })->sortByDesc(fn (array $u) => [$u['unread_count'] > 0 ? 1 : 0, $u['last_time_raw'], $u['id']])->values();
 
         return response()->json($users);
     }
@@ -309,6 +310,26 @@ class ChatController extends Controller
             ];
         }
 
+        $directUrl = null;
+        if ($request->user()->hasRole('employer')) {
+            $directUrl = route('employer.applications.index', ['user' => $user->id]);
+        } elseif ($request->user()->hasRole('admin')) {
+            $directUrl = route('admin.users.show', $user);
+        } elseif ($request->user()->hasRole('jobseeker')) {
+            if ($user->role === 'employer') {
+                $hasApp = JobApplication::where('user_id', $userId)
+                    ->whereHas('job', fn ($q) => $q->where('employer_id', $user->id))
+                    ->exists();
+
+                if ($hasApp) {
+                    $directUrl = route('applications.index');
+                } else {
+                    $firstJob = Job::where('employer_id', $user->id)->where('status', 'open')->first();
+                    $directUrl = $firstJob ? route('jobs.show', $firstJob) : route('jobs.index');
+                }
+            }
+        }
+
         return response()->json([
             'user' => [
                 'id' => $user->id,
@@ -318,6 +339,7 @@ class ChatController extends Controller
                 'role_label' => $user->role === 'employer' ? ($user->business_name ?: 'Mitra UMKM') : ($user->role === 'admin' ? 'Super Admin' : 'Pelamar / Pencari Kerja'),
                 'initials' => strtoupper(substr($user->name, 0, 2)),
                 'avatar_url' => $user->avatar_url,
+                'direct_url' => $directUrl,
             ],
             'messages' => $messages,
             'pending_resignation' => $pendingResignation,

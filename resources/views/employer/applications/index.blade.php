@@ -19,19 +19,19 @@
         </label>
         <div class="relative">
             <select id="mobile-status-filter" onchange="if(this.value) window.location.href=this.value" class="portal-input appearance-none pr-10 font-semibold text-slate-800 dark:text-slate-100">
-                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job')])) }}" @selected(!request('status'))>
+                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'user' => request('user')])) }}" @selected(!request('status'))>
                     Semua Pelamar
                 </option>
-                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'pending'])) }}" @selected(request('status') === 'pending')>
+                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'pending', 'user' => request('user')])) }}" @selected(request('status') === 'pending')>
                     Menunggu Tinjauan
                 </option>
-                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'interview'])) }}" @selected(request('status') === 'interview')>
+                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'interview', 'user' => request('user')])) }}" @selected(request('status') === 'interview')>
                     Tahap Wawancara
                 </option>
-                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'accepted'])) }}" @selected(request('status') === 'accepted')>
+                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'accepted', 'user' => request('user')])) }}" @selected(request('status') === 'accepted')>
                     Peserta Diterima
                 </option>
-                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'rejected'])) }}" @selected(request('status') === 'rejected')>
+                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'rejected', 'user' => request('user')])) }}" @selected(request('status') === 'rejected')>
                     Ditolak
                 </option>
             </select>
@@ -41,27 +41,43 @@
 
     {{-- Quick Status Filter - Desktop/Tablet Pill Tabs --}}
     <div class="mb-5 hidden sm:flex flex-wrap items-center gap-2" data-reveal>
-        <a href="{{ route('employer.applications.index', array_filter(['job' => request('job')])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ !request('status') ? 'bg-brand-700 text-white shadow-xs dark:bg-brand-500 dark:text-brand-950' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+        <a href="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'user' => request('user')])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ !request('status') ? 'bg-brand-700 text-white shadow-xs dark:bg-brand-500 dark:text-brand-950' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
             <span class="material-symbols-outlined text-[16px]">groups</span>
             Semua Pelamar
         </a>
-        <a href="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'pending'])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ request('status') === 'pending' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+        <a href="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'pending', 'user' => request('user')])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ request('status') === 'pending' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
             <span class="material-symbols-outlined text-[16px]">hourglass_empty</span>
             Menunggu Tinjauan
         </a>
-        <a href="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'interview'])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ request('status') === 'interview' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+        <a href="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'interview', 'user' => request('user')])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ request('status') === 'interview' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
             <span class="material-symbols-outlined text-[16px]">record_voice_over</span>
             Wawancara
         </a>
-        <a href="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'accepted'])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ request('status') === 'accepted' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60' }}">
+        <a href="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'accepted', 'user' => request('user')])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ request('status') === 'accepted' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60' }}">
             <span class="material-symbols-outlined text-[16px]">how_to_reg</span>
             Peserta Diterima
         </a>
-        <a href="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'rejected'])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ request('status') === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+        <a href="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'rejected', 'user' => request('user')])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ request('status') === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
             <span class="material-symbols-outlined text-[16px]">cancel</span>
             Ditolak
         </a>
     </div>
+
+    @if($selectedUser)
+        <div class="mb-5 p-4 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-teal-900 dark:text-teal-200 flex items-center justify-between gap-3 text-xs" data-reveal>
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span class="material-symbols-outlined text-teal-600 dark:text-teal-400 text-[24px] shrink-0">badge</span>
+                <div class="min-w-0">
+                    <strong class="block font-bold text-sm text-teal-950 dark:text-white truncate">Status Seleksi Pelamar: {{ $selectedUser->name }}</strong>
+                    <span class="text-teal-800 dark:text-teal-300">Menampilkan status berkas dan tahapan seleksi khusus untuk kandidat ini.</span>
+                </div>
+            </div>
+            <a href="{{ route('employer.applications.index') }}" class="shrink-0 font-bold underline hover:no-underline flex items-center gap-1 text-teal-700 dark:text-teal-300 hover:text-teal-900">
+                <span class="material-symbols-outlined text-[16px]">close</span>
+                <span>Tampilkan Semua Pelamar</span>
+            </a>
+        </div>
+    @endif
 
     @if(request('status') === 'accepted')
         <div class="mb-5 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 flex items-center justify-between gap-3 text-xs" data-reveal>
@@ -79,6 +95,9 @@
     @endif
 
     <form method="GET" class="mb-6 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_1fr_auto] dark:border-slate-800 dark:bg-slate-900" data-reveal>
+        @if(request('user'))
+            <input type="hidden" name="user" value="{{ request('user') }}">
+        @endif
         <div>
             <label for="job" class="portal-label">Lowongan</label>
             <select id="job" name="job" class="portal-input">
@@ -99,7 +118,7 @@
         </div>
         <div class="flex items-end gap-2">
             <button class="portal-button-primary">Terapkan</button>
-            @if(request()->hasAny(['job','status']))
+            @if(request()->hasAny(['job','status','user']))
                 <a href="{{ route('employer.applications.index') }}" class="portal-button-secondary">Reset</a>
             @endif
         </div>
@@ -370,8 +389,13 @@
         @empty
             <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
                 <span class="material-symbols-outlined text-4xl text-slate-300">group_off</span>
-                <h2 class="mt-3 font-bold">Belum ada pelamar</h2>
-                <p class="mt-1 text-sm text-slate-500">Pelamar baru akan tampil setelah mengirim resume.</p>
+                <h2 class="mt-3 font-bold">{{ $selectedUser ? 'Pelamar belum memiliki riwayat seleksi aktif' : 'Belum ada pelamar' }}</h2>
+                <p class="mt-1 text-sm text-slate-500">{{ $selectedUser ? 'Kandidat '.$selectedUser->name.' belum memiliki berkas lamaran pada filter status ini.' : 'Pelamar baru akan tampil setelah mengirim resume.' }}</p>
+                @if($selectedUser)
+                    <div class="mt-4">
+                        <a href="{{ route('employer.applications.index') }}" class="portal-button-secondary text-xs">Tampilkan Semua Pelamar</a>
+                    </div>
+                @endif
             </div>
         @endforelse
     </div>

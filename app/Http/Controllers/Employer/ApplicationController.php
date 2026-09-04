@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateApplicationStatusRequest;
 use App\Models\ChatMessage;
 use App\Models\Job;
 use App\Models\JobApplication;
+use App\Models\User;
 use App\Notifications\ApplicationStatusUpdatedNotification;
 use App\Notifications\ResignationDecisionNotification;
 use Carbon\Carbon;
@@ -25,12 +26,17 @@ class ApplicationController extends Controller
     {
         $employer = $request->user();
 
+        $selectedUser = $request->filled('user')
+            ? User::find($request->integer('user'))
+            : null;
+
         $applications = JobApplication::query()
             ->whereHas('job', fn ($query) => $query->whereBelongsTo($employer, 'employer'))
             ->whereNull('employer_hidden_at')
             ->with(['user', 'job.skills', 'job.category'])
             ->when($request->filled('job'), fn ($q) => $q->where('job_id', $request->integer('job')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->when($request->filled('user'), fn ($q) => $q->where('user_id', $request->integer('user')))
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -40,7 +46,7 @@ class ApplicationController extends Controller
             ->orderBy('title')
             ->get(['id', 'title']);
 
-        return view('employer.applications.index', compact('applications', 'jobs'));
+        return view('employer.applications.index', compact('applications', 'jobs', 'selectedUser'));
     }
 
     public function update(UpdateApplicationStatusRequest $request, JobApplication $application): RedirectResponse

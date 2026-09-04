@@ -94,6 +94,15 @@
                         <dd class="mt-1 font-semibold">{{ $user->created_at->translatedFormat('d F Y, H:i') }} WIB</dd>
                     </div>
                 </dl>
+
+                @if($user->id !== auth()->id())
+                    <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                        <a href="{{ route('chat.index', ['user' => $user->id]) }}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold shadow-xs transition cursor-pointer">
+                            <span class="material-symbols-outlined text-[18px]">chat</span>
+                            <span>Kirim Pesan</span>
+                        </a>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -368,9 +377,12 @@
                     <div class="grid gap-3 sm:grid-cols-2">
                         <div>
                             <label for="manage_phone" class="portal-label text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Nomor Telepon
+                                Nomor Telepon (Opsional)
                             </label>
-                            <input type="text" id="manage_phone" name="phone" value="{{ old('phone', $user->phone) }}" placeholder="08..." class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:bg-white focus:border-brand-600 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:focus:bg-slate-950">
+                            <input type="text" id="manage_phone" name="phone" value="{{ old('phone', $user->phone) }}" placeholder="08..." maxlength="13" class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:bg-white focus:border-brand-600 focus:ring-4 focus:ring-brand-500/10 focus:outline-none transition dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:focus:bg-slate-950">
+                            @error('phone')
+                                <p class="mt-1 text-xs text-rose-600 font-semibold">{{ $message }}</p>
+                            @enderror
                         </div>
                         @if($user->role === 'employer')
                             <div>

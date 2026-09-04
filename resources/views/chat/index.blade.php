@@ -95,28 +95,24 @@
                     <button type="button" onclick="showChatContactList()" class="lg:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-850 transition cursor-pointer shrink-0" aria-label="Kembali ke kontak">
                         <span class="material-symbols-outlined text-[22px]">arrow_back</span>
                     </button>
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-teal-700 text-white font-bold flex items-center justify-center text-xs sm:text-sm shrink-0" id="activeChatAvatar">
-                        --
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                            <span class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate" id="activeChatName">Pilih percakapan</span>
-                            <span class="px-1.5 sm:px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 text-[9px] sm:text-[10px] font-bold border border-teal-200 dark:border-teal-800 hidden shrink-0" id="activeChatRoleBadge"></span>
+                    <div id="activeChatUserDirectContainer" onclick="handleActiveProfileDirect(event)" class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 group transition cursor-pointer" title="Buka profil / status seleksi">
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-teal-700 text-white font-bold flex items-center justify-center text-xs sm:text-sm shrink-0 overflow-hidden ring-2 ring-transparent group-hover:ring-teal-500 transition shadow-xs" id="activeChatAvatar">
+                            --
                         </div>
-                        <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate" id="activeChatStatus">
-                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0"></span>
-                            <span class="truncate">Tidak ada obrolan aktif</span>
-                        </p>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                                <span class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate group-hover:text-teal-700 dark:group-hover:text-teal-400 transition" id="activeChatName">Pilih percakapan</span>
+                                <span class="px-1.5 sm:px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 text-[9px] sm:text-[10px] font-bold border border-teal-200 dark:border-teal-800 hidden shrink-0" id="activeChatRoleBadge"></span>
+                            </div>
+                            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate" id="activeChatStatus">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0"></span>
+                                <span class="truncate">Tidak ada obrolan aktif</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <!-- View Profile Button -->
-                    <button type="button" id="chatViewProfileBtn" onclick="openChatProfileModal()" class="hidden inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-2xs transition cursor-pointer" title="Lihat Profil Lengkap">
-                        <span class="material-symbols-outlined text-[17px] text-teal-600 dark:text-teal-400">badge</span>
-                        <span class="hidden sm:inline">Lihat Profil</span>
-                    </button>
-
                     <!-- Hamburger / Kebab Menu for Chat Actions -->
                     <div class="relative" id="chatActionMenuContainer">
                         <button type="button" id="chatActionMenuBtn" onclick="toggleChatActionMenu(event)" class="hidden p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer" title="Opsi Percakapan" aria-label="Opsi Percakapan">
@@ -124,11 +120,6 @@
                         </button>
                         <!-- Dropdown Options -->
                         <div id="chatActionMenuDropdown" class="hidden absolute right-0 mt-1.5 w-48 sm:w-52 bg-white dark:bg-slate-850 rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-700/80 py-1.5 z-30 animate-page-enter">
-                            <button type="button" id="chatMenuProfileOption" onclick="openChatProfileModal(); toggleChatActionMenu();" class="w-full text-left px-3.5 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer">
-                                <span class="material-symbols-outlined text-[17px] text-teal-600 dark:text-teal-400">badge</span>
-                                <span>Lihat Profil Lawan Bicara</span>
-                            </button>
-                            <div class="my-1 border-t border-slate-100 dark:border-slate-700/60"></div>
                             <button type="button" onclick="confirmClearChat(); toggleChatActionMenu();" class="w-full text-left px-3.5 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 transition cursor-pointer">
                                 <span class="material-symbols-outlined text-[17px] text-slate-400">delete_sweep</span>
                                 <span>Bersihkan Obrolan</span>
@@ -238,19 +229,6 @@
     <x-resign-decision-modal />
 @endif
 
-<!-- In-Chat Profile Viewer Modal -->
-<div id="chatProfileModal" class="fixed inset-0 z-[150] hidden bg-slate-950/60 backdrop-blur-xs p-3 sm:p-6 overflow-y-auto flex items-center justify-center" role="dialog" aria-modal="true">
-    <div class="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 my-auto overflow-hidden animate-page-enter">
-        <button type="button" onclick="closeChatProfileModal()" class="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer" title="Tutup">
-            <span class="material-symbols-outlined text-[20px]">close</span>
-        </button>
-
-        <div id="chatProfileModalContent">
-            <!-- Dynamically populated by openChatProfileModal() -->
-        </div>
-    </div>
-</div>
-
 <!-- Modal Respon Wawancara (Approval, Diskusi, Tolak) -->
 <div id="chatInterviewActionModal" class="fixed inset-0 z-[160] hidden bg-slate-950/60 backdrop-blur-xs p-4 overflow-y-auto flex items-center justify-center" role="dialog" aria-modal="true">
     <div class="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-auto animate-page-enter">
@@ -296,8 +274,14 @@
     let currentReply = null;
     let currentPendingResignation = null;
     let currentInterviewInvitation = null;
-    let currentProfile = null;
+    let activeChatUserDirectUrl = null;
     let currentOtherUser = null;
+
+    function handleActiveProfileDirect(event) {
+        if (activeChatUserDirectUrl) {
+            window.location.href = activeChatUserDirectUrl;
+        }
+    }
     let activeInterviewApplicationId = null;
     const isEmployer = {{ Auth::user()?->role === 'employer' ? 'true' : 'false' }};
     const employerName = {{ Js::from(Auth::user()?->business_name ?: Auth::user()?->name) }};
@@ -669,8 +653,19 @@
 
             currentPendingResignation = data.pending_resignation || null;
             currentInterviewInvitation = data.interview_invitation || null;
-            currentProfile = data.profile || null;
             currentOtherUser = data.user || null;
+            activeChatUserDirectUrl = data.user?.direct_url || null;
+
+            const directContainer = document.getElementById('activeChatUserDirectContainer');
+            if (directContainer) {
+                if (activeChatUserDirectUrl) {
+                    directContainer.classList.add('cursor-pointer');
+                    directContainer.title = 'Buka profil / status seleksi';
+                } else {
+                    directContainer.classList.remove('cursor-pointer');
+                    directContainer.removeAttribute('title');
+                }
+            }
 
             // Handle Contact Details Header Update if loaded dynamically
             if (data.user) {
@@ -706,16 +701,6 @@
                         unread_count: 0
                     });
                     renderConversations(allConversations);
-                }
-            }
-
-            // Handle Profile Button in Chat Header
-            const profileBtn = document.getElementById('chatViewProfileBtn');
-            if (profileBtn) {
-                if (currentProfile) {
-                    profileBtn.classList.remove('hidden');
-                } else {
-                    profileBtn.classList.add('hidden');
                 }
             }
 
@@ -1030,15 +1015,18 @@
                     document.getElementById('chatInput').placeholder = 'Ketik pesan...';
                     document.getElementById('chatSendBtn').disabled = true;
 
-                    const profileBtn = document.getElementById('chatViewProfileBtn');
-                    if (profileBtn) profileBtn.classList.add('hidden');
+                    const directContainer = document.getElementById('activeChatUserDirectContainer');
+                    if (directContainer) {
+                        directContainer.classList.remove('cursor-pointer');
+                        directContainer.removeAttribute('title');
+                    }
                     const interviewBanner = document.getElementById('chatInterviewBanner');
                     if (interviewBanner) {
                         interviewBanner.classList.add('hidden');
                         interviewBanner.classList.remove('flex');
                     }
                     currentInterviewInvitation = null;
-                    currentProfile = null;
+                    activeChatUserDirectUrl = null;
 
                     document.getElementById('messageContainer').innerHTML = `
                         <div class="h-full flex flex-col items-center justify-center text-slate-400 my-auto text-center p-8">
@@ -1179,233 +1167,6 @@
                 }
             }
         }
-    }
-
-    function openChatProfileModal() {
-        if (!currentProfile) return;
-        const modal = document.getElementById('chatProfileModal');
-        const content = document.getElementById('chatProfileModalContent');
-        if (!modal || !content) return;
-
-        let html = '';
-        if (currentProfile.type === 'jobseeker') {
-            const avatarHtml = currentProfile.avatar_url
-                ? `<img src="${currentProfile.avatar_url}" alt="${escapeHtml(currentProfile.name)}" class="w-14 h-14 rounded-2xl object-cover border-2 border-teal-500 shrink-0">`
-                : `<div class="w-14 h-14 rounded-2xl bg-teal-700 text-white font-bold flex items-center justify-center text-lg shrink-0">${escapeHtml(currentProfile.initials || '--')}</div>`;
-
-            let appsHtml = '';
-            if (currentProfile.applications && currentProfile.applications.length > 0) {
-                appsHtml = currentProfile.applications.map(app => {
-                    const statusBadgeColors = {
-                        pending: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
-                        interview: 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800',
-                        accepted: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
-                        rejected: 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800',
-                        resigned: 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
-                    }[app.status] || 'bg-slate-100 text-slate-700 border-slate-300';
-
-                    let interviewSnippet = '';
-                    if (app.status === 'interview') {
-                        interviewSnippet = `
-                            <div class="mt-2 p-2 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-900/50 text-[11px] text-indigo-900 dark:text-indigo-300">
-                                <span class="font-bold flex items-center gap-1 mb-0.5"><span class="material-symbols-outlined text-[14px]">event</span> Wawancara: ${escapeHtml(app.interview_date || '')} ${escapeHtml(app.interview_time || '')}</span>
-                                <span>Status Respon: <strong>${escapeHtml(app.interview_status_label)}</strong></span>
-                            </div>
-                        `;
-                    }
-
-                    let resumeActions = '';
-                    if (app.has_resume) {
-                        resumeActions = `
-                            <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 flex-wrap">
-                                ${app.resume_preview_url ? `
-                                    <a href="${app.resume_preview_url}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-[11px] shadow-2xs transition">
-                                        <span class="material-symbols-outlined text-[14px]">visibility</span>
-                                        <span>Buka CV / Resume</span>
-                                    </a>
-                                ` : ''}
-                                ${app.resume_download_url ? `
-                                    <a href="${app.resume_download_url}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold transition">
-                                        <span class="material-symbols-outlined text-[14px]">download</span>
-                                        <span>Unduh CV</span>
-                                    </a>
-                                ` : ''}
-                            </div>
-                        `;
-                    }
-
-                    return `
-                        <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 space-y-1">
-                            <div class="flex items-start justify-between gap-2">
-                                <h5 class="font-bold text-xs text-slate-900 dark:text-white">${escapeHtml(app.job_title)}</h5>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadgeColors}">${escapeHtml(app.status_label)}</span>
-                            </div>
-                            <p class="text-[10px] text-slate-400">Diajukan pada ${escapeHtml(app.applied_at)}</p>
-                            ${app.note ? `<p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-1">"${escapeHtml(app.note)}"</p>` : ''}
-                            ${interviewSnippet}
-                            ${resumeActions}
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                appsHtml = `<p class="text-xs text-slate-400 italic">Belum ada lamaran terdaftar pada usaha Anda.</p>`;
-            }
-
-            html = `
-                <div class="space-y-4">
-                    <div class="flex items-start gap-3.5">
-                        ${avatarHtml}
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <h4 class="font-bold text-base text-slate-900 dark:text-white">${escapeHtml(currentProfile.name)}</h4>
-                                <span class="px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-[10px] font-bold">Pencari Kerja</span>
-                            </div>
-                            ${currentProfile.username ? `<p class="text-xs font-mono text-slate-400 mt-0.5">${escapeHtml(currentProfile.username)}</p>` : ''}
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px]">calendar_month</span>
-                                <span>Bergabung sejak ${escapeHtml(currentProfile.member_since)}</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Contact Details Card -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span class="material-symbols-outlined text-slate-400 text-base shrink-0">mail</span>
-                            <a href="mailto:${escapeHtml(currentProfile.email)}" class="text-slate-700 dark:text-slate-300 hover:text-teal-700 truncate">${escapeHtml(currentProfile.email)}</a>
-                        </div>
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span class="material-symbols-outlined text-slate-400 text-base shrink-0">phone</span>
-                            <a href="tel:${escapeHtml(currentProfile.phone)}" class="text-slate-700 dark:text-slate-300 hover:text-teal-700 truncate">${escapeHtml(currentProfile.phone)}</a>
-                        </div>
-                    </div>
-
-                    <!-- Application History for this Employer -->
-                    <div class="space-y-2 pt-1">
-                        <h5 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-teal-600 text-base">assignment</span>
-                            <span>Riwayat Lamaran untuk Usaha Anda</span>
-                        </h5>
-                        <div class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-                            ${appsHtml}
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else if (currentProfile.type === 'employer') {
-            const avatarHtml = currentProfile.avatar_url
-                ? `<img src="${currentProfile.avatar_url}" alt="${escapeHtml(currentProfile.name)}" class="w-14 h-14 rounded-2xl object-cover border-2 border-teal-500 shrink-0">`
-                : `<div class="w-14 h-14 rounded-2xl bg-teal-800 text-white font-bold flex items-center justify-center text-lg shrink-0">${escapeHtml(currentProfile.initials || '--')}</div>`;
-
-            let jobsHtml = '';
-            if (currentProfile.open_jobs && currentProfile.open_jobs.length > 0) {
-                jobsHtml = currentProfile.open_jobs.map(job => `
-                    <div class="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between gap-3 min-w-0">
-                        <div class="min-w-0 flex-1">
-                            <h6 class="font-bold text-xs text-slate-900 dark:text-white truncate">${escapeHtml(job.title)}</h6>
-                            <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
-                                <span>${escapeHtml(job.location)}</span>
-                                <span>·</span>
-                                <span class="font-semibold text-teal-700 dark:text-teal-400">${escapeHtml(job.salary_formatted)}</span>
-                            </div>
-                        </div>
-                        <a href="${job.url}" target="_blank" class="portal-button-secondary !py-1 !px-2.5 text-[11px] font-bold gap-1 shrink-0">
-                            <span>Detail</span>
-                            <span class="material-symbols-outlined text-[13px]">arrow_forward</span>
-                        </a>
-                    </div>
-                `).join('');
-            } else {
-                jobsHtml = `<p class="text-xs text-slate-400 italic">Saat ini belum ada lowongan aktif yang sedang dibuka.</p>`;
-            }
-
-            let myAppsHtml = '';
-            if (currentProfile.my_applications && currentProfile.my_applications.length > 0) {
-                myAppsHtml = `
-                    <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <h5 class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-teal-600 text-base">task_alt</span>
-                            <span>Lamaran Anda pada Mitra Ini</span>
-                        </h5>
-                        <div class="space-y-1.5">
-                            ${currentProfile.my_applications.map(a => `
-                                <div class="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 min-w-0 gap-2">
-                                    <span class="font-medium text-slate-800 dark:text-slate-200 truncate min-w-0 flex-1 mr-2">${escapeHtml(a.job_title)}</span>
-                                    <span class="font-bold text-teal-700 dark:text-teal-400 shrink-0">${escapeHtml(a.status_label)}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            html = `
-                <div class="space-y-4">
-                    <div class="flex items-start gap-3.5">
-                        ${avatarHtml}
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <h4 class="font-bold text-base text-slate-900 dark:text-white">${escapeHtml(currentProfile.name)}</h4>
-                                <span class="px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-[10px] font-bold">Mitra UMKM</span>
-                            </div>
-                            <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Pemilik/Kontak: <strong class="text-slate-800 dark:text-slate-200">${escapeHtml(currentProfile.owner_name)}</strong></p>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px]">store</span>
-                                <span>Mitra sejak ${escapeHtml(currentProfile.member_since)}</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Contact Details -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span class="material-symbols-outlined text-slate-400 text-base shrink-0">mail</span>
-                            <a href="mailto:${escapeHtml(currentProfile.email)}" class="text-slate-700 dark:text-slate-300 hover:text-teal-700 truncate">${escapeHtml(currentProfile.email)}</a>
-                        </div>
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span class="material-symbols-outlined text-slate-400 text-base shrink-0">phone</span>
-                            <a href="tel:${escapeHtml(currentProfile.phone)}" class="text-slate-700 dark:text-slate-300 hover:text-teal-700 truncate">${escapeHtml(currentProfile.phone)}</a>
-                        </div>
-                    </div>
-
-                    <!-- Open Jobs Section -->
-                    <div class="space-y-2 pt-1">
-                        <h5 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-teal-600 text-base">work</span>
-                            <span>Lowongan Terbuka Saat Ini</span>
-                        </h5>
-                        <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
-                            ${jobsHtml}
-                        </div>
-                    </div>
-
-                    ${myAppsHtml}
-                </div>
-            `;
-        } else {
-            html = `
-                <div class="space-y-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-2xl bg-slate-800 text-white font-bold flex items-center justify-center text-base shrink-0">${escapeHtml(currentProfile.initials || 'AD')}</div>
-                        <div>
-                            <h4 class="font-bold text-sm text-slate-900 dark:text-white">${escapeHtml(currentProfile.name)}</h4>
-                            <p class="text-xs text-slate-500">${escapeHtml(currentProfile.role_label || 'Super Administrator')}</p>
-                        </div>
-                    </div>
-                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-xs space-y-1">
-                        <p class="text-slate-600 dark:text-slate-400">Email: <span class="font-medium text-slate-800 dark:text-slate-200">${escapeHtml(currentProfile.email)}</span></p>
-                    </div>
-                </div>
-            `;
-        }
-
-        content.innerHTML = html;
-        modal.classList.remove('hidden');
-    }
-
-    function closeChatProfileModal() {
-        const modal = document.getElementById('chatProfileModal');
-        if (modal) modal.classList.add('hidden');
     }
 
     async function confirmInterviewDirect(applicationId) {

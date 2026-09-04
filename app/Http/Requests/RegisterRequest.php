@@ -28,7 +28,7 @@ class RegisterRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'role' => ['required', Rule::in(['jobseeker', 'employer'])],
-            'phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+()\-\s]+$/'],
+            'phone' => ['nullable', 'string', 'max:13', 'regex:/^[0-9+()\-\s]+$/'],
             'business_name' => ['nullable', 'required_if:role,employer', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
         ];
@@ -42,6 +42,7 @@ class RegisterRequest extends FormRequest
             'email.email' => 'Format alamat email tidak valid.',
             'email.unique' => 'Alamat email sudah terdaftar.',
             'role.in' => 'Jenis akun tidak valid.',
+            'phone.max' => 'Nomor telepon tidak boleh lebih dari 13 karakter.',
             'phone.regex' => 'Nomor telepon hanya boleh berisi angka dan tanda telepon.',
             'business_name.required_if' => 'Nama usaha wajib diisi untuk mitra UMKM.',
             'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',

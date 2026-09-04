@@ -74,35 +74,28 @@
                     <button type="button" onclick="showPopupChatList()" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors cursor-pointer shrink-0" title="Kembali ke Daftar Kontak">
                         <span class="material-symbols-outlined text-base">arrow_back</span>
                     </button>
-                    <div class="w-7 h-7 rounded-lg bg-teal-600 text-white font-bold flex items-center justify-center text-xs shrink-0" id="detailChatAvatar">
-                        --
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="text-xs font-bold leading-tight truncate max-w-[125px] sm:max-w-[160px]" id="detailChatTitle">
-                            Pengguna
+                    <div id="popupProfileDirectContainer" onclick="handlePopupProfileDirect(event)" class="flex items-center gap-2 min-w-0 flex-1 cursor-pointer group transition" title="Buka status seleksi / profil">
+                        <div class="w-7 h-7 rounded-lg bg-teal-600 text-white font-bold flex items-center justify-center text-xs shrink-0 ring-1 ring-transparent group-hover:ring-teal-300 transition overflow-hidden" id="detailChatAvatar">
+                            --
                         </div>
-                        <div class="text-[10px] text-teal-200 flex items-center gap-1 min-w-0 truncate" id="detailChatSubtitle">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-                            <span class="truncate" id="detailChatOwner">Online</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold leading-tight truncate max-w-[125px] sm:max-w-[160px] group-hover:text-teal-200 transition" id="detailChatTitle">
+                                Pengguna
+                            </div>
+                            <div class="text-[10px] text-teal-200 flex items-center gap-1 min-w-0 truncate" id="detailChatSubtitle">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                                <span class="truncate" id="detailChatOwner">Online</span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="flex items-center gap-0.5 shrink-0">
-                    <!-- Profile Header Button -->
-                    <button type="button" id="popupProfileHeaderBtn" onclick="openPopupProfileModal()" class="hidden p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors cursor-pointer" title="Lihat Profil">
-                        <span class="material-symbols-outlined text-base">badge</span>
-                    </button>
                     <!-- Hamburger / More Options Menu -->
                     <div class="relative" id="popupActionMenuContainer">
                         <button type="button" onclick="togglePopupActionMenu(event)" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors cursor-pointer" title="Opsi Obrolan">
                             <span class="material-symbols-outlined text-base">more_vert</span>
                         </button>
                         <div id="popupActionMenuDropdown" class="hidden absolute right-0 mt-1 w-44 bg-white dark:bg-slate-850 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-30 animate-page-enter">
-                            <button type="button" onclick="openPopupProfileModal(); togglePopupActionMenu();" class="w-full text-left px-3 py-2 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition cursor-pointer">
-                                <span class="material-symbols-outlined text-[15px] text-teal-600 dark:text-teal-400">badge</span>
-                                <span>Lihat Profil Lawan Bicara</span>
-                            </button>
-                            <div class="my-0.5 border-t border-slate-100 dark:border-slate-700/60"></div>
                             <button type="button" onclick="confirmClearPopupChat(); togglePopupActionMenu();" class="w-full text-left px-3 py-2 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition cursor-pointer">
                                 <span class="material-symbols-outlined text-[15px] text-slate-400">delete_sweep</span>
                                 <span>Bersihkan Obrolan</span>
@@ -172,22 +165,6 @@
             </div>
         </div>
 
-        <!-- Floating Chat Profile Modal Overlay -->
-        <div id="popupProfileModal" class="hidden absolute inset-0 z-40 bg-white flex flex-col overflow-hidden animate-page-enter">
-            <div class="p-3 bg-teal-800 text-white flex items-center justify-between shadow-xs shrink-0">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-base">badge</span>
-                    <span class="text-xs font-bold" id="popupProfileModalTitle">Profil Lawan Bicara</span>
-                </div>
-                <button type="button" onclick="closePopupProfileModal()" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors cursor-pointer" title="Kembali ke Obrolan">
-                    <span class="material-symbols-outlined text-base">close</span>
-                </button>
-            </div>
-            <div class="flex-1 p-3 overflow-y-auto space-y-3 text-xs" id="popupProfileModalContent">
-                <!-- Dynamically populated -->
-            </div>
-        </div>
-
     </div>
 
     <!-- Floating FAB Button: Dinamai "Pesan" -->
@@ -206,7 +183,13 @@
     let listPollInterval = null;
     let popupReply = null;
     let popupCurrentInterview = null;
-    let popupCurrentProfile = null;
+    let popupCurrentDirectUrl = null;
+
+    function handlePopupProfileDirect(event) {
+        if (popupCurrentDirectUrl) {
+            window.location.href = popupCurrentDirectUrl;
+        }
+    }
     const currentUserId = {{ Auth::id() }};
     const currentUserInitials = {{ Js::from(strtoupper(substr(Auth::user()->name ?? 'U', 0, 2))) }};
     const csrfToken = {{ Js::from(csrf_token()) }};
@@ -248,16 +231,18 @@
             setTimeout(() => listView.classList.remove('animate-chat-slide-left'), 300);
         }
 
-        closePopupProfileModal();
+        popupCurrentDirectUrl = null;
+        const directContainer = document.getElementById('popupProfileDirectContainer');
+        if (directContainer) {
+            directContainer.classList.remove('cursor-pointer');
+            directContainer.removeAttribute('title');
+        }
         const interviewBanner = document.getElementById('popupInterviewBanner');
         if (interviewBanner) {
             interviewBanner.classList.add('hidden');
             interviewBanner.classList.remove('flex');
         }
-        const profileHeaderBtn = document.getElementById('popupProfileHeaderBtn');
-        if (profileHeaderBtn) profileHeaderBtn.classList.add('hidden');
         popupCurrentInterview = null;
-        popupCurrentProfile = null;
 
         loadPopupConversations();
     }
@@ -504,14 +489,16 @@
             const data = await res.json();
 
             popupCurrentInterview = data.interview_invitation || null;
-            popupCurrentProfile = data.profile || null;
+            popupCurrentDirectUrl = data.user?.direct_url || null;
 
-            const profileHeaderBtn = document.getElementById('popupProfileHeaderBtn');
-            if (profileHeaderBtn) {
-                if (popupCurrentProfile) {
-                    profileHeaderBtn.classList.remove('hidden');
+            const directContainer = document.getElementById('popupProfileDirectContainer');
+            if (directContainer) {
+                if (popupCurrentDirectUrl) {
+                    directContainer.classList.add('cursor-pointer');
+                    directContainer.title = 'Buka status seleksi / profil';
                 } else {
-                    profileHeaderBtn.classList.add('hidden');
+                    directContainer.classList.remove('cursor-pointer');
+                    directContainer.removeAttribute('title');
                 }
             }
 
@@ -900,118 +887,6 @@
         } catch (e) {
             console.error(e);
         }
-    }
-
-    function openPopupProfileModal() {
-        if (!popupCurrentProfile) return;
-        const modal = document.getElementById('popupProfileModal');
-        const content = document.getElementById('popupProfileModalContent');
-        if (!modal || !content) return;
-
-        let html = '';
-        if (popupCurrentProfile.type === 'jobseeker') {
-            const avatarHtml = popupCurrentProfile.avatar_url
-                ? `<img src="${popupCurrentProfile.avatar_url}" alt="${escapeHtml(popupCurrentProfile.name)}" class="w-10 h-10 rounded-xl object-cover border border-teal-500 shrink-0">`
-                : `<div class="w-10 h-10 rounded-xl bg-teal-700 text-white font-bold flex items-center justify-center text-xs shrink-0">${escapeHtml(popupCurrentProfile.initials || '--')}</div>`;
-
-            let appsList = '';
-            if (popupCurrentProfile.applications && popupCurrentProfile.applications.length > 0) {
-                appsList = popupCurrentProfile.applications.map(a => `
-                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-slate-800 text-[11px] truncate">${escapeHtml(a.job_title)}</span>
-                            <span class="px-1.5 py-0.2 rounded-md bg-teal-100 text-teal-800 text-[9px] font-bold">${escapeHtml(a.status_label)}</span>
-                        </div>
-                        ${a.has_resume && a.resume_preview_url ? `
-                            <a href="${a.resume_preview_url}" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 hover:underline pt-1">
-                                <span class="material-symbols-outlined text-[12px]">visibility</span>
-                                <span>Lihat CV / Resume</span>
-                            </a>
-                        ` : ''}
-                    </div>
-                `).join('');
-            } else {
-                appsList = `<p class="text-slate-400 text-[11px] italic">Belum ada riwayat lamaran.</p>`;
-            }
-
-            html = `
-                <div class="space-y-3">
-                    <div class="flex items-center gap-2.5">
-                        ${avatarHtml}
-                        <div class="min-w-0 flex-1">
-                            <h5 class="font-bold text-xs text-slate-900 truncate">${escapeHtml(popupCurrentProfile.name)}</h5>
-                            <span class="text-[10px] text-teal-700 font-semibold">Pelamar / Pencari Kerja</span>
-                        </div>
-                    </div>
-                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1 text-[11px]">
-                        <p class="text-slate-600 truncate">Email: <span class="font-medium text-slate-800">${escapeHtml(popupCurrentProfile.email)}</span></p>
-                        <p class="text-slate-600 truncate">Telepon: <span class="font-medium text-slate-800">${escapeHtml(popupCurrentProfile.phone)}</span></p>
-                    </div>
-                    <div>
-                        <h6 class="font-bold text-slate-800 text-[11px] mb-1.5 flex items-center gap-1">
-                            <span class="material-symbols-outlined text-teal-600 text-sm">assignment</span>
-                            <span>Lamaran pada Usaha Anda</span>
-                        </h6>
-                        <div class="space-y-1.5 max-h-40 overflow-y-auto">
-                            ${appsList}
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else if (popupCurrentProfile.type === 'employer') {
-            const avatarHtml = popupCurrentProfile.avatar_url
-                ? `<img src="${popupCurrentProfile.avatar_url}" alt="${escapeHtml(popupCurrentProfile.name)}" class="w-10 h-10 rounded-xl object-cover border border-teal-500 shrink-0">`
-                : `<div class="w-10 h-10 rounded-xl bg-teal-800 text-white font-bold flex items-center justify-center text-xs shrink-0">${escapeHtml(popupCurrentProfile.initials || '--')}</div>`;
-
-            let jobsList = '';
-            if (popupCurrentProfile.open_jobs && popupCurrentProfile.open_jobs.length > 0) {
-                jobsList = popupCurrentProfile.open_jobs.map(j => `
-                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-1">
-                        <div class="min-w-0">
-                            <p class="font-bold text-slate-800 text-[11px] truncate">${escapeHtml(j.title)}</p>
-                            <p class="text-[10px] text-slate-500">${escapeHtml(j.location)}</p>
-                        </div>
-                        <a href="${j.url}" target="_blank" class="text-teal-700 text-[10px] font-bold hover:underline shrink-0">Buka</a>
-                    </div>
-                `).join('');
-            } else {
-                jobsList = `<p class="text-slate-400 text-[11px] italic">Tidak ada lowongan aktif.</p>`;
-            }
-
-            html = `
-                <div class="space-y-3">
-                    <div class="flex items-center gap-2.5">
-                        ${avatarHtml}
-                        <div class="min-w-0 flex-1">
-                            <h5 class="font-bold text-xs text-slate-900 truncate">${escapeHtml(popupCurrentProfile.name)}</h5>
-                            <span class="text-[10px] text-teal-700 font-semibold">Mitra UMKM</span>
-                        </div>
-                    </div>
-                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1 text-[11px]">
-                        <p class="text-slate-600 truncate">Kontak: <span class="font-medium text-slate-800">${escapeHtml(popupCurrentProfile.owner_name)}</span></p>
-                        <p class="text-slate-600 truncate">Email: <span class="font-medium text-slate-800">${escapeHtml(popupCurrentProfile.email)}</span></p>
-                        <p class="text-slate-600 truncate">Telepon: <span class="font-medium text-slate-800">${escapeHtml(popupCurrentProfile.phone)}</span></p>
-                    </div>
-                    <div>
-                        <h6 class="font-bold text-slate-800 text-[11px] mb-1.5 flex items-center gap-1">
-                            <span class="material-symbols-outlined text-teal-600 text-sm">work</span>
-                            <span>Lowongan Terbuka</span>
-                        </h6>
-                        <div class="space-y-1.5 max-h-40 overflow-y-auto">
-                            ${jobsList}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        content.innerHTML = html;
-        modal.classList.remove('hidden');
-    }
-
-    function closePopupProfileModal() {
-        const modal = document.getElementById('popupProfileModal');
-        if (modal) modal.classList.add('hidden');
     }
 
     function escapeHtml(str) {

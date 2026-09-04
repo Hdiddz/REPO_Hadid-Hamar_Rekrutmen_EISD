@@ -371,4 +371,158 @@ class ChatTest extends TestCase
             'business_name' => 'Kedai Kopi Bahagia',
         ]);
     }
+
+    public function test_admin_can_view_conversations_and_send_messages_to_user(): void
+    {
+        $admin = User::factory()->admin()->create(['name' => 'Admin Utama']);
+        $jobseeker = User::factory()->jobseeker()->create(['name' => 'Sari Pelamar']);
+
+        // 1. Initially, admin has empty conversations list because no messages have been sent yet
+        $convResponse = $this->actingAs($admin)->getJson('/chat/conversations');
+        $convResponse->assertOk();
+        $convResponse->assertJsonCount(0);
+
+        // When opened with ?with={jobseeker->id}, Sari Pelamar is included
+        $withResponse = $this->actingAs($admin)->getJson('/chat/conversations?with='.$jobseeker->id);
+        $withResponse->assertOk();
+        $withResponse->assertJsonFragment([
+            'id' => $jobseeker->id,
+            'name' => 'Sari Pelamar',
+        ]);
+
+        // 2. Admin sends a direct message to user
+        $sendResponse = $this->actingAs($admin)->postJson(route('chat.send', $jobseeker), [
+            'message' => 'Halo Sari, kami ingin mengonfirmasi kelengkapan dokumen akun Anda.',
+        ]);
+        $sendResponse->assertStatus(201);
+
+        $this->assertDatabaseHas('chat_messages', [
+            'sender_id' => $admin->id,
+            'receiver_id' => $jobseeker->id,
+            'message' => 'Halo Sari, kami ingin mengonfirmasi kelengkapan dokumen akun Anda.',
+            'is_read' => false,
+        ]);
+
+        // Now conversations list includes Sari Pelamar because a message exists
+        $convAfterMsg = $this->actingAs($admin)->getJson('/chat/conversations');
+        $convAfterMsg->assertOk();
+        $convAfterMsg->assertJsonFragment([
+            'id' => $jobseeker->id,
+            'name' => 'Sari Pelamar',
+        ]);
+
+        // 3. User can fetch messages from admin
+        $fetchResponse = $this->actingAs($jobseeker)->getJson(route('chat.messages', $admin));
+        $fetchResponse->assertOk();
+        $fetchResponse->assertJsonPath('messages.0.message', 'Halo Sari, kami ingin mengonfirmasi kelengkapan dokumen akun Anda.');
+
+        // 4. User can reply to admin
+        $replyResponse = $this->actingAs($jobseeker)->postJson(route('chat.send', $admin), [
+            'message' => 'Terima kasih Admin, dokumen saya sudah saya perbarui.',
+        ]);
+        $replyResponse->assertStatus(201);
+
+        $this->assertDatabaseHas('chat_messages', [
+            'sender_id' => $jobseeker->id,
+            'receiver_id' => $admin->id,
+            'message' => 'Terima kasih Admin, dokumen saya sudah saya perbarui.',
+        ]);
+    }
+
+    public function test_admin_user_detail_profile_contains_chat_button_and_index_does_not(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $jobseeker = User::factory()->jobseeker()->create(['name' => 'Dewi Lestari']);
+
+        // 1. Index page does NOT include chat link for the user row
+        $indexResponse = $this->actingAs($admin)->get(route('admin.users.index'));
+        $indexResponse->assertOk();
+        $indexResponse->assertDontSee(route('chat.index', ['user' => $jobseeker->id]));
+
+        // 2. Show user detail profile page includes the chat action button with text "Kirim Pesan"
+        $showResponse = $this->actingAs($admin)->get(route('admin.users.show', $jobseeker));
+        $showResponse->assertOk();
+        $showResponse->assertSee(route('chat.index', ['user' => $jobseeker->id]));
+        $showResponse->assertSee('Kirim Pesan');
+        $showResponse->assertDontSee('Kirim Pesan Langsung');
+    }
+
+    public function test_chat_messages_endpoint_provides_direct_url_to_applicant_selection_status_or_profile(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $jobseeker = User::factory()->jobseeker()->create(['name' => 'Budi Santoso']);
+        $admin = User::factory()->admin()->create();
+
+        $job = Job::factory()->create([
+            'employer_id' => $employer->id,
+            'status' => 'open',
+        ]);
+
+        JobApplication::factory()->create([
+            'job_id' => $job->id,
+            'user_id' => $jobseeker->id,
+            'status' => 'pending',
+        ]);
+
+        // 1. Employer chatting with applicant -> direct_url points to employer.applications.index?user={jobseeker_id}
+        $employerResponse = $this->actingAs($employer)->getJson(route('chat.messages', $jobseeker));
+        $employerResponse->assertOk();
+        $employerResponse->assertJsonPath('user.direct_url', route('employer.applications.index', ['user' => $jobseeker->id]));
+
+        // 2. Admin chatting with user -> direct_url points to admin.users.show
+        $adminResponse = $this->actingAs($admin)->getJson(route('chat.messages', $jobseeker));
+        $adminResponse->assertOk();
+        $adminResponse->assertJsonPath('user.direct_url', route('admin.users.show', $jobseeker));
+
+        // 3. Jobseeker chatting with employer who has received jobseeker's application -> direct_url points to applications.index
+        $jobseekerResponse = $this->actingAs($jobseeker)->getJson(route('chat.messages', $employer));
+        $jobseekerResponse->assertOk();
+        $jobseekerResponse->assertJsonPath('user.direct_url', route('applications.index'));
+    }
+
+    public function test_employer_applications_index_can_filter_by_specific_user_and_displays_status_banner(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $candidateA = User::factory()->jobseeker()->create(['name' => 'Kandidat Pertama']);
+        $candidateB = User::factory()->jobseeker()->create(['name' => 'Kandidat Kedua']);
+
+        $job = Job::factory()->create([
+            'employer_id' => $employer->id,
+            'title' => 'Barista Kafe',
+            'status' => 'open',
+        ]);
+
+        JobApplication::factory()->create([
+            'job_id' => $job->id,
+            'user_id' => $candidateA->id,
+            'status' => 'interview',
+        ]);
+
+        JobApplication::factory()->create([
+            'job_id' => $job->id,
+            'user_id' => $candidateB->id,
+            'status' => 'pending',
+        ]);
+
+        // Filter by candidateA
+        $response = $this->actingAs($employer)->get(route('employer.applications.index', ['user' => $candidateA->id]));
+        $response->assertOk();
+        $response->assertSee('Status Seleksi Pelamar: Kandidat Pertama');
+        $response->assertSee('Kandidat Pertama');
+        $response->assertDontSee('Kandidat Kedua');
+    }
+
+    public function test_chat_views_do_not_contain_separate_profile_buttons_or_modals(): void
+    {
+        $user = User::factory()->jobseeker()->create();
+
+        $response = $this->actingAs($user)->get(route('chat.index'));
+        $response->assertOk();
+        $response->assertDontSee('id="chatViewProfileBtn"', false);
+        $response->assertDontSee('id="chatMenuProfileOption"', false);
+        $response->assertDontSee('id="chatProfileModal"', false);
+        $response->assertDontSee('id="popupProfileHeaderBtn"', false);
+        $response->assertDontSee('id="popupProfileModal"', false);
+        $response->assertSee('id="activeChatUserDirectContainer"', false);
+    }
 }

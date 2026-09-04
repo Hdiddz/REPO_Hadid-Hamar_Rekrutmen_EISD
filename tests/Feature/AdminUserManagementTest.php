@@ -128,6 +128,23 @@ class AdminUserManagementTest extends TestCase
         ]);
     }
 
+    public function test_admin_cannot_update_user_phone_exceeding_13_characters(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $user = User::factory()->jobseeker()->create(['phone' => '081234567890']);
+
+        $response = $this->actingAs($admin)->put(route('admin.users.account', $user), [
+            'username' => $user->username,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => '08123456789012', // 14 characters
+        ]);
+
+        $response->assertSessionHasErrors(['phone']);
+        $user->refresh();
+        $this->assertSame('081234567890', $user->phone);
+    }
+
     public function test_admin_cannot_assign_taken_username(): void
     {
         $admin = User::factory()->admin()->create();
