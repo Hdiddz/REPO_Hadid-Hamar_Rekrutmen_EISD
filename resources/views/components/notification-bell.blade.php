@@ -49,7 +49,7 @@
     </button>
 
     {{-- Dropdown Panel --}}
-    <div id="notification-dropdown-menu" data-menu onclick="event.stopPropagation()" class="absolute right-0 mt-2 hidden w-80 sm:w-96 overflow-hidden rounded-3xl border border-slate-200/90 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 z-50">
+    <div id="notification-dropdown-menu" data-menu onclick="event.stopPropagation()" class="fixed inset-x-3 top-[68px] sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 hidden w-auto sm:w-96 overflow-hidden rounded-3xl border border-slate-200/90 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 z-50">
         {{-- Header --}}
         <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
             <div class="flex items-center gap-2">
@@ -67,7 +67,7 @@
         </div>
 
         {{-- Notifications List Stream --}}
-        <div id="notificationListStream" class="max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+        <div id="notificationListStream" class="max-h-[calc(100dvh-12rem)] sm:max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
             <div class="p-8 text-center text-xs text-slate-400">
                 <span class="material-symbols-outlined text-3xl mb-1 text-slate-300 block animate-spin">sync</span>
                 Memuat notifikasi...

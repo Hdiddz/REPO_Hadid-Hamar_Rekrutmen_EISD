@@ -39,6 +39,12 @@ class UpdateJobRequest extends FormRequest
             'skills.*' => ['integer', 'distinct', 'exists:skills,id'],
             'new_skills' => ['nullable', 'array'],
             'new_skills.*' => ['string', 'max:100'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'remove_cover_image' => ['nullable', 'boolean'],
+            'workplace_photos' => ['nullable', 'array', 'max:6'],
+            'workplace_photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'delete_workplace_photo_ids' => ['nullable', 'array'],
+            'delete_workplace_photo_ids.*' => ['integer', 'exists:job_workplace_photos,id'],
         ];
     }
 

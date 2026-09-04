@@ -61,7 +61,7 @@
                     <tr>
                         <td>
                             <div>
-                                <a href="{{ route('admin.jobs.show', $job) }}" class="font-bold text-slate-950 hover:text-brand-700 dark:text-white dark:hover:text-brand-400 block truncate max-w-xs">
+                                <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="font-bold text-slate-950 hover:text-brand-700 dark:text-white dark:hover:text-brand-400 block truncate max-w-xs">
                                     {{ $job->title }}
                                 </a>
                                 <span class="mt-0.5 block text-xs text-slate-500 truncate">
@@ -127,7 +127,7 @@
                             @endif
                         </td>
                         <td>
-                            <a href="{{ route('admin.jobs.show', $job) }}#pelamar" class="inline-flex items-center gap-1 text-xs font-bold text-brand-700 dark:text-brand-300 hover:underline">
+                            <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}#pelamar" class="inline-flex items-center gap-1 text-xs font-bold text-brand-700 dark:text-brand-300 hover:underline">
                                 <span class="material-symbols-outlined text-[16px]">groups</span>
                                 {{ $job->applications_count }}
                             </a>
@@ -135,12 +135,12 @@
                         <td>
                             <div class="flex items-center justify-end gap-1.5">
                                 <!-- Detail Button -->
-                                <a href="{{ route('admin.jobs.show', $job) }}" class="portal-button-secondary !py-1 !px-2 text-xs" title="Lihat detail lowongan dan pelamar">
+                                <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2 text-xs" title="Lihat detail lowongan dan pelamar">
                                     Detail
                                 </a>
 
                                 <!-- Edit Button -->
-                                <a href="{{ route('admin.jobs.edit', $job) }}" class="portal-button-secondary !py-1 !px-2 text-xs" title="Edit informasi lowongan">
+                                <a href="{{ route('admin.jobs.edit', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2 text-xs" title="Edit informasi lowongan">
                                     <span class="material-symbols-outlined text-[16px]">edit</span>
                                 </a>
 

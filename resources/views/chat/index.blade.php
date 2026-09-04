@@ -66,9 +66,9 @@
     <div class="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col lg:flex-row flex-1 min-h-0 w-full">
         
         <!-- Left Pane: Conversation List -->
-        <div class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex flex-col h-full bg-slate-50/50 dark:bg-slate-950/40 shrink-0 overflow-hidden">
+        <div id="chatLeftPane" class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex flex-col h-full bg-slate-50/50 dark:bg-slate-950/40 shrink-0 overflow-hidden">
             <!-- Search bar -->
-            <div class="p-3.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+            <div class="p-3 sm:p-3.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
                 <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2 text-xs focus-within:bg-white dark:focus-within:bg-slate-950 focus-within:ring-2 focus-within:ring-teal-600/20 focus-within:border-teal-600 border border-transparent transition-all">
                     <span class="material-symbols-outlined text-slate-400 text-base mr-2">search</span>
                     <input type="text" id="chatSearchInput" oninput="filterConversations()" placeholder="Cari kontak obrolan..." class="w-full bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder:text-slate-400 p-0 text-xs">
@@ -86,20 +86,23 @@
         </div>
 
         <!-- Right Pane: Active Chat Conversation -->
-        <div class="flex-1 flex flex-col h-full bg-white dark:bg-slate-900 min-w-0 overflow-hidden" id="chatRightPane">
+        <div id="chatRightPane" class="hidden lg:flex flex-1 flex-col h-full bg-white dark:bg-slate-900 min-w-0 overflow-hidden">
             
             <!-- Chat Window Header -->
-            <div class="p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0" id="activeChatHeader">
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-2xl bg-teal-700 text-white font-bold flex items-center justify-center text-sm shrink-0" id="activeChatAvatar">
+            <div class="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0" id="activeChatHeader">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <button type="button" onclick="showChatContactList()" class="lg:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-850 transition cursor-pointer" aria-label="Kembali ke kontak">
+                        <span class="material-symbols-outlined text-[22px]">arrow_back</span>
+                    </button>
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-teal-700 text-white font-bold flex items-center justify-center text-xs sm:text-sm shrink-0" id="activeChatAvatar">
                         --
                     </div>
                     <div class="min-w-0">
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-sm text-slate-900 dark:text-white truncate" id="activeChatName">Pilih percakapan</span>
-                            <span class="px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 text-[10px] font-bold border border-teal-200 dark:border-teal-800 hidden" id="activeChatRoleBadge"></span>
+                        <div class="flex items-center gap-1.5 sm:gap-2">
+                            <span class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate" id="activeChatName">Pilih percakapan</span>
+                            <span class="px-1.5 sm:px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 text-[9px] sm:text-[10px] font-bold border border-teal-200 dark:border-teal-800 hidden" id="activeChatRoleBadge"></span>
                         </div>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5" id="activeChatStatus">
+                        <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5" id="activeChatStatus">
                             <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                             <span>Tidak ada obrolan aktif</span>
                         </p>
@@ -108,13 +111,13 @@
 
                 <!-- Action Buttons: Remove Contact & Clear Chat -->
                 <div class="flex items-center gap-1.5 sm:gap-2">
-                    <button type="button" id="removeContactBtn" onclick="confirmRemovePerson()" class="hidden portal-button-secondary !py-1.5 !px-2.5 sm:!px-3 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 dark:border-rose-900/50 dark:hover:bg-rose-950/40 cursor-pointer" title="Hapus kontak dari daftar obrolan">
+                    <button type="button" id="removeContactBtn" onclick="confirmRemovePerson()" class="hidden portal-button-secondary !py-1.5 !px-2 sm:!px-3 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 dark:border-rose-900/50 dark:hover:bg-rose-950/40 cursor-pointer" title="Hapus kontak dari daftar obrolan">
                         <span class="material-symbols-outlined text-[16px]">person_remove</span>
-                        <span class="hidden md:inline">Hapus Kontak</span>
+                        <span class="hidden sm:inline">Hapus Kontak</span>
                     </button>
-                    <button type="button" id="clearChatBtn" onclick="confirmClearChat()" class="hidden portal-button-secondary !py-1.5 !px-2.5 sm:!px-3 text-xs text-slate-600 hover:text-rose-700 hover:bg-rose-50 border-slate-200 dark:border-slate-800 dark:hover:bg-rose-950/40 cursor-pointer" title="Bersihkan seluruh riwayat pesan obrolan">
+                    <button type="button" id="clearChatBtn" onclick="confirmClearChat()" class="hidden portal-button-secondary !py-1.5 !px-2 sm:!px-3 text-xs text-slate-600 hover:text-rose-700 hover:bg-rose-50 border-slate-200 dark:border-slate-800 dark:hover:bg-rose-950/40 cursor-pointer" title="Bersihkan seluruh riwayat pesan obrolan">
                         <span class="material-symbols-outlined text-[16px]">delete_sweep</span>
-                        <span class="hidden md:inline">Bersihkan Obrolan</span>
+                        <span class="hidden sm:inline">Bersihkan</span>
                     </button>
                 </div>
             </div>
@@ -285,10 +288,30 @@
         renderConversations(filtered);
     }
 
+    function showChatContactList() {
+        const leftPane = document.getElementById('chatLeftPane');
+        const rightPane = document.getElementById('chatRightPane');
+        if (leftPane) leftPane.classList.remove('hidden');
+        if (rightPane) {
+            rightPane.classList.add('hidden');
+            rightPane.classList.remove('flex');
+        }
+    }
+
     async function selectConversation(userId, name, roleLabel, initials) {
         activeUserId = userId;
         activeUserName = name;
         cancelReply();
+
+        if (window.innerWidth < 1024) {
+            const leftPane = document.getElementById('chatLeftPane');
+            const rightPane = document.getElementById('chatRightPane');
+            if (leftPane) leftPane.classList.add('hidden');
+            if (rightPane) {
+                rightPane.classList.remove('hidden');
+                rightPane.classList.add('flex');
+            }
+        }
 
         const rightPane = document.getElementById('chatRightPane');
         if (rightPane) {

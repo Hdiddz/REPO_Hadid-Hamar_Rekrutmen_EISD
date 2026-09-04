@@ -3,45 +3,55 @@
 @section('title', 'Riwayat Lamaran | KerjaLokal')
 
 @section('content')
-    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between" data-reveal><div><p class="text-xs font-bold uppercase tracking-[0.18em] text-coral-600">Proses seleksi</p><h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Riwayat lamaran Anda.</h1><p class="mt-2 text-sm text-slate-500">Status diperbarui oleh mitra UMKM pada satu alur yang terhubung.</p></div><a href="{{ route('jobs.index') }}" class="portal-button-primary w-fit"><span class="material-symbols-outlined text-[18px]">search</span>Cari lowongan</a></div>
+    <div class="mb-6 sm:mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between" data-reveal>
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-coral-600">Proses seleksi</p>
+            <h1 class="mt-1.5 sm:mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Riwayat lamaran Anda.</h1>
+            <p class="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-500">Status diperbarui oleh mitra UMKM pada satu alur yang terhubung.</p>
+        </div>
+        <a href="{{ route('jobs.index') }}" class="portal-button-primary w-full sm:w-fit justify-center">
+            <span class="material-symbols-outlined text-[18px]">search</span>
+            <span>Cari lowongan</span>
+        </a>
+    </div>
 
     {{-- Filter Tabs Status Lamaran --}}
-    <div class="mb-6 flex items-center gap-2 overflow-x-auto pb-1" data-reveal>
-        <a href="{{ route('applications.index') }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition {{ !request('status') ? 'bg-brand-700 text-white shadow-xs dark:bg-brand-500 dark:text-brand-950' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+    <div class="mb-5 sm:mb-6 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1.5 -mx-4 px-4 sm:mx-0 sm:px-0" data-reveal>
+        <a href="{{ route('applications.index') }}" class="inline-flex items-center gap-1.5 rounded-xl px-3 sm:px-3.5 py-2 text-xs font-bold whitespace-nowrap shrink-0 transition {{ !request('status') ? 'bg-brand-700 text-white shadow-xs dark:bg-brand-500 dark:text-brand-950' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
             <span>Semua Lamaran</span>
             @if(isset($counts['all']))
                 <span class="rounded-full bg-black/10 dark:bg-white/10 px-1.5 py-0.2 text-[10px]">{{ $counts['all'] }}</span>
             @endif
         </a>
-        <a href="{{ route('applications.index', ['status' => 'pending']) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition {{ request('status') === 'pending' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+        <a href="{{ route('applications.index', ['status' => 'pending']) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3 sm:px-3.5 py-2 text-xs font-bold whitespace-nowrap shrink-0 transition {{ request('status') === 'pending' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
             <span class="material-symbols-outlined text-[16px]">hourglass_empty</span>
             <span>Menunggu Tinjauan</span>
             @if(isset($counts['pending']) && $counts['pending'] > 0)
                 <span class="rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-1.5 py-0.2 text-[10px]">{{ $counts['pending'] }}</span>
             @endif
         </a>
-        <a href="{{ route('applications.index', ['status' => 'interview']) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition {{ request('status') === 'interview' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+        <a href="{{ route('applications.index', ['status' => 'interview']) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3 sm:px-3.5 py-2 text-xs font-bold whitespace-nowrap shrink-0 transition {{ request('status') === 'interview' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
             <span class="material-symbols-outlined text-[16px]">record_voice_over</span>
             <span>Tahap Wawancara</span>
             @if(isset($counts['interview']) && $counts['interview'] > 0)
                 <span class="rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 px-1.5 py-0.2 text-[10px]">{{ $counts['interview'] }}</span>
             @endif
         </a>
-        <a href="{{ route('applications.index', ['status' => 'accepted']) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition {{ request('status') === 'accepted' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60' }}">
+        <a href="{{ route('applications.index', ['status' => 'accepted']) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3 sm:px-3.5 py-2 text-xs font-bold whitespace-nowrap shrink-0 transition {{ request('status') === 'accepted' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60' }}">
             <span class="material-symbols-outlined text-[16px]">how_to_reg</span>
             <span>Diterima Bekerja</span>
             @if(isset($counts['accepted']) && $counts['accepted'] > 0)
                 <span class="rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.2 text-[10px]">{{ $counts['accepted'] }}</span>
             @endif
         </a>
-        <a href="{{ route('applications.index', ['status' => 'rejected']) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition {{ request('status') === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
+        <a href="{{ route('applications.index', ['status' => 'rejected']) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3 sm:px-3.5 py-2 text-xs font-bold whitespace-nowrap shrink-0 transition {{ request('status') === 'rejected' ? 'bg-rose-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
             <span class="material-symbols-outlined text-[16px]">cancel</span>
             <span>Belum Sesuai</span>
             @if(isset($counts['rejected']) && $counts['rejected'] > 0)
                 <span class="rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 px-1.5 py-0.2 text-[10px]">{{ $counts['rejected'] }}</span>
             @endif
         </a>
-        <a href="{{ route('applications.index', ['status' => 'resigned']) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition {{ request('status') === 'resigned' ? 'bg-slate-800 text-white shadow-xs' : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200/80 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700' }}">
+        <a href="{{ route('applications.index', ['status' => 'resigned']) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3 sm:px-3.5 py-2 text-xs font-bold whitespace-nowrap shrink-0 transition {{ request('status') === 'resigned' ? 'bg-slate-800 text-white shadow-xs' : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200/80 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700' }}">
             <span class="material-symbols-outlined text-[16px]">person_cancel</span>
             <span>Telah Resign</span>
             @if(isset($counts['resigned']) && $counts['resigned'] > 0)

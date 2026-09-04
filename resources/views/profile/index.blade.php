@@ -3,6 +3,15 @@
 @section('title', 'Profil Saya | KerjaLokal')
 
 @section('content')
+    <div class="mb-4">
+        <a href="{{ url()->previous() && url()->previous() !== url()->current() && !str_contains(url()->previous(), 'login') ? url()->previous() : route('jobs.index') }}" 
+           onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host) && !document.referrer.includes(window.location.pathname)) { history.back(); return false; }"
+           class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-brand-700 dark:text-slate-400 dark:hover:text-brand-300">
+            <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+            <span>Kembali</span>
+        </a>
+    </div>
+
     <div class="grid gap-6 lg:grid-cols-[340px_1fr]">
         <aside class="rounded-3xl bg-brand-950 p-6 text-white lg:self-start" data-reveal>
             <div class="relative h-20 w-20 rounded-2xl overflow-hidden ring-4 ring-white/10 shadow-lg shrink-0">
@@ -16,7 +25,13 @@
             </div>
             <h1 class="mt-5 text-2xl font-bold">{{ $user->name }}</h1>
             <p class="mt-0.5 text-sm font-mono text-brand-300">@<span>{{ $user->username }}</span></p>
-            <p class="mt-1 text-sm text-brand-200">Pencari kerja</p>
+            <p class="mt-1 text-sm text-brand-200">{{ match ($user->role) { 'admin' => 'Administrator', 'employer' => 'Mitra UMKM', default => 'Pencari kerja' } }}</p>
+            @if($user->hasRole('employer') && $user->business_name)
+                <p class="mt-1 text-xs text-emerald-300 font-semibold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[15px]">storefront</span>
+                    {{ $user->business_name }}
+                </p>
+            @endif
             <dl class="mt-8 space-y-4 border-t border-white/10 pt-6 text-sm">
                 <div><dt class="text-xs text-brand-300">Username</dt><dd class="mt-1 font-mono font-semibold">@<span>{{ $user->username }}</span></dd></div>
                 <div><dt class="text-xs text-brand-300">Email</dt><dd class="mt-1 break-all font-semibold">{{ $user->email }}</dd></div>
@@ -31,9 +46,54 @@
             </div>
         </aside>
         <div class="space-y-5">
-            <section class="grid gap-4 sm:grid-cols-2" data-reveal><div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"><span class="material-symbols-outlined text-brand-600">assignment</span><strong class="mt-4 block text-3xl">{{ $user->job_applications_count }}</strong><span class="text-sm text-slate-500">lamaran diajukan</span></div><div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"><span class="material-symbols-outlined text-brand-600">verified_user</span><strong class="mt-4 block text-3xl">Aktif</strong><span class="text-sm text-slate-500">status akun</span></div></section>
-            <section class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900" data-reveal><h2 class="text-lg font-bold">Akses cepat</h2><div class="mt-5 grid gap-3 sm:grid-cols-2"><a href="{{ route('applications.index') }}" class="flex items-center justify-between rounded-xl bg-slate-50 p-4 font-bold transition hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-950 dark:hover:bg-brand-950"><span class="flex items-center gap-2"><span class="material-symbols-outlined">assignment</span>Riwayat lamaran</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span></a><a href="{{ route('jobs.index') }}" class="flex items-center justify-between rounded-xl bg-slate-50 p-4 font-bold transition hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-950 dark:hover:bg-brand-950"><span class="flex items-center gap-2"><span class="material-symbols-outlined">search</span>Cari lowongan</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span></a></div></section>
-            <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200" data-reveal><strong>Privasi berkas:</strong> Resume hanya disimpan ketika Anda melamar. Berkas hanya dapat diakses oleh mitra pemilik lowongan dan administrator.</section>
+            <section class="grid gap-4 sm:grid-cols-2" data-reveal>
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                    <span class="material-symbols-outlined text-brand-600">{{ $user->hasRole('employer') ? 'work' : ($user->hasRole('admin') ? 'dashboard' : 'assignment') }}</span>
+                    <strong class="mt-4 block text-3xl">{{ $user->hasRole('employer') ? $user->jobs_count : ($user->hasRole('admin') ? \App\Models\Job::count() : $user->job_applications_count) }}</strong>
+                    <span class="text-sm text-slate-500">{{ $user->hasRole('employer') ? 'lowongan dipublikasikan' : ($user->hasRole('admin') ? 'total lowongan sistem' : 'lamaran diajukan') }}</span>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                    <span class="material-symbols-outlined text-brand-600">verified_user</span>
+                    <strong class="mt-4 block text-3xl">Aktif</strong>
+                    <span class="text-sm text-slate-500">status akun</span>
+                </div>
+            </section>
+            <section class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900" data-reveal>
+                <h2 class="text-lg font-bold">Akses cepat</h2>
+                <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                    @if($user->hasRole('employer'))
+                        <a href="{{ route('employer.dashboard') }}" class="flex items-center justify-between rounded-xl bg-slate-50 p-4 font-bold transition hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-950 dark:hover:bg-brand-950">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined">work</span>Lowongan Saya</span>
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </a>
+                        <a href="{{ route('employer.applications.index') }}" class="flex items-center justify-between rounded-xl bg-slate-50 p-4 font-bold transition hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-950 dark:hover:bg-brand-950">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined">groups</span>Semua Pelamar</span>
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </a>
+                    @elseif($user->hasRole('admin'))
+                        <a href="{{ route('admin.dashboard') }}" class="flex items-center justify-between rounded-xl bg-slate-50 p-4 font-bold transition hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-950 dark:hover:bg-brand-950">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined">dashboard</span>Dashboard Admin</span>
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </a>
+                        <a href="{{ route('admin.jobs.index') }}" class="flex items-center justify-between rounded-xl bg-slate-50 p-4 font-bold transition hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-950 dark:hover:bg-brand-950">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined">work</span>Kelola Lowongan</span>
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </a>
+                    @else
+                        <a href="{{ route('applications.index') }}" class="flex items-center justify-between rounded-xl bg-slate-50 p-4 font-bold transition hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-950 dark:hover:bg-brand-950">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined">assignment</span>Riwayat lamaran</span>
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </a>
+                        <a href="{{ route('jobs.index') }}" class="flex items-center justify-between rounded-xl bg-slate-50 p-4 font-bold transition hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-950 dark:hover:bg-brand-950">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined">search</span>Cari lowongan</span>
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </a>
+                    @endif
+                </div>
+            </section>
+            @if($user->hasRole('jobseeker'))
+                <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200" data-reveal><strong>Privasi berkas:</strong> Resume hanya disimpan ketika Anda melamar. Berkas hanya dapat diakses oleh mitra pemilik lowongan dan administrator.</section>
+            @endif
         </div>
     </div>
 @endsection

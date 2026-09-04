@@ -4,18 +4,18 @@
 @section('portal_title', 'Ringkasan sistem rekrutmen')
 @section('portal_description', 'Pantau aktivitas lowongan, partisipasi mitra, laporan kepatuhan, dan hasil seleksi dalam ekosistem KerjaLokal.')
 @section('portal_actions')
-    <a href="{{ route('admin.reports.index') }}" class="portal-action-btn">
+    <a href="{{ route('admin.reports.index') }}" class="portal-action-btn !px-2.5 sm:!px-3" title="Laporan Pelamar">
         <span class="material-symbols-outlined text-[17px]">flag</span>
-        Laporan Pelamar ({{ $metrics['pending_reports'] }})
+        <span>Laporan<span class="hidden sm:inline"> Pelamar</span> ({{ $metrics['pending_reports'] }})</span>
     </a>
-    <a href="{{ route('admin.jobs.index') }}" class="portal-action-btn-primary">
+    <a href="{{ route('admin.jobs.index') }}" class="portal-action-btn-primary !px-2.5 sm:!px-3" title="Tinjau Lowongan">
         <span class="material-symbols-outlined text-[17px]">visibility</span>
-        Tinjau lowongan
+        <span>Tinjau<span class="hidden sm:inline"> Lowongan</span></span>
     </a>
 @endsection
 
 @section('content')
-    <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" data-reveal>
+    <section class="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" data-reveal>
         @foreach ([
             ['work', $metrics['open_jobs'], 'Lowongan aktif'],
             ['task_alt', $metrics['accepted_workers'], 'Pekerja diterima'],
@@ -50,16 +50,24 @@
     <div class="mt-7 grid gap-6 xl:grid-cols-[1.2fr_0.8fr_0.8fr]">
         <!-- Recent Jobs -->
         <section class="portal-panel overflow-hidden" data-reveal>
-            <div class="portal-panel-header">
-                <div>
-                    <h2 class="font-bold">Lowongan terbaru</h2>
-                    <p class="text-xs text-slate-500">Termasuk detail akun mitra penerbit.</p>
+            <div class="portal-panel-header bg-indigo-50/70 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900/40">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-[19px]">work</span>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-900 dark:text-white text-base">Lowongan terbaru</h2>
+                        <p class="text-xs text-indigo-950/60 dark:text-indigo-300/70">Termasuk detail akun mitra penerbit.</p>
+                    </div>
                 </div>
-                <a href="{{ route('admin.jobs.index') }}" class="text-sm font-bold text-brand-700 hover:underline dark:text-brand-300">Lihat semua</a>
+                <a href="{{ route('admin.jobs.index') }}" class="text-xs sm:text-sm font-bold text-indigo-700 hover:text-indigo-800 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 shrink-0">
+                    <span>Lihat semua</span>
+                    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                </a>
             </div>
             <div class="divide-y divide-slate-100 dark:divide-slate-800">
                 @forelse($recentJobs as $job)
-                    <a href="{{ route('admin.jobs.show', $job) }}" class="flex items-center justify-between gap-4 p-4 transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="flex items-center justify-between gap-4 p-4 transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
                         <div class="min-w-0">
                             <p class="text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-300">{{ $job->category->name }}</p>
                             <h3 class="mt-1 font-bold text-sm truncate">{{ $job->title }}</h3>
@@ -75,16 +83,24 @@
 
         <!-- Recent Reports -->
         <section class="portal-panel overflow-hidden" data-reveal>
-            <div class="portal-panel-header">
-                <div>
-                    <h2 class="font-bold">Aduan &amp; Laporan</h2>
-                    <p class="text-xs text-slate-500">Laporan aduan pelamar.</p>
+            <div class="portal-panel-header bg-rose-50/70 dark:bg-rose-950/30 border-b border-rose-100 dark:border-rose-900/40">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-[19px]">flag</span>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-rose-950 dark:text-rose-100 text-base">Aduan &amp; Laporan</h2>
+                        <p class="text-xs text-rose-950/60 dark:text-rose-300/70">Laporan aduan pelamar.</p>
+                    </div>
                 </div>
-                <a href="{{ route('admin.reports.index') }}" class="text-sm font-bold text-rose-600 hover:underline dark:text-rose-400">Semua</a>
+                <a href="{{ route('admin.reports.index') }}" class="text-xs sm:text-sm font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:underline inline-flex items-center gap-1 shrink-0">
+                    <span>Semua</span>
+                    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                </a>
             </div>
             <div class="divide-y divide-slate-100 dark:divide-slate-800">
                 @forelse($recentReports as $report)
-                    <a href="{{ route('admin.reports.show', $report) }}" class="block p-4 transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <a href="{{ route('admin.reports.show', ['report' => $report, 'return_to' => url()->full()]) }}" class="block p-4 transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
                         <div class="flex items-center justify-between gap-2">
                             <span class="font-bold text-xs text-rose-700 dark:text-rose-300 truncate">{{ $report->reason }}</span>
                             <span class="text-[10px] text-slate-400 shrink-0">{{ $report->created_at->diffForHumans() }}</span>
@@ -100,10 +116,15 @@
 
         <!-- Recent Applications -->
         <section class="portal-panel overflow-hidden" data-reveal>
-            <div class="portal-panel-header">
-                <div>
-                    <h2 class="font-bold">Lamaran terbaru</h2>
-                    <p class="text-xs text-slate-500">Aktivitas kandidat terbaru.</p>
+            <div class="portal-panel-header bg-emerald-50/70 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-900/40">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-[19px]">assignment_turned_in</span>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-900 dark:text-white text-base">Lamaran terbaru</h2>
+                        <p class="text-xs text-emerald-950/60 dark:text-emerald-300/70">Aktivitas kandidat terbaru.</p>
+                    </div>
                 </div>
             </div>
             <div class="divide-y divide-slate-100 dark:divide-slate-800">

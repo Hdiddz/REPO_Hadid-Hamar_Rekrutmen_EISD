@@ -11,8 +11,36 @@
 @endsection
 
 @section('content')
-    {{-- Quick Status Filter Tabs --}}
-    <div class="mb-5 flex flex-wrap items-center gap-2" data-reveal>
+    {{-- Quick Status Filter - Mobile Dropdown --}}
+    <div class="mb-4 sm:hidden" data-reveal>
+        <label for="mobile-status-filter" class="portal-label mb-1.5 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[17px] text-brand-700 dark:text-brand-400">filter_list</span>
+            <span>Filter Status Pelamar</span>
+        </label>
+        <div class="relative">
+            <select id="mobile-status-filter" onchange="if(this.value) window.location.href=this.value" class="portal-input appearance-none pr-10 font-semibold text-slate-800 dark:text-slate-100">
+                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job')])) }}" @selected(!request('status'))>
+                    Semua Pelamar
+                </option>
+                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'pending'])) }}" @selected(request('status') === 'pending')>
+                    Menunggu Tinjauan
+                </option>
+                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'interview'])) }}" @selected(request('status') === 'interview')>
+                    Tahap Wawancara
+                </option>
+                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'accepted'])) }}" @selected(request('status') === 'accepted')>
+                    Peserta Diterima
+                </option>
+                <option value="{{ route('employer.applications.index', array_filter(['job' => request('job'), 'status' => 'rejected'])) }}" @selected(request('status') === 'rejected')>
+                    Ditolak
+                </option>
+            </select>
+            <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[20px] text-slate-400">expand_more</span>
+        </div>
+    </div>
+
+    {{-- Quick Status Filter - Desktop/Tablet Pill Tabs --}}
+    <div class="mb-5 hidden sm:flex flex-wrap items-center gap-2" data-reveal>
         <a href="{{ route('employer.applications.index', array_filter(['job' => request('job')])) }}" class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition {{ !request('status') ? 'bg-brand-700 text-white shadow-xs dark:bg-brand-500 dark:text-brand-950' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800' }}">
             <span class="material-symbols-outlined text-[16px]">groups</span>
             Semua Pelamar

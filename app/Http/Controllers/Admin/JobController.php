@@ -64,28 +64,59 @@ class JobController extends Controller
         return view('admin.jobs.index', compact('jobs', 'stats', 'categories'));
     }
 
-    public function show(Job $job): View
+    public function show(Request $request, Job $job): View
     {
+        $previousUrl = url()->previous();
+        if ($request->filled('return_to')) {
+            $returnTo = $request->string('return_to')->toString();
+            $appUrl = url('/');
+            if ((str_starts_with($returnTo, '/') && ! str_starts_with($returnTo, '//')) || str_starts_with($returnTo, $appUrl)) {
+                session()->put('admin_jobs_return_to', $returnTo);
+            }
+        } elseif ($previousUrl && $previousUrl !== $request->fullUrl() && ! str_contains($previousUrl, '/admin/lowongan/'.$job->id)) {
+            if (str_starts_with($previousUrl, url('/')) && ! str_contains($previousUrl, 'login') && ! str_contains($previousUrl, 'logout')) {
+                session()->put('admin_jobs_return_to', $previousUrl);
+            }
+        }
+
+        $returnUrl = session('admin_jobs_return_to', route('admin.jobs.index'));
+
         $job->load([
             'employer:id,name,username,email,phone,business_name,created_at,banned_at,banned_until',
             'category:id,name',
             'skills:id,name',
+            'workplacePhotos',
             'applications' => fn ($q) => $q->with('user:id,name,username,email,phone')->latest('id'),
             'reports' => fn ($q) => $q->with('reporter:id,name,email')->latest('id'),
         ]);
 
         $job->loadCount(['applications', 'reports']);
 
-        return view('admin.jobs.show', compact('job'));
+        return view('admin.jobs.show', compact('job', 'returnUrl'));
     }
 
-    public function edit(Job $job): View
+    public function edit(Request $request, Job $job): View
     {
         $categories = Category::orderBy('name')->get();
         $skills = Skill::orderBy('name')->get();
         $job->load('skills:id,name');
 
-        return view('admin.jobs.edit', compact('job', 'categories', 'skills'));
+        $previousUrl = url()->previous();
+        if ($request->filled('return_to')) {
+            $returnTo = $request->string('return_to')->toString();
+            $appUrl = url('/');
+            if ((str_starts_with($returnTo, '/') && ! str_starts_with($returnTo, '//')) || str_starts_with($returnTo, $appUrl)) {
+                session()->put('admin_jobs_edit_return_to', $returnTo);
+            }
+        } elseif ($previousUrl && $previousUrl !== $request->fullUrl() && ! str_contains($previousUrl, '/admin/lowongan/'.$job->id.'/edit')) {
+            if (str_starts_with($previousUrl, url('/')) && ! str_contains($previousUrl, 'login') && ! str_contains($previousUrl, 'logout')) {
+                session()->put('admin_jobs_edit_return_to', $previousUrl);
+            }
+        }
+
+        $returnUrl = session('admin_jobs_edit_return_to', route('admin.jobs.show', $job));
+
+        return view('admin.jobs.edit', compact('job', 'categories', 'skills', 'returnUrl'));
     }
 
     public function update(Request $request, Job $job): RedirectResponse
@@ -115,6 +146,7 @@ class JobController extends Controller
         ]);
 
         $job->skills()->sync($request->input('skills', []));
+        $job->touch();
 
         // Kirim pesan notifikasi ke Mitra UMKM bahwa lowongannya telah diperbarui oleh Administrator
         $admin = $request->user();

@@ -5,15 +5,19 @@
 @section('portal_description', 'Detail profil, kredensial, status kepatuhan, serta riwayat seluruh aktivitas lowongan atau lamaran.')
 
 @section('portal_actions')
-    <a href="{{ route('admin.users.index') }}" class="portal-action-btn">
+    <a href="{{ $returnUrl ?? route('admin.users.index') }}" 
+       onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host) && !document.referrer.includes(window.location.pathname)) { history.back(); return false; }" 
+       class="portal-action-btn !px-2.5 sm:!px-3" 
+       title="Kembali ke halaman sebelumnya" 
+       aria-label="Kembali">
         <span class="material-symbols-outlined text-[17px]">arrow_back</span>
-        Kembali
+        <span class="hidden sm:inline">Kembali</span>
     </a>
 
     @if(!$user->hasRole('admin'))
-        <button type="button" onclick="openManageAccountModal()" class="portal-action-btn-primary">
+        <button type="button" onclick="openManageAccountModal()" class="portal-action-btn-primary !px-2.5 sm:!px-3" title="Kelola Akun">
             <span class="material-symbols-outlined text-[17px]">manage_accounts</span>
-            Kelola Akun
+            <span>Kelola<span class="hidden sm:inline"> Akun</span></span>
         </button>
     @endif
 @endsection
@@ -99,10 +103,15 @@
             @if($user->role === 'employer')
                 <!-- Employer Activity: Jobs Created -->
                 <div class="portal-panel overflow-hidden">
-                    <div class="portal-panel-header">
-                        <div>
-                            <h3 class="font-bold text-base text-slate-900 dark:text-white">Lowongan Diterbitkan</h3>
-                            <p class="text-xs text-slate-500">Total {{ $user->jobs_count }} lowongan dibuat oleh mitra ini.</p>
+                    <div class="portal-panel-header bg-indigo-50/70 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900/40">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[19px]">work</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Lowongan Diterbitkan</h3>
+                                <p class="text-xs text-indigo-950/60 dark:text-indigo-300/70">Total {{ $user->jobs_count }} lowongan dibuat oleh mitra ini.</p>
+                            </div>
                         </div>
                     </div>
 
@@ -119,20 +128,20 @@
                                         </span>
                                     </div>
                                     <h4 class="mt-1 font-bold text-sm text-slate-900 dark:text-white truncate">
-                                        <a href="{{ route('admin.jobs.show', $job) }}" class="hover:text-brand-700">
+                                        <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="hover:text-brand-700">
                                             {{ $job->title }}
                                         </a>
                                     </h4>
                                     <p class="mt-0.5 text-xs text-slate-500">
-                                        {{ $job->location }} · Rp {{ number_format($job->salary_amount, 0, ',', '.') }} · {{ $job->applications_count }} Pelamar
+                                         {{ $job->location }} · Rp {{ number_format($job->salary_amount, 0, ',', '.') }} · {{ $job->applications_count }} Pelamar
                                     </p>
                                 </div>
 
                                 <div class="flex items-center gap-2 shrink-0">
-                                    <a href="{{ route('admin.jobs.show', $job) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs">
+                                    <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs">
                                         Detail &amp; Pelamar
                                     </a>
-                                    <a href="{{ route('admin.jobs.edit', $job) }}" class="portal-button-secondary !py-1 !px-2 text-xs">
+                                    <a href="{{ route('admin.jobs.edit', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2 text-xs" title="Edit lowongan">
                                         <span class="material-symbols-outlined text-[16px]">edit</span>
                                     </a>
                                 </div>
@@ -148,10 +157,15 @@
             @elseif($user->role === 'jobseeker')
                 <!-- Jobseeker Activity: Applications Submitted -->
                 <div class="portal-panel overflow-hidden">
-                    <div class="portal-panel-header">
-                        <div>
-                            <h3 class="font-bold text-base text-slate-900 dark:text-white">Riwayat Lamaran Diajukan</h3>
-                            <p class="text-xs text-slate-500">Total {{ $user->job_applications_count }} lamaran pekerjaan oleh pencari kerja ini.</p>
+                    <div class="portal-panel-header bg-emerald-50/70 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-900/40">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[19px]">history_edu</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Riwayat Lamaran Diajukan</h3>
+                                <p class="text-xs text-emerald-950/60 dark:text-emerald-300/70">Total {{ $user->job_applications_count }} lamaran pekerjaan oleh pencari kerja ini.</p>
+                            </div>
                         </div>
                     </div>
 
@@ -219,7 +233,7 @@
                                 </div>
 
                                 <div class="flex items-center gap-2 shrink-0">
-                                    <a href="{{ route('admin.jobs.show', $app->job) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs">
+                                    <a href="{{ route('admin.jobs.show', ['job' => $app->job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs">
                                         Lihat Lowongan
                                     </a>
                                     @if($app->resume_file)
@@ -242,10 +256,15 @@
             <!-- Reports Submitted by this User -->
             @if($user->submittedReports->count() > 0)
                 <div class="portal-panel overflow-hidden">
-                    <div class="portal-panel-header">
-                        <div>
-                            <h3 class="font-bold text-base text-slate-900 dark:text-white">Laporan Pelanggaran yang Dikirim</h3>
-                            <p class="text-xs text-slate-500">Pengguna ini telah melaporkan {{ $user->submittedReports->count() }} lowongan.</p>
+                    <div class="portal-panel-header bg-rose-50/70 dark:bg-rose-950/30 border-b border-rose-100 dark:border-rose-900/40">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[19px]">flag</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-rose-950 dark:text-rose-100">Laporan Pelanggaran yang Dikirim</h3>
+                                <p class="text-xs text-rose-950/60 dark:text-rose-300/70">Pengguna ini telah melaporkan {{ $user->submittedReports->count() }} lowongan.</p>
+                            </div>
                         </div>
                     </div>
                     <div class="divide-y divide-slate-100 dark:divide-slate-800">

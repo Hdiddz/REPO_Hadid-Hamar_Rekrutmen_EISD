@@ -16,9 +16,12 @@
 @section('portal_description', 'Atur preferensi tema visual aplikasi serta kelola kredensial dan informasi akun Anda.')
 
 @section('portal_actions')
-    <a href="{{ match($user->role ?? 'jobseeker') { 'employer' => route('employer.dashboard'), 'admin' => route('admin.dashboard'), default => route('jobs.index') } }}" class="portal-button-secondary">
+    <a href="{{ match($user->role ?? 'jobseeker') { 'employer' => route('employer.dashboard'), 'admin' => route('admin.dashboard'), default => route('jobs.index') } }}" 
+       onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host) && !document.referrer.includes(window.location.pathname)) { history.back(); return false; }"
+       class="portal-button-secondary !px-2.5 sm:!px-3 !py-1.5 sm:!py-2 text-xs sm:text-sm"
+       title="Kembali ke Dashboard">
         <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-        Kembali ke Dashboard
+        <span>Kembali<span class="hidden sm:inline"> ke Dashboard</span></span>
     </a>
 @endsection
 
@@ -28,9 +31,11 @@
         @if(!in_array($user->role ?? 'jobseeker', ['admin', 'employer']))
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <a href="{{ route('jobs.index') }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-brand-700 dark:text-slate-400 dark:hover:text-brand-300">
+                    <a href="{{ route('jobs.index') }}" 
+                       onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host) && !document.referrer.includes(window.location.pathname)) { history.back(); return false; }"
+                       class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-brand-700 dark:text-slate-400 dark:hover:text-brand-300">
                         <span class="material-symbols-outlined text-[16px]">arrow_back</span>
-                        Kembali ke Katalog Lowongan
+                        <span>Kembali<span class="hidden sm:inline"> ke Katalog Lowongan</span></span>
                     </a>
                     <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl dark:text-white">Pengaturan & Preferensi</h1>
                     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Atur preferensi tampilan visual aplikasi dan tinjau profil akun Anda.</p>
@@ -446,6 +451,7 @@
                 }
             });
         };
+        window.updateThemeSelectionCards = updateThemeSelectionCards;
 
         updateThemeSelectionCards();
 

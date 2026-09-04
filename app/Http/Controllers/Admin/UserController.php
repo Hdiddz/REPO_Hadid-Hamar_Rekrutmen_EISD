@@ -48,8 +48,23 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
-    public function show(User $user): View
+    public function show(Request $request, User $user): View
     {
+        $previousUrl = url()->previous();
+        if ($request->filled('return_to')) {
+            $returnTo = $request->string('return_to')->toString();
+            $appUrl = url('/');
+            if ((str_starts_with($returnTo, '/') && ! str_starts_with($returnTo, '//')) || str_starts_with($returnTo, $appUrl)) {
+                session()->put('admin_users_return_to', $returnTo);
+            }
+        } elseif ($previousUrl && $previousUrl !== $request->fullUrl() && ! str_contains($previousUrl, '/admin/pengguna/'.$user->id)) {
+            if (str_starts_with($previousUrl, url('/')) && ! str_contains($previousUrl, 'login') && ! str_contains($previousUrl, 'logout')) {
+                session()->put('admin_users_return_to', $previousUrl);
+            }
+        }
+
+        $returnUrl = session('admin_users_return_to', route('admin.users.index'));
+
         $user->load([
             'jobs' => fn ($q) => $q->withCount('applications')->latest(),
             'jobs.category',
@@ -57,7 +72,7 @@ class UserController extends Controller
             'submittedReports' => fn ($q) => $q->with('job')->latest(),
         ])->loadCount(['jobs', 'jobApplications']);
 
-        return view('admin.users.show', compact('user'));
+        return view('admin.users.show', compact('user', 'returnUrl'));
     }
 
     public function updateAccount(Request $request, User $user): RedirectResponse

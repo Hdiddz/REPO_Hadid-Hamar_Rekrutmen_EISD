@@ -41,19 +41,36 @@ class ReportController extends Controller
         return view('admin.reports.index', compact('reports', 'counts'));
     }
 
-    public function show(JobReport $report): View
+    public function show(Request $request, JobReport $report): View
     {
+        $previousUrl = url()->previous();
+        if ($request->filled('return_to')) {
+            $returnTo = $request->string('return_to')->toString();
+            $appUrl = url('/');
+            if ((str_starts_with($returnTo, '/') && ! str_starts_with($returnTo, '//')) || str_starts_with($returnTo, $appUrl)) {
+                session()->put('admin_reports_return_to', $returnTo);
+            }
+        } elseif ($previousUrl && $previousUrl !== $request->fullUrl() && ! str_contains($previousUrl, '/admin/laporan/'.$report->id)) {
+            if (str_starts_with($previousUrl, url('/')) && ! str_contains($previousUrl, 'login') && ! str_contains($previousUrl, 'logout')) {
+                session()->put('admin_reports_return_to', $previousUrl);
+            }
+        }
+
+        $returnUrl = session('admin_reports_return_to', route('admin.reports.index'));
+
         $report->load([
             'job.employer',
             'job.category',
             'reporter',
         ]);
 
+        $report->job->loadCount('applications');
+
         if ($report->status === 'pending') {
             $report->update(['status' => 'reviewed']);
         }
 
-        return view('admin.reports.show', compact('report'));
+        return view('admin.reports.show', compact('report', 'returnUrl'));
     }
 
     public function action(Request $request, JobReport $report): RedirectResponse

@@ -72,7 +72,7 @@
                     <tr>
                         <td>
                             <div class="min-w-0 max-w-xs">
-                                <a href="{{ route('admin.jobs.show', $report->job) }}" class="font-bold text-slate-900 hover:text-brand-700 dark:text-white block truncate">
+                                <a href="{{ route('admin.jobs.show', ['job' => $report->job, 'return_to' => url()->full()]) }}" class="font-bold text-slate-900 hover:text-brand-700 dark:text-white block truncate">
                                     {{ $report->job->title }}
                                 </a>
                                 <span class="text-xs text-slate-500 block truncate">

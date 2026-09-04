@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 
 class JobController extends Controller
 {
@@ -45,7 +46,23 @@ class JobController extends Controller
     public function store(StoreJobRequest $request): RedirectResponse
     {
         $job = DB::transaction(function () use ($request): Job {
-            $job = $request->user()->jobs()->create($request->safe()->except(['skills', 'new_skills']));
+            $data = $request->safe()->except(['skills', 'new_skills', 'cover_image', 'workplace_photos']);
+
+            if ($request->hasFile('cover_image')) {
+                $data['cover_image'] = $request->file('cover_image')->store('jobs/covers', 'public');
+            }
+
+            $job = $request->user()->jobs()->create($data);
+
+            if ($request->hasFile('workplace_photos')) {
+                foreach ($request->file('workplace_photos') as $idx => $photoFile) {
+                    $path = $photoFile->store('jobs/workplace', 'public');
+                    $job->workplacePhotos()->create([
+                        'photo_path' => $path,
+                        'sort_order' => $idx,
+                    ]);
+                }
+            }
 
             $skillIds = collect($request->input('skills', []))->map(fn ($id) => (int) $id);
             if ($request->has('new_skills')) {
@@ -85,7 +102,7 @@ class JobController extends Controller
         Gate::authorize('update', $job);
 
         return view('employer.jobs.create', [
-            'job' => $job->load('skills:id'),
+            'job' => $job->load(['skills:id', 'workplacePhotos']),
             'categories' => Category::orderBy('name')->get(),
             'skills' => Skill::orderBy('name')->get(),
         ]);
@@ -97,7 +114,46 @@ class JobController extends Controller
     public function update(UpdateJobRequest $request, Job $job): RedirectResponse
     {
         DB::transaction(function () use ($request, $job): void {
-            $job->update($request->safe()->except(['skills', 'new_skills']));
+            $data = $request->safe()->except(['skills', 'new_skills', 'cover_image', 'remove_cover_image', 'workplace_photos', 'delete_workplace_photo_ids']);
+
+            // Handle cover image replacement or removal
+            if ($request->boolean('remove_cover_image')) {
+                if ($job->cover_image && Storage::disk('public')->exists($job->cover_image)) {
+                    Storage::disk('public')->delete($job->cover_image);
+                }
+                $data['cover_image'] = null;
+            } elseif ($request->hasFile('cover_image')) {
+                if ($job->cover_image && Storage::disk('public')->exists($job->cover_image)) {
+                    Storage::disk('public')->delete($job->cover_image);
+                }
+                $data['cover_image'] = $request->file('cover_image')->store('jobs/covers', 'public');
+            }
+
+            $job->update($data);
+
+            // Handle deletion of specific workplace photos
+            $deletePhotoIds = $request->input('delete_workplace_photo_ids', []);
+            if (! empty($deletePhotoIds)) {
+                $photosToDelete = $job->workplacePhotos()->whereIn('id', $deletePhotoIds)->get();
+                foreach ($photosToDelete as $photo) {
+                    if (Storage::disk('public')->exists($photo->photo_path)) {
+                        Storage::disk('public')->delete($photo->photo_path);
+                    }
+                    $photo->delete();
+                }
+            }
+
+            // Handle new additional workplace photos
+            if ($request->hasFile('workplace_photos')) {
+                $currentMaxSort = (int) $job->workplacePhotos()->max('sort_order');
+                foreach ($request->file('workplace_photos') as $idx => $photoFile) {
+                    $path = $photoFile->store('jobs/workplace', 'public');
+                    $job->workplacePhotos()->create([
+                        'photo_path' => $path,
+                        'sort_order' => $currentMaxSort + $idx + 1,
+                    ]);
+                }
+            }
 
             $skillIds = collect($request->input('skills', []))->map(fn ($id) => (int) $id);
             if ($request->has('new_skills')) {
@@ -111,9 +167,12 @@ class JobController extends Controller
             }
 
             $job->skills()->sync($skillIds->unique()->values()->all());
+
+            // Always touch updated_at so timestamp is updated in database
+            $job->touch();
         });
 
-        return redirect()->route('employer.dashboard')
+        return redirect()->route('jobs.show', $job)
             ->with('success', 'Lowongan berhasil diperbarui.');
     }
 
@@ -128,6 +187,15 @@ class JobController extends Controller
             $job->update(['status' => 'closed']);
 
             return back()->with('warning', 'Lowongan memiliki pelamar sehingga ditutup dan dipertahankan untuk riwayat.');
+        }
+
+        if ($job->cover_image && Storage::disk('public')->exists($job->cover_image)) {
+            Storage::disk('public')->delete($job->cover_image);
+        }
+        foreach ($job->workplacePhotos as $photo) {
+            if (Storage::disk('public')->exists($photo->photo_path)) {
+                Storage::disk('public')->delete($photo->photo_path);
+            }
         }
 
         $job->delete();

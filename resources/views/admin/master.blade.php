@@ -6,7 +6,108 @@
 
 @section('content')
     <div class="grid gap-6 xl:grid-cols-2">
-        <section class="portal-panel overflow-hidden"><div class="portal-panel-header"><div><h2 class="font-bold">Kategori lowongan</h2><p class="text-xs text-slate-500">{{ $categories->count() }} kategori tersedia</p></div></div><form action="{{ route('admin.categories.store') }}" method="POST" class="grid gap-3 border-b border-slate-100 p-5 sm:grid-cols-[1fr_1fr_auto] dark:border-slate-800">@csrf<div><label for="category-name" class="portal-label">Nama</label><input id="category-name" name="name" value="{{ old('name') }}" class="portal-input" placeholder="Kuliner">@error('name')<p class="portal-field-error">{{ $message }}</p>@enderror</div><div><label for="category-slug" class="portal-label">Slug opsional</label><input id="category-slug" name="slug" value="{{ old('slug') }}" class="portal-input" placeholder="kuliner">@error('slug')<p class="portal-field-error">{{ $message }}</p>@enderror</div><div class="flex items-end"><button class="portal-button-primary">Tambah</button></div></form><div class="divide-y divide-slate-100 dark:divide-slate-800">@foreach($categories as $category)<details class="group p-4"><summary class="flex cursor-pointer list-none items-center justify-between gap-3"><div><span class="font-bold">{{ $category->name }}</span><span class="ml-2 text-xs text-slate-400">{{ $category->slug }} · {{ $category->jobs_count }} lowongan</span></div><span class="material-symbols-outlined text-slate-400 transition group-open:rotate-180">expand_more</span></summary><div class="mt-4 flex flex-col gap-2 sm:flex-row"><form action="{{ route('admin.categories.update', $category) }}" method="POST" class="grid flex-1 gap-2 sm:grid-cols-2">@csrf @method('PUT')<input name="name" value="{{ $category->name }}" class="portal-input"><input name="slug" value="{{ $category->slug }}" class="portal-input"><button class="portal-button-secondary sm:col-span-2">Simpan perubahan</button></form><form action="{{ route('admin.categories.destroy', $category) }}" method="POST">@csrf @method('DELETE')<button class="portal-button-secondary text-rose-600" @disabled($category->jobs_count > 0)>Hapus</button></form></div></details>@endforeach</div></section>
-        <section class="portal-panel overflow-hidden"><div class="portal-panel-header"><div><h2 class="font-bold">Keterampilan</h2><p class="text-xs text-slate-500">{{ $skills->count() }} keterampilan tersedia</p></div></div><form action="{{ route('admin.skills.store') }}" method="POST" class="grid gap-3 border-b border-slate-100 p-5 sm:grid-cols-[1fr_auto] dark:border-slate-800">@csrf<div><label for="skill-name" class="portal-label">Nama keterampilan</label><input id="skill-name" name="name" class="portal-input" placeholder="Pelayanan pelanggan">@error('name')<p class="portal-field-error">{{ $message }}</p>@enderror</div><div class="flex items-end"><button class="portal-button-primary">Tambah</button></div></form><div class="divide-y divide-slate-100 dark:divide-slate-800">@foreach($skills as $skill)<details class="group p-4"><summary class="flex cursor-pointer list-none items-center justify-between gap-3"><div><span class="font-bold">{{ $skill->name }}</span><span class="ml-2 text-xs text-slate-400">{{ $skill->jobs_count }} lowongan</span></div><span class="material-symbols-outlined text-slate-400 transition group-open:rotate-180">expand_more</span></summary><div class="mt-4 flex gap-2"><form action="{{ route('admin.skills.update', $skill) }}" method="POST" class="flex flex-1 flex-col gap-2 sm:flex-row">@csrf @method('PUT')<input name="name" value="{{ $skill->name }}" class="portal-input"><button class="portal-button-secondary">Simpan</button></form><form action="{{ route('admin.skills.destroy', $skill) }}" method="POST">@csrf @method('DELETE')<button class="portal-button-secondary text-rose-600" @disabled($skill->jobs_count > 0)>Hapus</button></form></div></details>@endforeach</div></section>
+        <section class="portal-panel overflow-hidden">
+            <div class="portal-panel-header bg-brand-50/70 dark:bg-brand-950/30 border-b border-brand-100 dark:border-brand-900/40">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-brand-100 text-brand-700 dark:bg-brand-900/60 dark:text-brand-300 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-[19px]">category</span>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-900 dark:text-white text-base">Kategori lowongan</h2>
+                        <p class="text-xs text-brand-950/60 dark:text-brand-300/70">{{ $categories->count() }} kategori tersedia</p>
+                    </div>
+                </div>
+            </div>
+            <form action="{{ route('admin.categories.store') }}" method="POST" class="grid gap-3 border-b border-slate-100 p-5 sm:grid-cols-[1fr_1fr_auto] dark:border-slate-800">
+                @csrf
+                <div>
+                    <label for="category-name" class="portal-label">Nama</label>
+                    <input id="category-name" name="name" value="{{ old('name') }}" class="portal-input" placeholder="Kuliner">
+                    @error('name')<p class="portal-field-error">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label for="category-slug" class="portal-label">Slug opsional</label>
+                    <input id="category-slug" name="slug" value="{{ old('slug') }}" class="portal-input" placeholder="kuliner">
+                    @error('slug')<p class="portal-field-error">{{ $message }}</p>@enderror
+                </div>
+                <div class="flex items-end">
+                    <button class="portal-button-primary">Tambah</button>
+                </div>
+            </form>
+            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                @foreach($categories as $category)
+                    <details class="group p-4">
+                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3">
+                            <div>
+                                <span class="font-bold">{{ $category->name }}</span>
+                                <span class="ml-2 text-xs text-slate-400">{{ $category->slug }} · {{ $category->jobs_count }} lowongan</span>
+                            </div>
+                            <span class="material-symbols-outlined text-slate-400 transition group-open:rotate-180">expand_more</span>
+                        </summary>
+                        <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+                            <form action="{{ route('admin.categories.update', $category) }}" method="POST" class="grid flex-1 gap-2 sm:grid-cols-2">
+                                @csrf @method('PUT')
+                                <input name="name" value="{{ $category->name }}" class="portal-input">
+                                <input name="slug" value="{{ $category->slug }}" class="portal-input">
+                                <button class="portal-button-secondary sm:col-span-2">Simpan perubahan</button>
+                            </form>
+                            <form action="{{ route('admin.categories.destroy', $category) }}" method="POST">
+                                @csrf @method('DELETE')
+                                <button class="portal-button-secondary text-rose-600" @disabled($category->jobs_count > 0)>Hapus</button>
+                            </form>
+                        </div>
+                    </details>
+                @endforeach
+            </div>
+        </section>
+
+        <section class="portal-panel overflow-hidden">
+            <div class="portal-panel-header bg-sky-50/70 dark:bg-sky-950/30 border-b border-sky-100 dark:border-sky-900/40">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-[19px]">psychology</span>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-900 dark:text-white text-base">Keterampilan</h2>
+                        <p class="text-xs text-sky-950/60 dark:text-sky-300/70">{{ $skills->count() }} keterampilan tersedia</p>
+                    </div>
+                </div>
+            </div>
+            <form action="{{ route('admin.skills.store') }}" method="POST" class="grid gap-3 border-b border-slate-100 p-5 sm:grid-cols-[1fr_auto] dark:border-slate-800">
+                @csrf
+                <div>
+                    <label for="skill-name" class="portal-label">Nama keterampilan</label>
+                    <input id="skill-name" name="name" class="portal-input" placeholder="Pelayanan pelanggan">
+                    @error('name')<p class="portal-field-error">{{ $message }}</p>@enderror
+                </div>
+                <div class="flex items-end">
+                    <button class="portal-button-primary">Tambah</button>
+                </div>
+            </form>
+            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                @foreach($skills as $skill)
+                    <details class="group p-4">
+                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3">
+                            <div>
+                                <span class="font-bold">{{ $skill->name }}</span>
+                                <span class="ml-2 text-xs text-slate-400">{{ $skill->jobs_count }} lowongan</span>
+                            </div>
+                            <span class="material-symbols-outlined text-slate-400 transition group-open:rotate-180">expand_more</span>
+                        </summary>
+                        <div class="mt-4 flex gap-2">
+                            <form action="{{ route('admin.skills.update', $skill) }}" method="POST" class="flex flex-1 flex-col gap-2 sm:flex-row">
+                                @csrf @method('PUT')
+                                <input name="name" value="{{ $skill->name }}" class="portal-input">
+                                <button class="portal-button-secondary">Simpan</button>
+                            </form>
+                            <form action="{{ route('admin.skills.destroy', $skill) }}" method="POST">
+                                @csrf @method('DELETE')
+                                <button class="portal-button-secondary text-rose-600" @disabled($skill->jobs_count > 0)>Hapus</button>
+                            </form>
+                        </div>
+                    </details>
+                @endforeach
+            </div>
+        </section>
     </div>
 @endsection

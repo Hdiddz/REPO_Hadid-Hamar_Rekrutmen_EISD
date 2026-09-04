@@ -5,34 +5,38 @@
 @section('portal_description', 'Detail lowongan, status kepatuhan etis, profil mitra penerbit, serta pantau seluruh pelamar dan status seleksinya.')
 
 @section('portal_actions')
-    <a href="{{ route('admin.jobs.index') }}" class="portal-action-btn">
+    <a href="{{ $returnUrl ?? route('admin.jobs.index') }}" 
+       onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host) && !document.referrer.includes(window.location.pathname)) { history.back(); return false; }" 
+       class="portal-action-btn !px-2.5 sm:!px-3" 
+       title="Kembali ke halaman sebelumnya" 
+       aria-label="Kembali">
         <span class="material-symbols-outlined text-[17px]">arrow_back</span>
-        Kembali
+        <span class="hidden sm:inline">Kembali</span>
     </a>
 
-    <a href="{{ route('admin.jobs.edit', $job) }}" class="portal-action-btn">
+    <a href="{{ route('admin.jobs.edit', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-action-btn !px-2.5 sm:!px-3" title="Edit Lowongan">
         <span class="material-symbols-outlined text-[17px]">edit</span>
-        Edit Lowongan
+        <span>Edit<span class="hidden sm:inline"> Lowongan</span></span>
     </a>
 
     @if($job->status === 'open')
-        <button type="button" onclick="openCloseJobModal({{ $job->id }}, '{{ addslashes($job->title) }}')" class="portal-action-btn-warning">
+        <button type="button" onclick="openCloseJobModal({{ $job->id }}, '{{ addslashes($job->title) }}')" class="portal-action-btn-warning !px-2.5 sm:!px-3" title="Tutup Lowongan">
             <span class="material-symbols-outlined text-[17px]">lock</span>
-            Tutup Lowongan
+            <span>Tutup<span class="hidden sm:inline"> Lowongan</span></span>
         </button>
     @else
         <form action="{{ route('admin.jobs.reopen', $job) }}" method="POST">
             @csrf
-            <button type="submit" class="portal-action-btn-success cursor-pointer">
+            <button type="submit" class="portal-action-btn-success cursor-pointer !px-2.5 sm:!px-3" title="Buka Kembali Lowongan">
                 <span class="material-symbols-outlined text-[17px]">lock_open</span>
-                Buka Kembali
+                <span>Buka<span class="hidden sm:inline"> Kembali</span></span>
             </button>
         </form>
     @endif
 
-    <button type="button" onclick="openDeleteJobModal()" class="portal-action-btn-danger cursor-pointer" title="Hapus Lowongan">
+    <button type="button" onclick="openDeleteJobModal()" class="portal-action-btn-danger cursor-pointer !px-2.5 sm:!px-3" title="Hapus Lowongan" aria-label="Hapus Lowongan">
         <span class="material-symbols-outlined text-[17px]">delete</span>
-        Hapus
+        <span class="hidden sm:inline">Hapus</span>
     </button>
 @endsection
 
@@ -97,6 +101,42 @@
                     </div>
                 </dl>
 
+                @if($job->cover_image || $job->workplacePhotos->isNotEmpty())
+                    <div class="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+                        <h2 class="font-bold text-slate-900 dark:text-white text-sm mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[18px] text-brand-600">photo_library</span>
+                            Foto Lowongan &amp; Lingkungan Kerja
+                        </h2>
+                        
+                        @if($job->cover_image)
+                            <div class="mb-4">
+                                <span class="text-xs font-semibold text-slate-400 block mb-1.5">Foto Sampul Utama (Cover)</span>
+                                <div class="relative max-w-md aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900">
+                                    <img src="{{ $job->cover_image_url }}" alt="Cover {{ $job->title }}" class="h-full w-full object-cover">
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($job->workplacePhotos->isNotEmpty())
+                            <div>
+                                <span class="text-xs font-semibold text-slate-400 block mb-1.5">Foto Lingkungan Kerja ({{ $job->workplacePhotos->count() }} foto)</span>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                    @foreach($job->workplacePhotos as $idx => $photo)
+                                        <div class="group relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900">
+                                            <img src="{{ $photo->photo_url }}" alt="Foto #{{ $idx + 1 }}" class="h-full w-full object-cover group-hover:scale-105 transition">
+                                            @if($photo->caption)
+                                                <div class="absolute bottom-0 inset-x-0 bg-black/70 p-1.5 text-[10px] text-white truncate" title="{{ $photo->caption }}">
+                                                    {{ $photo->caption }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
                 <div class="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
                     <h2 class="font-bold text-slate-900 dark:text-white text-sm">Deskripsi Pekerjaan</h2>
                     <p class="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600 dark:text-slate-300">
@@ -120,10 +160,15 @@
 
             <!-- Applicants Table Section -->
             <section class="portal-panel overflow-hidden" id="pelamar">
-                <div class="portal-panel-header">
-                    <div>
-                        <h2 class="font-bold text-slate-900 dark:text-white text-base">Pelamar Masuk</h2>
-                        <p class="text-xs text-slate-500">Total {{ $job->applications_count }} pelamar terdaftar pada lowongan ini.</p>
+                <div class="portal-panel-header bg-indigo-50/70 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900/40">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[19px]">groups</span>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-slate-900 dark:text-white text-base">Pelamar Masuk</h2>
+                            <p class="text-xs text-indigo-950/60 dark:text-indigo-300/70">Total {{ $job->applications_count }} pelamar terdaftar pada lowongan ini.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -216,13 +261,17 @@
             <!-- Reports on this Job Section -->
             @if($job->reports->count() > 0)
                 <section class="portal-panel overflow-hidden">
-                    <div class="portal-panel-header bg-rose-50/50 dark:bg-rose-950/20">
-                        <div>
-                            <h2 class="font-bold text-rose-900 dark:text-rose-200 text-base flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-rose-600 text-lg">flag</span>
-                                Laporan Aduan Pelamar Terkait Lowongan Ini
-                            </h2>
-                            <p class="text-xs text-rose-700/80 dark:text-rose-400">Tinjau laporan masuk dari pencari kerja terkait indikasi pelanggaran.</p>
+                    <div class="portal-panel-header bg-rose-50/70 dark:bg-rose-950/30 border-b border-rose-100 dark:border-rose-900/40">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[19px]">flag</span>
+                            </div>
+                            <div>
+                                <h2 class="font-bold text-rose-950 dark:text-rose-100 text-base">
+                                    Laporan Aduan Pelamar Terkait Lowongan Ini
+                                </h2>
+                                <p class="text-xs text-rose-950/60 dark:text-rose-300/70">Tinjau laporan masuk dari pencari kerja terkait indikasi pelanggaran.</p>
+                            </div>
                         </div>
                     </div>
 

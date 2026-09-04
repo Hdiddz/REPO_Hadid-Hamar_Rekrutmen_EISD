@@ -119,14 +119,14 @@
                         <td>
                             <div class="flex items-center justify-end gap-1.5">
                                 <!-- Detail Button -->
-                                <a href="{{ route('admin.users.show', $user) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs" title="Lihat detail aktivitas pengguna">
+                                <a href="{{ route('admin.users.show', ['user' => $user, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs" title="Lihat detail aktivitas pengguna">
                                     <span class="material-symbols-outlined text-[16px]">visibility</span>
                                     Detail
                                 </a>
 
                                 @if(!$user->hasRole('admin'))
                                     <!-- Kelola Akun Button -->
-                                    <a href="{{ route('admin.users.show', $user) }}?kelola=1" class="portal-button-secondary !py-1 !px-2.5 text-xs !text-brand-700 hover:!bg-brand-50 dark:!text-brand-300" title="Kelola Akun (Ganti Sandi, Username, Ban)">
+                                    <a href="{{ route('admin.users.show', ['user' => $user, 'return_to' => url()->full(), 'kelola' => 1]) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs !text-brand-700 hover:!bg-brand-50 dark:!text-brand-300" title="Kelola Akun (Ganti Sandi, Username, Ban)">
                                         <span class="material-symbols-outlined text-[16px]">manage_accounts</span>
                                         Kelola Akun
                                     </a>

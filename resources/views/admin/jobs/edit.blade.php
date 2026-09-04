@@ -5,9 +5,12 @@
 @section('portal_description', 'Perbarui parameter lowongan mitra demi kesesuaian informasi standar kerja layak.')
 
 @section('portal_actions')
-    <a href="{{ route('admin.jobs.show', $job) }}" class="portal-action-btn">
+    <a href="{{ $returnUrl ?? route('admin.jobs.show', $job) }}" 
+       onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host) && !document.referrer.includes(window.location.pathname)) { history.back(); return false; }"
+       class="portal-action-btn !px-2.5 sm:!px-3" 
+       title="Batal dan Kembali">
         <span class="material-symbols-outlined text-[17px]">arrow_back</span>
-        Batal &amp; Kembali
+        <span>Batal<span class="hidden sm:inline"> &amp; Kembali</span></span>
     </a>
 @endsection
 
@@ -130,7 +133,7 @@
 
             <!-- Submit Button -->
             <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
-                <a href="{{ route('admin.jobs.show', $job) }}" class="portal-button-secondary">Batal</a>
+                <a href="{{ $returnUrl ?? route('admin.jobs.show', $job) }}" class="portal-button-secondary">Batal</a>
                 <button type="submit" class="portal-button-primary">
                     <span class="material-symbols-outlined text-[18px]">save</span>
                     Simpan Perubahan

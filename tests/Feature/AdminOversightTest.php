@@ -107,4 +107,40 @@ class AdminOversightTest extends TestCase
             'resignation_status' => 'approved',
         ]);
     }
+
+    public function test_admin_job_show_preserves_return_to_url_in_session_and_renders_back_button(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $job = Job::factory()->create();
+
+        $returnUrl = '/admin/laporan/42';
+        $response = $this->actingAs($admin)->get(route('admin.jobs.show', ['job' => $job, 'return_to' => $returnUrl]));
+
+        $response->assertOk();
+        $this->assertSame($returnUrl, session('admin_jobs_return_to'));
+        $response->assertSee('href="'.$returnUrl.'"', false);
+
+        // Subsequent view without return_to parameter should still use the session-stored return URL
+        $subsequentResponse = $this->actingAs($admin)->get(route('admin.jobs.show', $job));
+        $subsequentResponse->assertOk();
+        $subsequentResponse->assertSee('href="'.$returnUrl.'"', false);
+    }
+
+    public function test_redundant_profil_saya_link_is_removed_from_jobseeker_mobile_navigation(): void
+    {
+        $jobseeker = User::factory()->jobseeker()->create(['username' => 'testseeker']);
+
+        $response = $this->actingAs($jobseeker)->get(route('jobs.index'));
+
+        $response->assertOk();
+        $html = $response->getContent();
+
+        // Extract #app-mobile-nav section
+        $this->assertStringContainsString('id="app-mobile-nav"', $html);
+        $mobileNavContent = substr($html, strpos($html, 'id="app-mobile-nav"'));
+        $mobileNavContent = substr($mobileNavContent, 0, strpos($mobileNavContent, '</nav>'));
+
+        $this->assertStringContainsString('Lihat Profil', $mobileNavContent);
+        $this->assertStringNotContainsString('Profil Saya', $mobileNavContent);
+    }
 }

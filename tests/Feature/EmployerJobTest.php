@@ -8,7 +8,12 @@ use App\Models\Job;
 use App\Models\JobApplication;
 use App\Models\Skill;
 use App\Models\User;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Exceptions\PostTooLargeException;
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class EmployerJobTest extends TestCase
@@ -118,27 +123,27 @@ class EmployerJobTest extends TestCase
         $this->assertDatabaseMissing('skills', ['id' => $skill->id]);
     }
 
-    public function test_employer_can_close_and_reopen_job_from_detail_page(): void
+    public function test_employer_can_close_and_reopen_job_status(): void
     {
         $employer = User::factory()->employer()->create();
         $job = Job::factory()->for($employer, 'employer')->create(['status' => 'open']);
 
-        // Shows Tutup Lowongan Ini when job is open
+        // Detail page shows status badge, but close button is only in edit mode
         $this->actingAs($employer)->get(route('jobs.show', $job))
             ->assertOk()
-            ->assertSee('Tutup Lowongan Ini')
+            ->assertDontSee('Tutup Lowongan Ini')
             ->assertSee('Sedang Dibuka');
 
-        // Employer closes job
+        // Employer closes job via status endpoint or edit form
         $this->actingAs($employer)->patch(route('employer.jobs.status', $job), ['status' => 'closed'])
             ->assertSessionHas('success');
 
         $this->assertSame('closed', $job->fresh()->status);
 
-        // Shows Buka Kembali Lowongan Ini when job is closed
+        // Shows Sedang Ditutup status on detail page without inline toggle button
         $this->actingAs($employer)->get(route('jobs.show', $job))
             ->assertOk()
-            ->assertSee('Buka Kembali Lowongan Ini')
+            ->assertDontSee('Buka Kembali Lowongan Ini')
             ->assertSee('Sedang Ditutup');
     }
 
@@ -229,5 +234,300 @@ class EmployerJobTest extends TestCase
             ->assertSee('modalStatusRejected')
             ->assertSee('modalStatusPending')
             ->assertSee('Atur & Perbarui Status', false);
+    }
+
+    public function test_employer_can_create_job_with_cover_image_and_workplace_photos(): void
+    {
+        Storage::fake('public');
+
+        $employer = User::factory()->employer()->create();
+        $category = Category::factory()->create();
+        $skill = Skill::factory()->create();
+
+        $coverFile = UploadedFile::fake()->create('coffee_shop_cover.jpg', 500, 'image/jpeg');
+        $photo1 = UploadedFile::fake()->create('barista_corner.jpg', 400, 'image/jpeg');
+        $photo2 = UploadedFile::fake()->create('kitchen_area.png', 400, 'image/png');
+
+        $response = $this->actingAs($employer)->post(route('employer.jobs.store'), [
+            'category_id' => $category->id,
+            'title' => 'Barista Kedai Kopi',
+            'description' => 'Meracik kopi spesialti dan menjaga keramahan kedai kopi lokal setiap shift.',
+            'location' => 'Sumur Bandung, Kota Bandung',
+            'salary_type' => 'monthly',
+            'salary_amount' => 3500000,
+            'work_hours_per_day' => 8,
+            'skills' => [$skill->id],
+            'cover_image' => $coverFile,
+            'workplace_photos' => [$photo1, $photo2],
+        ]);
+
+        $response->assertRedirect(route('employer.dashboard'))
+            ->assertSessionHas('success');
+
+        $job = Job::query()->where('title', 'Barista Kedai Kopi')->firstOrFail();
+        $this->assertNotNull($job->cover_image);
+        Storage::disk('public')->assertExists($job->cover_image);
+
+        $this->assertCount(2, $job->workplacePhotos);
+        foreach ($job->workplacePhotos as $workplacePhoto) {
+            Storage::disk('public')->assertExists($workplacePhoto->photo_path);
+        }
+    }
+
+    public function test_employer_can_update_job_and_replace_or_remove_cover_image(): void
+    {
+        Storage::fake('public');
+
+        $employer = User::factory()->employer()->create();
+        $category = Category::factory()->create();
+        $skill = Skill::factory()->create();
+
+        $initialCover = UploadedFile::fake()->create('initial_cover.jpg', 300, 'image/jpeg');
+        $initialCoverPath = $initialCover->store('jobs/covers', 'public');
+
+        $job = Job::factory()->for($employer, 'employer')->create([
+            'category_id' => $category->id,
+            'cover_image' => $initialCoverPath,
+        ]);
+
+        Storage::disk('public')->assertExists($initialCoverPath);
+
+        // Test replacing cover image
+        $newCover = UploadedFile::fake()->create('new_cover.jpg', 300, 'image/jpeg');
+        $response = $this->actingAs($employer)->put(route('employer.jobs.update', $job), [
+            'category_id' => $category->id,
+            'title' => 'Barista Baru',
+            'status' => 'open',
+            'description' => 'Deskripsi pekerjaan baru yang mencakup operasional harian kedai kopi.',
+            'location' => 'Bandung Wetan',
+            'salary_type' => 'monthly',
+            'salary_amount' => 3600000,
+            'work_hours_per_day' => 8,
+            'skills' => [$skill->id],
+            'cover_image' => $newCover,
+        ]);
+
+        $response->assertRedirect(route('jobs.show', $job));
+        $job->refresh();
+        Storage::disk('public')->assertMissing($initialCoverPath);
+        Storage::disk('public')->assertExists($job->cover_image);
+
+        // Test removing cover image
+        $currentCoverPath = $job->cover_image;
+        $responseRemove = $this->actingAs($employer)->put(route('employer.jobs.update', $job), [
+            'category_id' => $category->id,
+            'title' => 'Barista Tanpa Cover',
+            'status' => 'open',
+            'description' => 'Deskripsi pekerjaan baru yang mencakup operasional harian kedai kopi.',
+            'location' => 'Bandung Wetan',
+            'salary_type' => 'monthly',
+            'salary_amount' => 3600000,
+            'work_hours_per_day' => 8,
+            'skills' => [$skill->id],
+            'remove_cover_image' => '1',
+        ]);
+
+        $responseRemove->assertRedirect(route('jobs.show', $job));
+        $job->refresh();
+        $this->assertNull($job->cover_image);
+        Storage::disk('public')->assertMissing($currentCoverPath);
+    }
+
+    public function test_employer_can_delete_specific_workplace_photos(): void
+    {
+        Storage::fake('public');
+
+        $employer = User::factory()->employer()->create();
+        $skill = Skill::factory()->create();
+        $job = Job::factory()->for($employer, 'employer')->create();
+
+        $photo1 = $job->workplacePhotos()->create([
+            'photo_path' => 'jobs/workplace/photo1.jpg',
+            'sort_order' => 1,
+        ]);
+        Storage::disk('public')->put('jobs/workplace/photo1.jpg', 'content1');
+
+        $photo2 = $job->workplacePhotos()->create([
+            'photo_path' => 'jobs/workplace/photo2.jpg',
+            'sort_order' => 2,
+        ]);
+        Storage::disk('public')->put('jobs/workplace/photo2.jpg', 'content2');
+
+        $response = $this->actingAs($employer)->put(route('employer.jobs.update', $job), [
+            'category_id' => $job->category_id,
+            'title' => $job->title,
+            'status' => 'open',
+            'description' => $job->description,
+            'location' => $job->location,
+            'salary_type' => $job->salary_type,
+            'salary_amount' => $job->salary_amount,
+            'work_hours_per_day' => $job->work_hours_per_day,
+            'skills' => [$skill->id],
+            'delete_workplace_photo_ids' => [$photo1->id],
+        ]);
+
+        $response->assertRedirect(route('jobs.show', $job));
+        $this->assertDatabaseMissing('job_workplace_photos', ['id' => $photo1->id]);
+        $this->assertDatabaseHas('job_workplace_photos', ['id' => $photo2->id]);
+        Storage::disk('public')->assertMissing('jobs/workplace/photo1.jpg');
+        Storage::disk('public')->assertExists('jobs/workplace/photo2.jpg');
+    }
+
+    public function test_job_public_views_render_cover_and_workplace_photos_carousel(): void
+    {
+        Storage::fake('public');
+
+        $employer = User::factory()->employer()->create();
+        $job = Job::factory()->for($employer, 'employer')->create([
+            'cover_image' => 'jobs/covers/test_cover.jpg',
+            'status' => 'open',
+        ]);
+        Storage::disk('public')->put('jobs/covers/test_cover.jpg', 'fake-image');
+
+        $job->workplacePhotos()->create([
+            'photo_path' => 'jobs/workplace/wp1.jpg',
+            'caption' => 'Ruang Barista Modern',
+            'sort_order' => 1,
+        ]);
+        $job->workplacePhotos()->create([
+            'photo_path' => 'jobs/workplace/wp2.jpg',
+            'caption' => 'Area Kasir & Display',
+            'sort_order' => 2,
+        ]);
+        Storage::disk('public')->put('jobs/workplace/wp1.jpg', 'fake-image');
+        Storage::disk('public')->put('jobs/workplace/wp2.jpg', 'fake-image');
+
+        // Test Job Details view
+        $showResponse = $this->get(route('jobs.show', $job));
+        $showResponse->assertOk()
+            ->assertDontSee('Foto Lowongan Resmi')
+            ->assertSee('Perbesar Sampul')
+            ->assertSee('Foto')
+            ->assertSee('Ruang Barista Modern')
+            ->assertSee('Area Kasir & Display')
+            ->assertSee('workplaceCarousel')
+            ->assertSee('workplaceLightboxModal');
+
+        // Test Jobs Index view
+        $indexResponse = $this->get(route('jobs.index'));
+        $indexResponse->assertOk()
+            ->assertSee('2 Foto');
+    }
+
+    public function test_job_photo_upload_validates_mimes_and_max_size(): void
+    {
+        Storage::fake('public');
+
+        $employer = User::factory()->employer()->create();
+        $category = Category::factory()->create();
+
+        // Non-image file
+        $pdfFile = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($employer)->post(route('employer.jobs.store'), [
+            'category_id' => $category->id,
+            'title' => 'Barista',
+            'description' => 'Deskripsi pekerjaan valid dengan panjang teks yang cukup.',
+            'location' => 'Bandung',
+            'salary_type' => 'monthly',
+            'salary_amount' => 3000000,
+            'work_hours_per_day' => 8,
+            'cover_image' => $pdfFile,
+        ]);
+
+        $response->assertSessionHasErrors(['cover_image']);
+    }
+
+    public function test_job_data_update_persists_to_database_and_reflects_in_detail_page(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $oldCategory = Category::factory()->create(['name' => 'Kategori Lama']);
+        $newCategory = Category::factory()->create(['name' => 'Kategori Baru']);
+        $skill1 = Skill::factory()->create(['name' => 'Keahlian Satu']);
+        $skill2 = Skill::factory()->create(['name' => 'Keahlian Dua']);
+
+        $job = Job::factory()->for($employer, 'employer')->create([
+            'category_id' => $oldCategory->id,
+            'title' => 'Judul Awal Sebelum Diubah',
+            'description' => 'Deskripsi lama pekerjaan sebelum diperbarui oleh mitra UMKM.',
+            'location' => 'Kota Awal',
+            'salary_type' => 'monthly',
+            'salary_amount' => 3000000,
+            'work_hours_per_day' => 7,
+            'status' => 'open',
+            'created_at' => now()->subDays(3),
+            'updated_at' => now()->subDays(2),
+        ]);
+        $job->skills()->attach($skill1);
+
+        $this->travel(1)->hours();
+
+        $response = $this->actingAs($employer)->put(route('employer.jobs.update', $job), [
+            'category_id' => $newCategory->id,
+            'title' => 'Judul Baru Setelah Diubah Mitra',
+            'description' => 'Deskripsi pekerjaan terbaru yang jauh lebih jelas, profesional, dan detail.',
+            'location' => 'Kota Baru Bandung',
+            'salary_type' => 'daily',
+            'salary_amount' => 175000,
+            'work_hours_per_day' => 8,
+            'status' => 'open',
+            'skills' => [$skill2->id],
+            'new_skills' => ['Skill Kustom Tambahan'],
+        ]);
+
+        $response->assertRedirect(route('jobs.show', $job))
+            ->assertSessionHas('success');
+
+        // Verify Database Persistence
+        $this->assertDatabaseHas('jobs', [
+            'id' => $job->id,
+            'category_id' => $newCategory->id,
+            'title' => 'Judul Baru Setelah Diubah Mitra',
+            'location' => 'Kota Baru Bandung',
+            'salary_type' => 'daily',
+            'salary_amount' => 175000,
+            'work_hours_per_day' => 8,
+            'status' => 'open',
+        ]);
+
+        $job->refresh();
+        $this->assertDatabaseMissing('job_skill', [
+            'job_id' => $job->id,
+            'skill_id' => $skill1->id,
+        ]);
+        $this->assertDatabaseHas('job_skill', [
+            'job_id' => $job->id,
+            'skill_id' => $skill2->id,
+        ]);
+        $this->assertTrue($job->skills()->where('name', 'Skill Kustom Tambahan')->exists());
+
+        // Verify updated_at is touched
+        $this->assertTrue($job->updated_at->isAfter(now()->subMinutes(5)));
+
+        // Verify Job Detail view displays updated information and subtle updated timestamp
+        $detailResponse = $this->get(route('jobs.show', $job));
+        $detailResponse->assertOk()
+            ->assertSee('Judul Baru Setelah Diubah Mitra')
+            ->assertSee('Kategori Baru')
+            ->assertSee('Kota Baru Bandung')
+            ->assertSee('Keahlian Dua')
+            ->assertSee('Skill Kustom Tambahan')
+            ->assertSee('Terakhir diperbarui')
+            ->assertDontSee('Judul Awal Sebelum Diubah');
+    }
+
+    public function test_post_too_large_exception_redirects_back_with_friendly_error(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $job = Job::factory()->for($employer, 'employer')->create();
+
+        $request = Request::create(route('employer.jobs.update', $job), 'POST');
+        $request->headers->set('referer', route('employer.jobs.edit', $job));
+        $exception = new PostTooLargeException;
+
+        $response = app(ExceptionHandler::class)->render($request, $exception);
+
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertTrue(session()->has('error'));
     }
 }

@@ -6,14 +6,24 @@
 @section('portal_actions')<a href="{{ route('employer.applications.index') }}" class="portal-button-secondary"><span class="material-symbols-outlined text-[18px]">group</span>Lihat pelamar</a><a href="{{ route('employer.jobs.create') }}" class="portal-button-primary"><span class="material-symbols-outlined text-[18px]">add</span>Pasang lowongan</a>@endsection
 
 @section('content')
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" data-reveal>
+    <section class="grid gap-3 sm:gap-4 grid-cols-2 xl:grid-cols-4" data-reveal>
         @foreach ([['work', $metrics['open_jobs'], 'Lowongan aktif'], ['group', $metrics['applications'], 'Total pelamar'], ['task_alt', $metrics['accepted'], 'Diterima'], ['payments', 'Rp '.number_format($metrics['accepted_wages'], 0, ',', '.'), 'Nilai upah diterima']] as $metric)
             <div class="portal-stat-card"><span class="material-symbols-outlined text-brand-600 dark:text-brand-300">{{ $metric[0] }}</span><strong class="mt-5 block text-2xl font-bold">{{ $metric[1] }}</strong><span class="mt-1 block text-sm text-slate-500">{{ $metric[2] }}</span></div>
         @endforeach
     </section>
 
     <section class="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900" data-reveal>
-        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800"><div><h2 class="font-bold">Daftar lowongan</h2><p class="mt-0.5 text-xs text-slate-500">Data langsung dari lowongan milik akun Anda.</p></div></div>
+        <div class="flex items-center justify-between border-b border-indigo-100 bg-indigo-50/70 px-5 py-4 dark:border-indigo-900/40 dark:bg-indigo-950/30">
+            <div class="flex items-center gap-3">
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 shrink-0">
+                    <span class="material-symbols-outlined text-[19px]">work</span>
+                </div>
+                <div>
+                    <h2 class="font-bold text-slate-900 dark:text-white text-base">Daftar lowongan</h2>
+                    <p class="text-xs text-indigo-950/60 dark:text-indigo-300/70">Data langsung dari lowongan milik akun Anda.</p>
+                </div>
+            </div>
+        </div>
         <div class="divide-y divide-slate-100 dark:divide-slate-800">
             @forelse($jobs as $job)
                 <article class="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -41,7 +51,7 @@
 
     {{-- Bagian: Daftar Peserta / Tenaga Kerja yang Diterima --}}
     <section class="mt-8 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900" data-reveal>
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-emerald-100 px-6 py-4 dark:border-emerald-900/40 bg-emerald-50/70 dark:bg-emerald-950/30">
             <div class="flex items-center gap-3">
                 <div class="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 shrink-0">
                     <span class="material-symbols-outlined text-[22px]">how_to_reg</span>

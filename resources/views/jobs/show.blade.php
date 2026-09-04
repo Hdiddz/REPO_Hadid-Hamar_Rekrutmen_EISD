@@ -3,7 +3,22 @@
 @section('title', $job->title.' | KerjaLokal')
 
 @section('content')
-    <a href="{{ route('jobs.index') }}" class="mb-5 inline-flex items-center gap-1 text-sm font-bold text-brand-700 hover:underline dark:text-brand-300"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Kembali ke daftar lowongan</a>
+    <div class="mb-5 flex items-center justify-between gap-3">
+        <a href="{{ $returnUrl ?? route('jobs.index') }}" 
+           onclick="if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host) && !document.referrer.includes(window.location.pathname)) { history.back(); return false; }"
+           class="inline-flex items-center gap-1 text-sm font-bold text-brand-700 hover:underline dark:text-brand-300">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            <span>Kembali<span class="hidden sm:inline"> ke daftar lowongan</span></span>
+        </a>
+        @auth
+            @if(auth()->user()->id === $job->employer_id)
+                <a href="{{ route('employer.jobs.edit', $job) }}" class="lg:hidden inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 transition shrink-0">
+                    <span class="material-symbols-outlined text-[16px]">edit</span>
+                    Edit Lowongan
+                </a>
+            @endif
+        @endauth
+    </div>
 
     @if($hasApplied && $application?->status === 'accepted' && $application?->resignation_status !== 'approved')
         <div class="mb-6 rounded-3xl bg-emerald-500/15 border border-emerald-500/30 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-emerald-950 dark:text-emerald-100 shadow-sm" data-reveal>
@@ -30,33 +45,144 @@
 
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div class="space-y-5">
-            <section class="rounded-3xl bg-brand-950 p-6 text-white sm:p-9" data-reveal>
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-brand-100">{{ $job->category->name }}</span>
-                    <span class="rounded-lg bg-emerald-400/15 px-2.5 py-1 text-xs font-bold text-emerald-200">{{ $job->status === 'open' ? 'Masih dibuka' : 'Ditutup' }}</span>
-                    <span class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-brand-100" title="{{ $job->updated_at->translatedFormat('d F Y, H:i:s') }} WIB">
-                        <span class="material-symbols-outlined text-[15px] text-emerald-300">schedule</span>
-                        Diperbarui <span data-relative-time="{{ $job->updated_at->toISOString() }}">{{ $job->updated_at->diffForHumans() }}</span>
-                    </span>
-                    @auth
-                        @if(auth()->user()->id === $job->employer_id)
-                            <a href="{{ route('employer.jobs.edit', $job) }}" class="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-white/30">
-                                <span class="material-symbols-outlined text-[16px]">edit</span>
-                                Edit Lowongan
-                            </a>
-                        @endif
-                    @endauth
+            <section class="overflow-hidden rounded-3xl bg-brand-950 text-white shadow-xl shadow-brand-950/10" data-reveal>
+                @if($job->cover_image)
+                    <div class="relative w-full aspect-[16/9] sm:aspect-[21/9] max-h-[320px] overflow-hidden group cursor-zoom-in border-b border-white/10" onclick="openPhotoLightbox('{{ $job->cover_image_url }}', 'Foto Sampul Lowongan: {{ addslashes($job->title) }}')">
+                        <img src="{{ $job->cover_image_url }}" alt="Cover {{ $job->title }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/20 to-transparent"></div>
+                        <div class="absolute top-3 right-3 flex items-center gap-1.5 text-white/90 text-xs font-semibold backdrop-blur-md bg-black/40 px-2.5 py-1 rounded-xl border border-white/20 transition group-hover:bg-black/60">
+                            <span class="material-symbols-outlined text-[15px]">zoom_in</span>
+                            <span class="hidden sm:inline">Perbesar Sampul</span>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="p-5 sm:p-9">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-brand-100">{{ $job->category->name }}</span>
+                        <span class="rounded-lg bg-emerald-400/15 px-2.5 py-1 text-xs font-bold text-emerald-200">{{ $job->status === 'open' ? 'Masih dibuka' : 'Ditutup' }}</span>
+                    </div>
+                    <h1 class="mt-4 sm:mt-6 text-2xl sm:text-4xl font-bold tracking-tight">{{ $job->title }}</h1>
+                    <p class="mt-1.5 sm:mt-2 text-sm sm:text-base text-brand-100">{{ $job->employer->business_name }}</p>
+                    <dl class="mt-6 sm:mt-8 grid grid-cols-3 gap-2 sm:gap-3">
+                        <div class="rounded-2xl bg-white/10 p-3 sm:p-4 text-center sm:text-left">
+                            <dt class="text-[10px] sm:text-xs text-brand-200">Lokasi</dt>
+                            <dd class="mt-0.5 sm:mt-1 text-xs sm:text-sm font-bold truncate">{{ $job->location }}</dd>
+                        </div>
+                        <div class="rounded-2xl bg-white/10 p-3 sm:p-4 text-center sm:text-left">
+                            <dt class="text-[10px] sm:text-xs text-brand-200">Upah</dt>
+                            <dd class="mt-0.5 sm:mt-1 text-xs sm:text-sm font-bold truncate">Rp {{ number_format($job->salary_amount, 0, ',', '.') }}</dd>
+                        </div>
+                        <div class="rounded-2xl bg-white/10 p-3 sm:p-4 text-center sm:text-left">
+                            <dt class="text-[10px] sm:text-xs text-brand-200">Jam kerja</dt>
+                            <dd class="mt-0.5 sm:mt-1 text-xs sm:text-sm font-bold truncate">{{ $job->work_hours_per_day }} jam/hari</dd>
+                        </div>
+                    </dl>
                 </div>
-                <h1 class="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">{{ $job->title }}</h1><p class="mt-2 text-base text-brand-100">{{ $job->employer->business_name }}</p>
-                <dl class="mt-8 grid gap-3 sm:grid-cols-3"><div class="rounded-2xl bg-white/10 p-4"><dt class="text-xs text-brand-200">Lokasi</dt><dd class="mt-1 text-sm font-bold">{{ $job->location }}</dd></div><div class="rounded-2xl bg-white/10 p-4"><dt class="text-xs text-brand-200">Upah</dt><dd class="mt-1 text-sm font-bold">Rp {{ number_format($job->salary_amount, 0, ',', '.') }} / {{ $job->salary_type === 'monthly' ? 'bulan' : 'hari' }}</dd></div><div class="rounded-2xl bg-white/10 p-4"><dt class="text-xs text-brand-200">Jam kerja</dt><dd class="mt-1 text-sm font-bold">{{ $job->work_hours_per_day }} jam / hari</dd></div></dl>
             </section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900" data-reveal><h2 class="text-lg font-bold text-slate-950 dark:text-white">Deskripsi pekerjaan</h2><div class="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600 dark:text-slate-300">{{ $job->description }}</div></section>
-            <section class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900" data-reveal><h2 class="text-lg font-bold text-slate-950 dark:text-white">Keterampilan yang dicari</h2><div class="mt-4 flex flex-wrap gap-2">@foreach($job->skills as $skill)<span class="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700 dark:bg-brand-950 dark:text-brand-300">{{ $skill->name }}</span>@endforeach</div></section>
-            <section class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900" data-reveal><h2 class="text-lg font-bold text-slate-950 dark:text-white">Tentang mitra</h2><p class="mt-3 text-sm font-bold">{{ $job->employer->business_name }}</p><p class="mt-1 text-sm text-slate-500">Penanggung jawab: {{ $job->employer->name }}</p>@auth @if(auth()->user()->hasRole('jobseeker'))<a href="{{ route('chat.index', ['user' => $job->employer_id]) }}" class="portal-button-secondary mt-5 w-fit"><span class="material-symbols-outlined text-[18px]">chat</span>Pesan mitra</a>@endif @endauth</section>
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-900" data-reveal>
+                <h2 class="text-base sm:text-lg font-bold text-slate-950 dark:text-white">Deskripsi pekerjaan</h2>
+                <div class="mt-3 sm:mt-4 whitespace-pre-line text-xs sm:text-sm leading-6 sm:leading-7 text-slate-600 dark:text-slate-300">{{ $job->description }}</div>
+
+                <div class="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+                    <span class="inline-flex items-center gap-1.5" title="{{ $job->updated_at->translatedFormat('d F Y, H:i') }} WIB">
+                        <span class="material-symbols-outlined text-[15px] opacity-75">schedule</span>
+                        Terakhir diperbarui <span data-relative-time="{{ $job->updated_at->toISOString() }}">{{ $job->updated_at->diffForHumans() }}</span>
+                    </span>
+                    <span class="text-[11px] hidden sm:inline">{{ $job->updated_at->translatedFormat('d F Y') }}</span>
+                </div>
+            </section>
+
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-900" data-reveal>
+                <h2 class="text-base sm:text-lg font-bold text-slate-950 dark:text-white">Keterampilan yang dicari</h2>
+                <div class="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">
+                    @foreach($job->skills as $skill)
+                        <span class="rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700 dark:bg-brand-950 dark:text-brand-300">{{ $skill->name }}</span>
+                    @endforeach
+                </div>
+            </section>
+
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-900" data-reveal>
+                <h2 class="text-base sm:text-lg font-bold text-slate-950 dark:text-white">Tentang mitra</h2>
+                <p class="mt-2.5 text-sm font-bold">{{ $job->employer->business_name }}</p>
+                <p class="mt-0.5 text-xs sm:text-sm text-slate-500">Penanggung jawab: {{ $job->employer->name }}</p>
+                @auth
+                    @if(auth()->user()->hasRole('jobseeker'))
+                        <a href="{{ route('chat.index', ['user' => $job->employer_id]) }}" class="portal-button-secondary mt-4 w-fit !py-2 !px-3.5 text-xs sm:text-sm">
+                            <span class="material-symbols-outlined text-[18px]">chat</span>
+                            Pesan mitra
+                        </a>
+                    @endif
+                @endauth
+            </section>
+
+            @if($job->workplacePhotos->isNotEmpty())
+                <section class="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs" data-reveal id="workplace-photos-section">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <h2 class="text-base sm:text-lg font-bold text-slate-950 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[20px] text-brand-600 dark:text-brand-400">photo_library</span>
+                            <span>Foto</span>
+                        </h2>
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl">
+                            <span id="workplace-counter">1 / {{ $job->workplacePhotos->count() }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Workplace Photo Slider (Default size 4:5) -->
+                    <div class="relative select-none overflow-hidden rounded-2xl bg-slate-950 shadow-inner group max-w-lg mx-auto transition-all duration-300" id="workplaceCarousel" tabindex="0" role="region" aria-label="Galeri Foto Lowongan">
+                        <!-- Main slides viewport with dynamic aspect ratio (default 4:5) -->
+                        <div id="workplaceCarouselViewport" class="relative w-full aspect-[4/5] overflow-hidden flex items-center justify-center bg-black/60 transition-all duration-300">
+                            @foreach($job->workplacePhotos as $idx => $photo)
+                                <div class="carousel-slide absolute inset-0 transition-opacity duration-300 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}" data-slide-index="{{ $idx }}">
+                                    <img src="{{ $photo->photo_url }}" alt="{{ $photo->caption ?: 'Foto '.$job->title }}" class="h-full w-full object-cover bg-black/40 cursor-zoom-in" onclick="openPhotoLightbox('{{ $photo->photo_url }}', '{{ addslashes($photo->caption ?: 'Foto #'.($idx + 1)) }}')">
+                                    @if($photo->caption)
+                                        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 sm:p-4 text-white text-xs sm:text-sm">
+                                            <p class="font-medium line-clamp-2 drop-shadow-sm">{{ $photo->caption }}</p>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <!-- Prev / Next Controls (shown if > 1 photo) -->
+                        @if($job->workplacePhotos->count() > 1)
+                            <button type="button" onclick="prevWorkplaceSlide()" class="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition hover:bg-black/90 hover:scale-105 active:scale-95 focus:outline-hidden" aria-label="Foto Sebelumnya">
+                                <span class="material-symbols-outlined text-[20px] sm:text-[24px]">chevron_left</span>
+                            </button>
+                            <button type="button" onclick="nextWorkplaceSlide()" class="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition hover:bg-black/90 hover:scale-105 active:scale-95 focus:outline-hidden" aria-label="Foto Selanjutnya">
+                                <span class="material-symbols-outlined text-[20px] sm:text-[24px]">chevron_right</span>
+                            </button>
+
+                            <!-- Slide dots indicator -->
+                            <div class="absolute bottom-2.5 sm:bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md px-3 py-1">
+                                @foreach($job->workplacePhotos as $idx => $photo)
+                                    <button type="button" onclick="goToWorkplaceSlide({{ $idx }})" class="carousel-dot h-2 rounded-full transition-all duration-300 {{ $idx === 0 ? 'w-5 bg-brand-400' : 'w-2 bg-white/60 hover:bg-white' }}" aria-label="Lompat ke foto {{ $idx + 1 }}"></button>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <!-- Fullscreen / Zoom Trigger Button -->
+                        <button type="button" onclick="openActiveWorkplaceLightbox()" class="absolute top-2.5 right-2.5 z-20 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-black/60 text-white backdrop-blur-md transition hover:bg-black/90 hover:scale-105 focus:outline-hidden" title="Perbesar Foto">
+                            <span class="material-symbols-outlined text-[18px]">zoom_in</span>
+                        </button>
+                    </div>
+
+                    <!-- Thumbnails Strip (if > 1 photo) -->
+                    @if($job->workplacePhotos->count() > 1)
+                        <div class="mt-3.5 flex items-center justify-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
+                            @foreach($job->workplacePhotos as $idx => $photo)
+                                <button type="button" onclick="goToWorkplaceSlide({{ $idx }})" class="carousel-thumb relative aspect-[4/5] h-16 sm:h-20 shrink-0 overflow-hidden rounded-xl border-2 transition focus:outline-hidden {{ $idx === 0 ? 'border-brand-500 ring-2 ring-brand-500/40 opacity-100' : 'border-transparent opacity-60 hover:opacity-100' }}" data-thumb-index="{{ $idx }}">
+                                    <img src="{{ $photo->photo_url }}" alt="Thumbnail {{ $idx + 1 }}" class="h-full w-full object-cover">
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+                </section>
+            @endif
         </div>
 
-        <aside class="lg:sticky lg:top-24 lg:self-start">
+        <aside id="job-apply-section" class="lg:sticky lg:top-24 lg:self-start">
             <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-6" data-reveal>
                 @guest
                     <div class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300"><span class="material-symbols-outlined">login</span></div><h2 class="mt-5 text-xl font-bold">Masuk untuk melamar</h2><p class="mt-2 text-sm leading-6 text-slate-500">Buat akun pencari kerja untuk mengirim resume dan memantau status seleksi.</p><a href="{{ route('login') }}" class="portal-button-primary mt-6 w-full">Masuk</a><a href="{{ route('register') }}" class="portal-button-secondary mt-2 w-full">Daftar</a>
@@ -378,32 +504,10 @@
                                 Tinjau Pelamar Masuk ({{ $job->applications_count }})
                             </a>
 
-                            @if($job->status === 'open')
-                                <form id="closeEmployerJobForm" action="{{ route('employer.jobs.status', $job) }}" method="POST" class="pt-1">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status" value="closed">
-                                    <button type="button" onclick="confirmCloseEmployerJob('{{ addslashes($job->title) }}')" class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50/80 py-2.5 px-3 text-xs font-bold text-amber-800 hover:bg-amber-100 hover:border-amber-400 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50 transition cursor-pointer">
-                                        <span class="material-symbols-outlined text-[17px]">lock</span>
-                                        Tutup Lowongan Ini
-                                    </button>
-                                </form>
-                            @else
-                                @if(! $job->isClosedByAdmin())
-                                    <form id="openEmployerJobForm" action="{{ route('employer.jobs.status', $job) }}" method="POST" class="pt-1">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="status" value="open">
-                                        <button type="button" onclick="confirmOpenEmployerJob('{{ addslashes($job->title) }}')" class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50/80 py-2.5 px-3 text-xs font-bold text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50 transition cursor-pointer">
-                                            <span class="material-symbols-outlined text-[17px]">lock_open</span>
-                                            Buka Kembali Lowongan Ini
-                                        </button>
-                                    </form>
-                                @else
-                                    <div class="mt-2 rounded-xl bg-rose-50 p-2.5 text-center text-xs font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-                                        Lowongan dinonaktifkan oleh Administrator
-                                    </div>
-                                @endif
+                            @if($job->isClosedByAdmin())
+                                <div class="mt-2 rounded-xl bg-rose-50 p-2.5 text-center text-xs font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+                                    Lowongan dinonaktifkan oleh Administrator
+                                </div>
                             @endif
                         </div>
                     @else
@@ -412,21 +516,17 @@
                     @endif
                 @endguest
 
-                {{-- Status Pembaruan Real-Time --}}
-                <div class="mt-6 border-t border-slate-100 pt-4 dark:border-slate-800">
-                    <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        <span class="relative flex h-2 w-2">
-                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                {{-- Status Pembaruan Ringkas --}}
+                <div class="mt-5 border-t border-slate-100 pt-3.5 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center justify-between">
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[15px] text-slate-400">schedule</span>
+                            Status Pembaruan Mitra:
                         </span>
-                        <span>Status Pembaruan Mitra:</span>
+                        <span class="font-medium text-slate-700 dark:text-slate-300" title="{{ $job->updated_at->translatedFormat('d F Y, H:i') }} WIB">
+                            <span data-relative-time="{{ $job->updated_at->toISOString() }}">{{ $job->updated_at->diffForHumans() }}</span>
+                        </span>
                     </div>
-                    <p class="mt-1.5 text-sm font-bold text-slate-900 dark:text-white">
-                        Diperbarui <span data-relative-time="{{ $job->updated_at->toISOString() }}">{{ $job->updated_at->diffForHumans() }}</span>
-                    </p>
-                    <p class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-                        {{ $job->updated_at->translatedFormat('d F Y, H:i') }} WIB
-                    </p>
                 </div>
 
                 {{-- Laporkan Lowongan Button & Ajukan Resign --}}
@@ -469,9 +569,64 @@
             </div>
         </aside>
     </div>
+
+    {{-- Mobile Sticky Action Bar --}}
+    <div class="fixed bottom-0 inset-x-0 z-30 border-t border-slate-200/90 bg-white/95 px-4 py-3 backdrop-blur-md lg:hidden dark:border-slate-800 dark:bg-slate-950/95 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
+            <div class="min-w-0">
+                <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Upah Kerja</span>
+                <p class="truncate text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-300">
+                    Rp {{ number_format($job->salary_amount, 0, ',', '.') }} <span class="text-[10px] font-normal text-slate-500">/ {{ $job->salary_type === 'monthly' ? 'bln' : 'hari' }}</span>
+                </p>
+            </div>
+            <div class="shrink-0 flex items-center gap-2">
+                @guest
+                    <a href="{{ route('login') }}" class="portal-button-primary !py-2 !px-3.5 text-xs">
+                        <span class="material-symbols-outlined text-[17px]">login</span>
+                        <span>Masuk Melamar</span>
+                    </a>
+                @elseif(auth()->user()->hasRole('jobseeker'))
+                    @if($hasApplied)
+                        <a href="#job-apply-section" class="portal-button-secondary !py-2 !px-3.5 text-xs">
+                            <span class="material-symbols-outlined text-[17px]">assignment_turned_in</span>
+                            <span>Status Lamaran</span>
+                        </a>
+                    @elseif($job->status === 'open')
+                        <a href="#job-apply-section" class="portal-button-primary !py-2 !px-4 text-xs shadow-md">
+                            <span class="material-symbols-outlined text-[17px]">send</span>
+                            <span>Lamar Sekarang</span>
+                        </a>
+                    @else
+                        <span class="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                            <span class="material-symbols-outlined text-[15px]">lock</span>
+                            Ditutup
+                        </span>
+                    @endif
+                @elseif(auth()->user()->id === $job->employer_id)
+                    <a href="{{ route('employer.applications.index', ['job' => $job->id]) }}" class="portal-button-primary !py-2 !px-3.5 text-xs">
+                        <span class="material-symbols-outlined text-[17px]">group</span>
+                        <span>Pelamar ({{ $job->applications_count }})</span>
+                    </a>
+                @endif
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('modals')
+    <!-- Workplace Photo Lightbox Modal -->
+    <div id="workplaceLightboxModal" class="fixed inset-0 z-[120] hidden bg-black/90 backdrop-blur-md p-4 sm:p-6 flex items-center justify-center transition-all duration-300" onclick="if(event.target === this) closePhotoLightboxDirect()">
+        <div class="relative max-w-4xl w-full flex flex-col items-center justify-center max-h-[90vh]">
+            <button type="button" onclick="closePhotoLightboxDirect()" class="absolute -top-12 right-0 sm:-right-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition cursor-pointer" aria-label="Tutup Pratinjau">
+                <span class="material-symbols-outlined text-[24px]">close</span>
+            </button>
+            <div class="relative overflow-hidden rounded-2xl max-h-[80vh] flex items-center justify-center shadow-2xl">
+                <img id="lightboxImage" src="" alt="Pratinjau Foto" class="max-h-[75vh] w-auto max-w-full object-contain rounded-xl select-none">
+            </div>
+            <p id="lightboxCaption" class="mt-3 text-center text-xs sm:text-sm font-medium text-slate-200 max-w-xl px-4 line-clamp-2"></p>
+        </div>
+    </div>
+
     <!-- Modal Laporkan Lowongan -->
     <!-- ================= MODAL LAPORKAN LOWONGAN ================= -->
     @auth
@@ -664,10 +819,207 @@
         }
     }
 
+    // Workplace Photos Carousel & Lightbox Logic
+    let currentWorkplaceSlide = 0;
+    const workplaceSlides = document.querySelectorAll('.carousel-slide');
+    const workplaceDots = document.querySelectorAll('.carousel-dot');
+    const workplaceThumbs = document.querySelectorAll('.carousel-thumb');
+    const totalWorkplaceSlides = workplaceSlides.length;
+    const workplaceCounterEl = document.getElementById('workplace-counter');
+
+    function updateWorkplaceCarousel(index) {
+        if (totalWorkplaceSlides === 0) return;
+        currentWorkplaceSlide = (index + totalWorkplaceSlides) % totalWorkplaceSlides;
+
+        workplaceSlides.forEach((slide, idx) => {
+            if (idx === currentWorkplaceSlide) {
+                slide.classList.remove('opacity-0', 'z-0', 'pointer-events-none');
+                slide.classList.add('opacity-100', 'z-10');
+            } else {
+                slide.classList.remove('opacity-100', 'z-10');
+                slide.classList.add('opacity-0', 'z-0', 'pointer-events-none');
+            }
+        });
+
+        workplaceDots.forEach((dot, idx) => {
+            if (idx === currentWorkplaceSlide) {
+                dot.className = 'carousel-dot h-2 rounded-full transition-all duration-300 w-5 bg-brand-400';
+            } else {
+                dot.className = 'carousel-dot h-2 rounded-full transition-all duration-300 w-2 bg-white/60 hover:bg-white';
+            }
+        });
+
+        workplaceThumbs.forEach((thumb, idx) => {
+            if (idx === currentWorkplaceSlide) {
+                thumb.classList.add('border-brand-500', 'ring-2', 'ring-brand-500/40', 'opacity-100');
+                thumb.classList.remove('border-transparent', 'opacity-60');
+                thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            } else {
+                thumb.classList.remove('border-brand-500', 'ring-2', 'ring-brand-500/40', 'opacity-100');
+                thumb.classList.add('border-transparent', 'opacity-60');
+            }
+        });
+
+        if (workplaceCounterEl) {
+            workplaceCounterEl.textContent = `${currentWorkplaceSlide + 1} / ${totalWorkplaceSlides}`;
+        }
+    }
+
+    function adaptWorkplaceCarouselRatio() {
+        const slideImgs = document.querySelectorAll('.carousel-slide img');
+        if (slideImgs.length === 0) return;
+
+        const checkRatios = () => {
+            const ratios = [];
+            slideImgs.forEach(img => {
+                if (img.naturalWidth && img.naturalHeight) {
+                    ratios.push(img.naturalWidth / img.naturalHeight);
+                }
+            });
+
+            if (ratios.length === 0) return;
+
+            const isAll16x9 = ratios.every(r => Math.abs(r - (16 / 9)) < 0.15);
+            const isAll1x1 = ratios.every(r => Math.abs(r - 1.0) < 0.12);
+
+            const carousel = document.getElementById('workplaceCarousel');
+            const viewport = document.getElementById('workplaceCarouselViewport');
+            const thumbs = document.querySelectorAll('.carousel-thumb');
+
+            if (isAll16x9) {
+                if (carousel) {
+                    carousel.classList.remove('max-w-lg');
+                    carousel.classList.add('max-w-2xl');
+                }
+                if (viewport) {
+                    viewport.classList.remove('aspect-[4/5]', 'aspect-square');
+                    viewport.classList.add('aspect-[16/9]');
+                }
+                thumbs.forEach(t => {
+                    t.classList.remove('aspect-[4/5]', 'aspect-square');
+                    t.classList.add('aspect-[16/9]', 'w-24', 'sm:w-28');
+                });
+            } else if (isAll1x1) {
+                if (carousel) {
+                    carousel.classList.remove('max-w-lg', 'max-w-2xl');
+                    carousel.classList.add('max-w-md');
+                }
+                if (viewport) {
+                    viewport.classList.remove('aspect-[4/5]', 'aspect-[16/9]');
+                    viewport.classList.add('aspect-square');
+                }
+                thumbs.forEach(t => {
+                    t.classList.remove('aspect-[4/5]', 'aspect-[16/9]');
+                    t.classList.add('aspect-square', 'w-16', 'sm:w-20');
+                });
+            } else {
+                // Lock strictly to default 4:5
+                if (carousel) {
+                    carousel.classList.remove('max-w-2xl', 'max-w-md');
+                    carousel.classList.add('max-w-lg');
+                }
+                if (viewport) {
+                    viewport.classList.remove('aspect-[16/9]', 'aspect-square');
+                    viewport.classList.add('aspect-[4/5]');
+                }
+                thumbs.forEach(t => {
+                    t.classList.remove('aspect-[16/9]', 'aspect-square', 'w-24', 'sm:w-28');
+                    t.classList.add('aspect-[4/5]', 'h-16', 'sm:h-20');
+                });
+            }
+        };
+
+        if (Array.from(slideImgs).every(img => img.complete && img.naturalWidth)) {
+            checkRatios();
+        } else {
+            slideImgs.forEach(img => {
+                img.addEventListener('load', checkRatios, { once: true });
+            });
+        }
+    }
+
+    adaptWorkplaceCarouselRatio();
+
+    function nextWorkplaceSlide() {
+        updateWorkplaceCarousel(currentWorkplaceSlide + 1);
+    }
+
+    function prevWorkplaceSlide() {
+        updateWorkplaceCarousel(currentWorkplaceSlide - 1);
+    }
+
+    function goToWorkplaceSlide(index) {
+        updateWorkplaceCarousel(index);
+    }
+
+    function openPhotoLightbox(src, caption) {
+        const modal = document.getElementById('workplaceLightboxModal');
+        const img = document.getElementById('lightboxImage');
+        const cap = document.getElementById('lightboxCaption');
+        if (modal && img) {
+            img.src = src;
+            if (cap) cap.textContent = caption || '';
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closePhotoLightboxDirect() {
+        const modal = document.getElementById('workplaceLightboxModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function openActiveWorkplaceLightbox() {
+        if (workplaceSlides.length > 0 && workplaceSlides[currentWorkplaceSlide]) {
+            const activeImg = workplaceSlides[currentWorkplaceSlide].querySelector('img');
+            const activeCap = workplaceSlides[currentWorkplaceSlide].querySelector('p');
+            if (activeImg) {
+                openPhotoLightbox(activeImg.src, activeCap ? activeCap.textContent : '');
+            }
+        }
+    }
+
+    // Touch Swipe Support for Mobile Screens
+    const carouselWrapper = document.getElementById('workplaceCarousel');
+    if (carouselWrapper) {
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        carouselWrapper.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        carouselWrapper.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            const diff = touchEndX - touchStartX;
+            if (Math.abs(diff) > 40) {
+                if (diff < 0) {
+                    nextWorkplaceSlide();
+                } else {
+                    prevWorkplaceSlide();
+                }
+            }
+        }, { passive: true });
+    }
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeReportModal();
             closeResignModal();
+            closePhotoLightboxDirect();
+        } else if (e.key === 'ArrowRight' && totalWorkplaceSlides > 1) {
+            const lightbox = document.getElementById('workplaceLightboxModal');
+            if (!lightbox || lightbox.classList.contains('hidden')) {
+                nextWorkplaceSlide();
+            }
+        } else if (e.key === 'ArrowLeft' && totalWorkplaceSlides > 1) {
+            const lightbox = document.getElementById('workplaceLightboxModal');
+            if (!lightbox || lightbox.classList.contains('hidden')) {
+                prevWorkplaceSlide();
+            }
         }
     });
 
@@ -683,36 +1035,6 @@
 
         if (confirmed) {
             document.getElementById(`cancelApplicationForm-${applicationId}`)?.submit();
-        }
-    }
-
-    async function confirmCloseEmployerJob(jobTitle) {
-        const confirmed = await window.showAppConfirm({
-            title: 'Tutup Lowongan Pekerjaan?',
-            message: `Apakah Anda yakin ingin menutup rekrutmen untuk lowongan "${jobTitle}"?\n\nSetelah ditutup, lowongan ini tidak akan menerima pelamar baru dan disembunyikan dari daftar pencarian aktif.`,
-            confirmText: 'Ya, Tutup Lowongan',
-            cancelText: 'Batal',
-            type: 'warning',
-            icon: 'lock'
-        });
-
-        if (confirmed) {
-            document.getElementById('closeEmployerJobForm')?.submit();
-        }
-    }
-
-    async function confirmOpenEmployerJob(jobTitle) {
-        const confirmed = await window.showAppConfirm({
-            title: 'Buka Kembali Lowongan?',
-            message: `Apakah Anda yakin ingin membuka kembali rekrutmen untuk lowongan "${jobTitle}"?\n\nPencari kerja akan dapat melihat kembali lowongan ini dan mengirimkan lamaran.`,
-            confirmText: 'Ya, Buka Lowongan',
-            cancelText: 'Batal',
-            type: 'primary',
-            icon: 'lock_open'
-        });
-
-        if (confirmed) {
-            document.getElementById('openEmployerJobForm')?.submit();
         }
     }
 </script>

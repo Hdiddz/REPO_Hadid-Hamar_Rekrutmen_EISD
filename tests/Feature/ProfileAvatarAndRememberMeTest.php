@@ -129,4 +129,58 @@ class ProfileAvatarAndRememberMeTest extends TestCase
         $recallerName = Auth::guard()->getRecallerName();
         $response->assertCookie($recallerName);
     }
+
+    public function test_jobseeker_can_view_profile_page(): void
+    {
+        $user = User::factory()->jobseeker()->create([
+            'name' => 'Kandidat Kerja',
+            'username' => 'kandidat',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('profile.index'));
+
+        $response->assertOk();
+        $response->assertSee('Kandidat Kerja');
+        $response->assertSee('kandidat');
+        $response->assertSee('Pencari kerja');
+        $response->assertSee('Riwayat lamaran');
+        $response->assertSee('Lihat Profil');
+    }
+
+    public function test_employer_can_view_profile_page_with_business_details(): void
+    {
+        $user = User::factory()->employer()->create([
+            'name' => 'Hadid Hamar',
+            'username' => 'hadids',
+            'business_name' => 'Kedai Kopi Digital',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('profile.index'));
+
+        $response->assertOk();
+        $response->assertSee('Hadid Hamar');
+        $response->assertSee('hadids');
+        $response->assertSee('Mitra UMKM');
+        $response->assertSee('Kedai Kopi Digital');
+        $response->assertSee('Lowongan Saya');
+        $response->assertSee('Semua Pelamar');
+        $response->assertSee('Lihat Profil');
+    }
+
+    public function test_admin_can_view_profile_page(): void
+    {
+        $user = User::factory()->admin()->create([
+            'name' => 'Admin Sistem',
+            'username' => 'superadmin',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('profile.index'));
+
+        $response->assertOk();
+        $response->assertSee('Admin Sistem');
+        $response->assertSee('superadmin');
+        $response->assertSee('Administrator');
+        $response->assertSee('Dashboard Admin');
+        $response->assertSee('Lihat Profil');
+    }
 }

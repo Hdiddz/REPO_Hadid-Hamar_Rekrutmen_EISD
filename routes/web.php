@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('/notifikasi/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
 
+    Route::get('/profil', [ProfileController::class, 'show'])->name('profile.index');
+
     Route::middleware('role:jobseeker')->group(function (): void {
         Route::post('/lowongan/{job}/lamar', [JobApplicationController::class, 'store'])->name('applications.store');
         Route::get('/riwayat-lamaran', [JobApplicationController::class, 'index'])->name('applications.index');
@@ -59,7 +61,6 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/riwayat-lamaran/{application}/resign', [JobApplicationController::class, 'requestResignation'])->name('applications.resign');
         Route::delete('/riwayat-lamaran/{application}', [JobApplicationController::class, 'destroy'])->name('applications.destroy');
         Route::get('/riwayat-lamaran/{application}/resume/preview', [EmployerApplicationController::class, 'preview'])->name('applications.resume.preview');
-        Route::get('/profil', [ProfileController::class, 'show'])->name('profile.index');
     });
 
     Route::prefix('mitra')->name('employer.')->middleware('role:employer')->group(function (): void {

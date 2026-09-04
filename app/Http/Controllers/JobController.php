@@ -18,7 +18,7 @@ class JobController extends Controller
         $jobs = Job::query()
             ->where('status', 'open')
             ->with(['category:id,name', 'employer:id,name,business_name', 'skills:id,name'])
-            ->withCount('applications')
+            ->withCount(['applications', 'workplacePhotos'])
             ->when($request->filled('q'), function ($query) use ($request): void {
                 $term = $request->string('q')->toString();
                 $query->where(function ($nested) use ($term): void {
@@ -55,9 +55,24 @@ class JobController extends Controller
             abort(404);
         }
 
-        $job->load(['category:id,name', 'employer:id,name,email,phone,business_name', 'skills:id,name'])
+        $job->load(['category:id,name', 'employer:id,name,email,phone,business_name', 'skills:id,name', 'workplacePhotos'])
             ->loadCount('applications');
 
-        return view('jobs.show', compact('job', 'hasApplied', 'application'));
+        $previousUrl = url()->previous();
+        if ($request->filled('return_to')) {
+            $returnTo = $request->string('return_to')->toString();
+            $appUrl = url('/');
+            if ((str_starts_with($returnTo, '/') && ! str_starts_with($returnTo, '//')) || str_starts_with($returnTo, $appUrl)) {
+                session()->put('job_show_return_to', $returnTo);
+            }
+        } elseif ($previousUrl && $previousUrl !== $request->fullUrl() && ! str_contains($previousUrl, '/lowongan/'.$job->id)) {
+            if (str_starts_with($previousUrl, url('/')) && ! str_contains($previousUrl, 'login') && ! str_contains($previousUrl, 'logout')) {
+                session()->put('job_show_return_to', $previousUrl);
+            }
+        }
+
+        $returnUrl = session('job_show_return_to', route('jobs.index'));
+
+        return view('jobs.show', compact('job', 'hasApplied', 'application', 'returnUrl'));
     }
 }

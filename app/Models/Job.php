@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['employer_id', 'category_id', 'title', 'description', 'location', 'salary_type', 'salary_amount', 'work_hours_per_day', 'status', 'closed_reason', 'closed_until', 'closed_by_admin'])]
+#[Fillable(['employer_id', 'category_id', 'title', 'description', 'cover_image', 'location', 'salary_type', 'salary_amount', 'work_hours_per_day', 'status', 'closed_reason', 'closed_until', 'closed_by_admin'])]
 class Job extends Model
 {
     /** @use HasFactory<JobFactory> */
@@ -51,6 +51,11 @@ class Job extends Model
         return $this->hasMany(JobReport::class);
     }
 
+    public function workplacePhotos(): HasMany
+    {
+        return $this->hasMany(JobWorkplacePhoto::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function applicants(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'job_applications')
@@ -61,5 +66,18 @@ class Job extends Model
     public function isClosedByAdmin(): bool
     {
         return $this->closed_by_admin && $this->status === 'closed';
+    }
+
+    public function getCoverImageUrlAttribute(): ?string
+    {
+        if (! $this->cover_image) {
+            return null;
+        }
+
+        if (str_starts_with($this->cover_image, 'http://') || str_starts_with($this->cover_image, 'https://')) {
+            return $this->cover_image;
+        }
+
+        return asset('storage/'.$this->cover_image);
     }
 }

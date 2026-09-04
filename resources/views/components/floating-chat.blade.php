@@ -6,9 +6,9 @@
 @endphp
 
 <!-- ================= FLOATING CHAT WIDGET ================= -->
-<div class="fixed bottom-6 right-6 z-50 flex flex-col items-end print:hidden">
+<div class="fixed {{ request()->routeIs('jobs.show') ? 'bottom-20 lg:bottom-6' : 'bottom-4 sm:bottom-6' }} right-4 sm:right-6 z-50 flex flex-col items-end print:hidden">
     <!-- Floating Chat Pop-up Window -->
-    <div id="floatingChatPopup" class="hidden mb-3 w-[350px] sm:w-[385px] max-w-[calc(100vw-2rem)] h-[520px] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-page-enter">
+    <div id="floatingChatPopup" class="hidden mb-3 w-[340px] sm:w-[385px] max-w-[calc(100vw-2rem)] h-[480px] sm:h-[520px] max-h-[calc(100dvh-6rem)] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-page-enter">
         
         <!-- VIEW 1: DAFTAR PERCAKAPAN (CONTACT LIST VIEW) -->
         <div id="popupChatListView" class="flex flex-col h-full">

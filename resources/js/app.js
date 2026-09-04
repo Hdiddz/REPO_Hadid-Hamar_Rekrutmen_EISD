@@ -40,9 +40,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-menu-toggle]').forEach((button) => {
         button.addEventListener('click', (event) => {
             event.stopPropagation();
-            const menu = document.getElementById(button.dataset.menuToggle);
+            const targetId = button.dataset.menuToggle;
+            const menu = document.getElementById(targetId);
 
             if (!menu) {
+                return;
+            }
+
+            // On mobile devices, hide floating user menu dropdown and trigger mobile nav drawer instead
+            if (window.innerWidth < 1024 && targetId === 'portal-user-menu') {
+                const mobileNavToggle = document.querySelector('[data-mobile-nav-toggle][aria-controls="portal-mobile-nav"]');
+                if (mobileNavToggle) {
+                    mobileNavToggle.click();
+                }
+                return;
+            }
+            if (window.innerWidth < 768 && targetId === 'main-user-menu') {
+                const mobileNavToggle = document.querySelector('[data-mobile-nav-toggle][aria-controls="app-mobile-nav"]');
+                if (mobileNavToggle) {
+                    mobileNavToggle.click();
+                }
                 return;
             }
 
@@ -53,13 +70,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    const mobileNavButton = document.querySelector('[data-mobile-nav-toggle]');
-    const mobileNav = document.getElementById('portal-mobile-nav');
+    document.querySelectorAll('[data-mobile-nav-toggle]').forEach((button) => {
+        const targetSelector = button.dataset.target || (button.getAttribute('aria-controls') ? `#${button.getAttribute('aria-controls')}` : '#portal-mobile-nav');
+        const mobileNav = document.querySelector(targetSelector);
+        const icon = button.querySelector('.material-symbols-outlined');
 
-    mobileNavButton?.addEventListener('click', () => {
-        const willOpen = mobileNav?.classList.contains('hidden') ?? false;
-        mobileNav?.classList.toggle('hidden', !willOpen);
-        setExpanded(mobileNavButton, willOpen);
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (!mobileNav) {
+                return;
+            }
+
+            const willOpen = mobileNav.classList.contains('hidden');
+            closeMenus();
+
+            mobileNav.classList.toggle('hidden', !willOpen);
+            setExpanded(button, willOpen);
+
+            if (icon) {
+                icon.textContent = willOpen ? 'close' : 'menu';
+            }
+        });
+
+        mobileNav?.querySelectorAll('a:not([data-stay-open])').forEach((link) => {
+            link.addEventListener('click', () => {
+                mobileNav.classList.add('hidden');
+                setExpanded(button, false);
+                if (icon) {
+                    icon.textContent = 'menu';
+                }
+            });
+        });
     });
 
     document.querySelectorAll('[data-dialog-open]').forEach((button) => {
@@ -82,16 +123,59 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.querySelectorAll('[data-theme-value]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const theme = button.dataset.themeValue;
-            localStorage.setItem('theme', theme);
-            document.documentElement.classList.toggle('dark', theme === 'dark');
-            document.querySelectorAll('[data-theme-value]').forEach((item) => {
-                item.setAttribute('aria-pressed', String(item === button));
-            });
+    const updateThemeElements = (isDark) => {
+        document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+            const icon = button.querySelector('.theme-toggle-icon') || button.querySelector('.material-symbols-outlined');
+            const text = button.querySelector('.theme-toggle-text');
+            if (icon) {
+                icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+            }
+            if (text && text.dataset.dynamicText !== 'false') {
+                text.textContent = isDark ? 'Mode Terang' : 'Mode Gelap';
+            }
+            button.setAttribute('aria-pressed', String(isDark));
+            button.setAttribute('title', isDark ? 'Beralih ke mode terang' : 'Beralih ke mode gelap');
+        });
+
+        document.querySelectorAll('[data-theme-value]').forEach((item) => {
+            item.setAttribute('aria-pressed', String(item.dataset.themeValue === (isDark ? 'dark' : 'light')));
+        });
+
+        if (typeof window.updateThemeSelectionCards === 'function') {
+            window.updateThemeSelectionCards();
+        }
+    };
+
+    const applyTheme = (theme) => {
+        const isDark = theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        localStorage.setItem('theme', theme);
+        updateThemeElements(isDark);
+    };
+
+    const toggleTheme = () => {
+        const isCurrentlyDark = document.documentElement.classList.contains('dark');
+        applyTheme(isCurrentlyDark ? 'light' : 'dark');
+    };
+
+    window.applyTheme = applyTheme;
+    window.toggleTheme = toggleTheme;
+
+    document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            toggleTheme();
         });
     });
+
+    document.querySelectorAll('[data-theme-value]').forEach((button) => {
+        button.addEventListener('click', () => {
+            applyTheme(button.dataset.themeValue);
+        });
+    });
+
+    updateThemeElements(document.documentElement.classList.contains('dark'));
+
 
     document.querySelectorAll('[data-flash-alert]').forEach((alert) => {
         let isDismissed = false;
@@ -167,14 +251,28 @@ document.addEventListener('DOMContentLoaded', () => {
         revealElements.forEach((element) => revealObserver.observe(element));
     }
 
-    document.addEventListener('click', () => closeMenus());
+    const closeMobileNavs = () => {
+        document.querySelectorAll('[data-mobile-nav]').forEach((nav) => nav.classList.add('hidden'));
+        const portalNav = document.getElementById('portal-mobile-nav');
+        if (portalNav) portalNav.classList.add('hidden');
+        document.querySelectorAll('[data-mobile-nav-toggle]').forEach((btn) => {
+            setExpanded(btn, false);
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (icon) icon.textContent = 'menu';
+        });
+    };
+
+    document.addEventListener('click', (event) => {
+        closeMenus();
+        if (!event.target.closest('[data-mobile-nav]') && !event.target.closest('#portal-mobile-nav') && !event.target.closest('[data-mobile-nav-toggle]')) {
+            closeMobileNavs();
+        }
+    });
+
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeMenus();
-            mobileNav?.classList.add('hidden');
-            if (mobileNavButton) {
-                setExpanded(mobileNavButton, false);
-            }
+            closeMobileNavs();
         }
     });
 });
