@@ -3,8 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
-use App\Models\Job;
-use App\Models\JobApplication;
 use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -17,7 +15,6 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        // 1. Kategori Pekerjaan
         collect([
             'Kreatif dan Media' => 'kreatif-dan-media',
             'Kuliner dan Kedai Kopi' => 'kuliner-kedai-kopi',
@@ -29,7 +26,6 @@ class DatabaseSeeder extends Seeder
             Category::updateOrCreate(['slug' => $slug], ['name' => $name]);
         });
 
-        // 2. Keterampilan / Skills
         collect([
             'Video Editing',
             'Color Grading',
@@ -41,11 +37,17 @@ class DatabaseSeeder extends Seeder
             'Kasir POS',
             'Customer Service',
             'Manajemen Stok',
+            'Persiapan Makanan',
+            'Packing Barang',
+            'Perawatan Kendaraan',
+            'Ketelitian',
+            'Kreativitas',
+            'Desain Grafis',
+            'Microsoft Office',
         ])->each(function (string $name): void {
             Skill::updateOrCreate(['name' => $name]);
         });
 
-        // 3. Akun Admin Tunggal
         $admin = User::updateOrCreate(
             ['email' => 'Hadid@adm.id'],
             [
@@ -58,9 +60,10 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 4. Bersihkan data demo/user lama, hanya tinggalkan akun admin
-        JobApplication::query()->delete();
-        Job::query()->delete();
-        User::where('id', '!=', $admin->id)->delete();
+        $this->call(DemoEmployerSeeder::class);
+
+        // Pertahankan hanya akun admin dan akun dummy mitra johan1..johan10
+        $allowedUsernames = collect(range(1, 10))->map(fn (int $i): string => 'johan'.$i)->push('Hadid');
+        User::whereNotIn('username', $allowedUsernames)->delete();
     }
 }

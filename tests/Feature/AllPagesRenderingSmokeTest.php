@@ -19,7 +19,10 @@ class AllPagesRenderingSmokeTest extends TestCase
         $employer = User::factory()->employer()->create();
         $job = Job::factory()->create(['employer_id' => $employer->id]);
 
-        $this->get(route('home'))->assertOk();
+        $homeResponse = $this->get(route('home'))->assertOk();
+        $homeResponse->assertSee('Login');
+        $homeResponse->assertSee('Register');
+        $homeResponse->assertSee('home-search');
         $this->get(route('jobs.index'))->assertOk();
         $this->get(route('jobs.show', $job))->assertOk();
         $this->get(route('login'))->assertOk();

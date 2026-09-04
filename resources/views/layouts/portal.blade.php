@@ -74,10 +74,12 @@
                                     <span class="material-symbols-outlined text-[19px] text-slate-500 dark:text-slate-400">account_circle</span>
                                     Profil Saya
                                 </a>
-                                <a href="{{ route('reports.index') }}" class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">
-                                    <span class="material-symbols-outlined text-[19px] text-slate-500 dark:text-slate-400">flag</span>
-                                    Riwayat Laporan
-                                </a>
+                                @if(!auth()->user()?->hasRole('admin'))
+                                    <a href="{{ route('reports.index') }}" class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">
+                                        <span class="material-symbols-outlined text-[19px] text-slate-500 dark:text-slate-400">flag</span>
+                                        Riwayat Laporan
+                                    </a>
+                                @endif
                                 <a href="{{ route('settings.index') }}" class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">
                                     <span class="material-symbols-outlined text-[19px] text-slate-500 dark:text-slate-400">settings</span>
                                     Pengaturan
@@ -136,10 +138,12 @@
 
                     @yield('portal_mobile_navigation')
                     
-                    <a href="{{ route('reports.index') }}" class="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition">
-                        <span class="material-symbols-outlined text-[20px]">flag</span>
-                        <span>Riwayat Laporan</span>
-                    </a>
+                    @if(!auth()->user()?->hasRole('admin'))
+                        <a href="{{ route('reports.index') }}" class="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition">
+                            <span class="material-symbols-outlined text-[20px]">flag</span>
+                            <span>Riwayat Laporan</span>
+                        </a>
+                    @endif
                     <a href="{{ route('settings.index') }}" class="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition">
                         <span class="material-symbols-outlined text-[20px]">settings</span>
                         <span>Pengaturan Akun</span>

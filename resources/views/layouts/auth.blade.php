@@ -32,25 +32,26 @@
         </section>
 
         <section class="flex min-h-[100dvh] flex-col">
-            <header class="flex h-[72px] items-center justify-between px-4 sm:px-8 lg:px-10">
+            <header class="flex h-14 sm:h-[72px] items-center justify-between px-4 sm:px-8 lg:px-10">
                 <a href="{{ route('home') }}" class="rounded-lg lg:hidden">
-                    <img src="{{ asset('logo.svg') }}" alt="KerjaLokal" class="h-9 w-auto dark:hidden">
-                    <img src="{{ asset('logo-white.svg') }}" alt="KerjaLokal" class="hidden h-9 w-auto dark:block">
+                    <img src="{{ asset('logo.svg') }}" alt="KerjaLokal" class="h-8 sm:h-9 w-auto dark:hidden">
+                    <img src="{{ asset('logo-white.svg') }}" alt="KerjaLokal" class="hidden h-8 sm:h-9 w-auto dark:block">
                 </a>
-                <a href="{{ route('home') }}" class="ml-auto inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white">
+                <a href="{{ route('home') }}" class="ml-auto inline-flex min-h-9 sm:min-h-10 items-center gap-1.5 sm:gap-2 rounded-xl px-2.5 sm:px-3 text-xs sm:text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white">
                     <span class="material-symbols-outlined text-[18px]">arrow_back</span>
                     Beranda
                 </a>
             </header>
 
-            <div class="flex flex-1 items-center justify-center px-4 py-8 sm:px-8 lg:px-12">
+            <div class="flex flex-1 items-center justify-center px-4 py-4 sm:py-8 sm:px-8 lg:px-12">
                 <div class="w-full max-w-xl animate-page-enter">
                     @yield('content')
                 </div>
             </div>
 
-            <footer class="px-4 py-5 text-center text-xs text-slate-500 dark:text-slate-400">
-                &copy; {{ now()->year }} KerjaLokal. Platform pekerjaan layak dan pertumbuhan ekonomi.
+            <footer class="px-4 py-3 sm:py-5 text-center text-xs text-slate-500 dark:text-slate-400">
+                <span class="sm:hidden">&copy; {{ now()->year }} KerjaLokal</span>
+                <span class="hidden sm:inline">&copy; {{ now()->year }} KerjaLokal. Platform pekerjaan layak dan pertumbuhan ekonomi.</span>
             </footer>
         </section>
     </main>

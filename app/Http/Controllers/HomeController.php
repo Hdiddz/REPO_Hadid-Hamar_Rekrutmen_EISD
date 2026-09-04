@@ -26,12 +26,15 @@ class HomeController extends Controller
         }
 
         $featuredJobs = Job::query()
-            ->select(['id', 'employer_id', 'title', 'location', 'salary_amount', 'salary_type', 'created_at'])
+            ->select(['id', 'employer_id', 'category_id', 'title', 'location', 'salary_amount', 'salary_type', 'created_at'])
             ->where('status', 'open')
-            ->with('employer:id,name,business_name')
+            ->with([
+                'category:id,name,slug',
+                'employer:id,name,business_name',
+            ])
             ->latest()
             ->orderByDesc('id')
-            ->limit(4)
+            ->limit(5)
             ->get();
 
         return view('home', compact('featuredJobs'));

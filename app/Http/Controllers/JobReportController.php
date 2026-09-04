@@ -15,8 +15,12 @@ class JobReportController extends Controller
     /**
      * Display a listing of reports submitted by the authenticated user.
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
+        if ($request->user()->hasRole('admin')) {
+            return redirect()->route('admin.reports.index');
+        }
+
         $status = $request->query('status');
 
         $userReports = JobReport::where('reporter_id', $request->user()->id)

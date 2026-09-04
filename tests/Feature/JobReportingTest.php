@@ -114,6 +114,25 @@ class JobReportingTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
+    public function test_admin_is_redirected_to_admin_reports_when_accessing_user_reports(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->get(route('reports.index'));
+
+        $response->assertRedirect(route('admin.reports.index'));
+    }
+
+    public function test_admin_does_not_see_riwayat_laporan_in_portal_menu(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+
+        $response->assertOk();
+        $response->assertDontSee('Riwayat Laporan');
+    }
+
     public function test_authenticated_user_can_view_own_reports(): void
     {
         $user = User::factory()->jobseeker()->create();
