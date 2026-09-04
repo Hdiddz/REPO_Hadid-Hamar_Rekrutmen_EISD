@@ -96,7 +96,7 @@
                         <span class="material-symbols-outlined text-[22px]">arrow_back</span>
                     </button>
                     <div id="activeChatUserDirectContainer" onclick="handleActiveProfileDirect(event)" class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 group transition cursor-pointer" title="Buka profil / status seleksi">
-                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-teal-700 text-white font-bold flex items-center justify-center text-xs sm:text-sm shrink-0 overflow-hidden ring-2 ring-transparent group-hover:ring-teal-500 transition shadow-xs" id="activeChatAvatar">
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-teal-700 text-white font-bold flex items-center justify-center text-xs sm:text-sm shrink-0 overflow-hidden ring-2 ring-transparent group-hover:ring-teal-500 transition shadow-xs" id="activeChatAvatar" onclick="handleActiveChatAvatarClick(event)">
                             --
                         </div>
                         <div class="min-w-0 flex-1">
@@ -278,6 +278,31 @@
     let currentInterviewInvitation = null;
     let activeChatUserDirectUrl = null;
     let currentOtherUser = null;
+    let currentOtherProfile = null;
+
+    function handleActiveChatAvatarClick(event) {
+        if (isEmployer && currentOtherProfile && currentOtherProfile.type === 'jobseeker' && typeof window.openApplicantProfileModal === 'function') {
+            event.stopPropagation();
+            const app = (currentOtherProfile.applications && currentOtherProfile.applications.length > 0) ? currentOtherProfile.applications[0] : null;
+            window.openApplicantProfileModal({
+                name: currentOtherProfile.name,
+                username: currentOtherProfile.username || ('@' + (currentOtherProfile.name.toLowerCase().replace(/\s+/g, ''))),
+                email: currentOtherProfile.email || '-',
+                phone: currentOtherProfile.phone || '-',
+                avatar_url: currentOtherProfile.avatar_url || null,
+                initials: currentOtherProfile.initials || (currentOtherProfile.name ? currentOtherProfile.name.substring(0, 2).toUpperCase() : 'PK'),
+                registered_at: currentOtherProfile.registered_at || currentOtherProfile.member_since || 'Terdaftar di Platform',
+                job_title: app?.job_title || null,
+                status: app?.status || null,
+                status_label: app?.status_label || null,
+                applied_at: app?.applied_at || null,
+                resume_preview_url: app?.resume_preview_url || null,
+                resume_url: app?.resume_download_url || null,
+                chat_url: null,
+            });
+            return;
+        }
+    }
 
     function handleActiveProfileDirect(event) {
         if (activeChatUserDirectUrl) {
@@ -656,6 +681,7 @@
             currentPendingResignation = data.pending_resignation || null;
             currentInterviewInvitation = data.interview_invitation || null;
             currentOtherUser = data.user || null;
+            currentOtherProfile = data.profile || null;
             activeChatUserDirectUrl = data.user?.direct_url || null;
 
             const directContainer = document.getElementById('activeChatUserDirectContainer');

@@ -40,7 +40,7 @@ class DashboardController extends Controller
 
         $acceptedWorkers = (clone $applications)
             ->where('status', 'accepted')
-            ->with(['user:id,name,username,email,phone,avatar', 'job:id,title,salary_amount,salary_type,location'])
+            ->with(['user:id,name,username,email,phone,avatar,created_at', 'job:id,title,salary_amount,salary_type,location'])
             ->latest('updated_at')
             ->get();
 

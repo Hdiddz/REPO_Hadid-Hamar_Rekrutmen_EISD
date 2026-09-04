@@ -129,13 +129,38 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 transition hover:border-slate-300 dark:hover:border-slate-700" data-reveal>
                 <div class="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-start">
                     <div class="flex items-start gap-4">
-                        <div class="relative h-12 w-12 shrink-0 rounded-2xl overflow-hidden bg-brand-700 flex items-center justify-center font-bold text-white shadow-xs">
+                        <button type="button" 
+                                onclick="openApplicantProfileModal({{ Js::from([
+                                    'name' => $application->user->name,
+                                    'username' => $application->user->username ? '@'.$application->user->username : null,
+                                    'email' => $application->user->email,
+                                    'phone' => $application->user->phone,
+                                    'avatar_url' => $application->user->avatar_url,
+                                    'initials' => strtoupper(substr($application->user->name, 0, 2)),
+                                    'registered_at' => $application->user->created_at ? $application->user->created_at->locale('id')->translatedFormat('d F Y').' ('.$application->user->created_at->locale('id')->diffForHumans().')' : 'Terdaftar di platform',
+                                    'job_title' => $application->job->title,
+                                    'status' => $application->status,
+                                    'status_label' => match($application->status) {
+                                        'accepted' => 'Diterima Bekerja',
+                                        'interview' => 'Tahap Wawancara',
+                                        'rejected' => 'Belum Lolos',
+                                        'resigned' => 'Telah Resign',
+                                        default => 'Menunggu Tinjauan'
+                                    },
+                                    'applied_at' => $application->created_at ? $application->created_at->locale('id')->translatedFormat('d F Y') : '-',
+                                    'chat_url' => route('chat.index', ['user' => $application->user_id]),
+                                    'resume_url' => $application->resume_file ? route('employer.applications.resume', $application) : null,
+                                    'resume_preview_url' => $application->resume_file ? route('employer.applications.resume.preview', $application) : null,
+                                ]) }})"
+                                class="relative h-12 w-12 shrink-0 rounded-2xl overflow-hidden bg-brand-700 flex items-center justify-center font-bold text-white shadow-xs hover:ring-3 hover:ring-brand-500/50 hover:scale-105 transition cursor-pointer group"
+                                title="Klik untuk melihat detail profil pelamar"
+                                aria-label="Lihat profil {{ $application->user->name }}">
                             @if($application->user->avatar_url)
-                                <img src="{{ $application->user->avatar_url }}" alt="{{ $application->user->name }}" class="h-full w-full object-cover">
+                                <img src="{{ $application->user->avatar_url }}" alt="{{ $application->user->name }}" class="h-full w-full object-cover group-hover:scale-105 transition-transform">
                             @else
                                 {{ strtoupper(substr($application->user->name, 0, 2)) }}
                             @endif
-                        </div>
+                        </button>
                         <div>
                             <div class="flex flex-wrap items-center gap-2">
                                 <p class="text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-300">{{ $application->job->title }}</p>

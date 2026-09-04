@@ -189,7 +189,7 @@
                     <div class="flex flex-wrap items-center gap-2.5">
                         <button type="button" onclick="document.getElementById('avatarFileInput').click()" class="portal-button-primary !py-2 !px-4 text-xs font-bold gap-1.5 cursor-pointer">
                             <span class="material-symbols-outlined text-[17px]">upload</span>
-                            Pilih Foto (1080x1080)
+                            Pilih Foto
                         </button>
 
                         @if($user->avatar)
@@ -204,8 +204,8 @@
                         @endif
                     </div>
 
-                    <div id="avatarStatusNotice" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                        Pilih foto berformat JPG, PNG, atau WEBP. Anda dapat mempratinjau, memotong (*crop*), dan memperbesar (*resize*) secara interaktif dengan rasio 1:1 presisi <strong>1080 × 1080 piksel</strong> sebelum disimpan.
+                    <div id="avatarStatusNotice" class="text-xs text-slate-500 dark:text-slate-400">
+                        Format JPG, PNG, atau WEBP (1080 × 1080 px).
                     </div>
                 </div>
             </div>
@@ -219,7 +219,7 @@
                 </span>
                 <div>
                     <h2 class="text-lg font-bold text-slate-950 dark:text-white">Ganti Username</h2>
-                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Username bersifat unik untuk identitas profil Anda dan dapat digunakan untuk masuk (login).</p>
+                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Username unik untuk identitas profil dan login.</p>
                 </div>
             </div>
 
@@ -229,7 +229,7 @@
                     <div>
                         <h4 class="text-xs font-bold text-amber-900 dark:text-amber-200">Masa Cooldown Ganti Username Aktif (7 Hari)</h4>
                         <p class="text-xs text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
-                            Username terakhir diubah pada <strong>{{ $user->username_changed_at->translatedFormat('d F Y, H:i') }} WIB</strong>. Demi keamanan dan konsistensi data akun, Anda dapat mengganti username kembali dalam <strong>{{ $user->daysUntilUsernameChange() }} hari</strong> (mulai <strong>{{ $user->nextUsernameChangeDate()->translatedFormat('d F Y') }}</strong>).
+                            Dapat diubah kembali dalam <strong>{{ $user->daysUntilUsernameChange() }} hari</strong> (mulai <strong>{{ $user->nextUsernameChangeDate()->translatedFormat('d F Y') }}</strong>).
                         </p>
                     </div>
                 </div>
@@ -252,8 +252,7 @@
                     @else
                         @if($user->canChangeUsername())
                             <p class="mt-1.5 text-xs text-slate-400">
-                                Minimal 3 karakter. Hanya huruf, angka, titik (.), tanda hubung (-), dan garis bawah (_). Bebas spasi.
-                                <span class="block mt-1 text-slate-500 dark:text-slate-400 font-medium">💡 <strong>Catatan:</strong> Setelah username diganti, terdapat masa <em>cooldown</em> selama 7 hari sebelum Anda dapat menggantinya kembali.</span>
+                                Minimal 3 karakter (huruf, angka, titik, strip, garis bawah). Cooldown 7 hari setelah diganti.
                             </p>
                         @endif
                     @enderror

@@ -262,7 +262,7 @@ class NotificationTest extends TestCase
         $this->assertStringContainsString('Indikasi penipuan', $notif1->data['message']);
     }
 
-    public function test_chat_messages_send_notifications_across_all_three_roles(): void
+    public function test_chat_messages_do_not_trigger_notifications_across_all_three_roles(): void
     {
         $admin = User::factory()->admin()->create(['name' => 'Admin Satgas']);
         $employer = User::factory()->employer()->create(['name' => 'Mitra Kopi Jaya', 'business_name' => 'Kopi Jaya Studio']);
@@ -273,33 +273,21 @@ class NotificationTest extends TestCase
             'message' => 'Halo apakah Anda bersedia wawancara besok pagi?',
         ]);
         $res1->assertCreated();
-
-        $notifJobseeker = $jobseeker->notifications()->first();
-        $this->assertNotNull($notifJobseeker);
-        $this->assertSame('chat_message', $notifJobseeker->data['status']);
-        $this->assertStringContainsString('Kopi Jaya Studio', $notifJobseeker->data['title']);
+        $this->assertSame(0, $jobseeker->notifications()->count());
 
         // 2. Admin kirim pesan ke Mitra UMKM
         $res2 = $this->actingAs($admin)->postJson(route('chat.send', $employer), [
             'message' => 'Tolong lengkapi profil izin usaha Anda.',
         ]);
         $res2->assertCreated();
-
-        $notifEmployer = $employer->notifications()->first();
-        $this->assertNotNull($notifEmployer);
-        $this->assertSame('chat_message', $notifEmployer->data['status']);
-        $this->assertStringContainsString('Admin Satgas', $notifEmployer->data['title']);
+        $this->assertSame(0, $employer->notifications()->count());
 
         // 3. Pencari Kerja kirim pesan ke Admin
         $res3 = $this->actingAs($jobseeker)->postJson(route('chat.send', $admin), [
             'message' => 'Halo admin saya ingin bertanya seputar verifikasi.',
         ]);
         $res3->assertCreated();
-
-        $notifAdmin = $admin->notifications()->first();
-        $this->assertNotNull($notifAdmin);
-        $this->assertSame('chat_message', $notifAdmin->data['status']);
-        $this->assertStringContainsString('Kandidat Hebat', $notifAdmin->data['title']);
+        $this->assertSame(0, $admin->notifications()->count());
     }
 
     public function test_user_can_delete_notification(): void

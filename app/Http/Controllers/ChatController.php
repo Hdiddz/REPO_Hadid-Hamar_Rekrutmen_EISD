@@ -6,7 +6,6 @@ use App\Models\ChatMessage;
 use App\Models\Job;
 use App\Models\JobApplication;
 use App\Models\User;
-use App\Notifications\NewChatMessageNotification;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -241,6 +240,7 @@ class ChatController extends Controller
                 'avatar_url' => $user->avatar_url,
                 'initials' => strtoupper(substr($user->name, 0, 2)),
                 'member_since' => $user->created_at->locale('id')->translatedFormat('F Y'),
+                'registered_at' => $user->created_at->locale('id')->translatedFormat('d F Y').' ('.$user->created_at->locale('id')->diffForHumans().')',
                 'applications' => $applicantApplications,
             ];
         } elseif ($user->role === 'employer') {
@@ -383,8 +383,6 @@ class ChatController extends Controller
 
         $message->load('replyTo.sender');
         $message->setRelation('sender', $request->user());
-
-        $user->notify(new NewChatMessageNotification($message));
 
         return response()->json([
             'id' => $message->id,

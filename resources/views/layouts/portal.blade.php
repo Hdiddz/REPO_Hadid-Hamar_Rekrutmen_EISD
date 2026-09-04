@@ -196,6 +196,9 @@
     <x-confirm-modal />
     <x-pdf-viewer-modal />
     <x-notification-modal />
+    @if(auth()->user()?->hasRole('employer'))
+        <x-applicant-profile-modal />
+    @endif
 
     @yield('portal_modals')
     @stack('modals')

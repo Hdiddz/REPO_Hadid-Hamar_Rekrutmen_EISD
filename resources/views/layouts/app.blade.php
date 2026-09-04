@@ -341,6 +341,9 @@
         @include('components.floating-chat')
         <x-logout-modal />
         <x-notification-modal />
+        @if(auth()->user()->hasRole('employer'))
+            <x-applicant-profile-modal />
+        @endif
     @endauth
     <x-confirm-modal />
     <x-pdf-viewer-modal />

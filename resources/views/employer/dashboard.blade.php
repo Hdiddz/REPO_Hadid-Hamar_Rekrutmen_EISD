@@ -105,15 +105,36 @@
                 <div class="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition hover:bg-slate-50/70 dark:hover:bg-slate-950/40">
                     <div class="flex items-start gap-4 min-w-0">
                         <!-- Avatar -->
-                        <div class="relative h-12 w-12 rounded-2xl overflow-hidden ring-2 ring-emerald-500/20 bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center">
+                        <button type="button"
+                                onclick="openApplicantProfileModal({{ Js::from([
+                                    'name' => $worker->user->name,
+                                    'username' => $worker->user->username ? '@'.$worker->user->username : null,
+                                    'email' => $worker->user->email,
+                                    'phone' => $worker->user->phone,
+                                    'avatar_url' => $worker->user->avatar_url,
+                                    'initials' => strtoupper(substr($worker->user->name, 0, 2)),
+                                    'registered_at' => $worker->user->created_at ? $worker->user->created_at->locale('id')->translatedFormat('d F Y').' ('.$worker->user->created_at->locale('id')->diffForHumans().')' : 'Terdaftar di platform',
+                                    'job_title' => $worker->job->title,
+                                    'status' => $worker->status,
+                                    'status_label' => match($worker->status) {
+                                        'accepted' => 'Diterima Bekerja',
+                                        'resigned' => 'Telah Resign',
+                                        default => 'Kandidat Diterima'
+                                    },
+                                    'applied_at' => $worker->created_at ? $worker->created_at->locale('id')->translatedFormat('d F Y') : '-',
+                                    'chat_url' => route('chat.index', ['user' => $worker->user_id]),
+                                ]) }})"
+                                class="relative h-12 w-12 rounded-2xl overflow-hidden ring-2 ring-emerald-500/20 bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center hover:ring-4 hover:ring-emerald-500/40 hover:scale-105 transition cursor-pointer group"
+                                title="Klik untuk melihat detail profil pekerja"
+                                aria-label="Lihat profil {{ $worker->user->name }}">
                             @if($worker->user->avatar_url)
-                                <img src="{{ $worker->user->avatar_url }}" alt="{{ $worker->user->name }}" class="h-full w-full object-cover">
+                                <img src="{{ $worker->user->avatar_url }}" alt="{{ $worker->user->name }}" class="h-full w-full object-cover group-hover:scale-105 transition-transform">
                             @else
                                 <span class="text-base font-bold text-slate-700 dark:text-slate-200">
                                     {{ strtoupper(substr($worker->user->name, 0, 2)) }}
                                 </span>
                             @endif
-                        </div>
+                        </button>
 
                         <!-- Worker Info -->
                         <div class="min-w-0">
