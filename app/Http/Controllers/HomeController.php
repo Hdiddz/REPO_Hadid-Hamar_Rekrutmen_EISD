@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
-use App\Models\JobApplication;
-use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -28,19 +26,14 @@ class HomeController extends Controller
         }
 
         $featuredJobs = Job::query()
+            ->select(['id', 'employer_id', 'title', 'location', 'salary_amount', 'salary_type', 'created_at'])
             ->where('status', 'open')
-            ->with(['category:id,name', 'employer:id,name,business_name'])
-            ->withCount('applications')
+            ->with('employer:id,name,business_name')
             ->latest()
+            ->orderByDesc('id')
             ->limit(4)
             ->get();
 
-        $metrics = [
-            'open_jobs' => Job::where('status', 'open')->count(),
-            'employers' => User::where('role', 'employer')->count(),
-            'accepted_workers' => JobApplication::where('status', 'accepted')->count(),
-        ];
-
-        return view('home', compact('featuredJobs', 'metrics'));
+        return view('home', compact('featuredJobs'));
     }
 }
