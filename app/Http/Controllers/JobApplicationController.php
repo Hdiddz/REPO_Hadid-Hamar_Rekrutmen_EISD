@@ -6,11 +6,13 @@ use App\Http\Requests\StoreJobApplicationRequest;
 use App\Models\ChatMessage;
 use App\Models\Job;
 use App\Models\JobApplication;
+use App\Notifications\InterviewResponseNotification;
 use App\Notifications\JobApplicationSubmittedNotification;
 use App\Notifications\NewApplicationReceivedNotification;
 use App\Notifications\ResignationSubmittedNotification;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +26,8 @@ class JobApplicationController extends Controller
     {
         $status = $request->query('status');
 
-        $userApps = JobApplication::whereBelongsTo($request->user());
+        $userApps = JobApplication::whereBelongsTo($request->user())
+            ->whereNull('jobseeker_hidden_at');
 
         $counts = [
             'all' => (clone $userApps)->count(),
@@ -37,6 +40,7 @@ class JobApplicationController extends Controller
 
         $applications = JobApplication::query()
             ->whereBelongsTo($request->user())
+            ->whereNull('jobseeker_hidden_at')
             ->when($status === 'accepted', function ($query) {
                 $query->where('status', 'accepted')
                     ->where(fn ($q) => $q->whereNull('resignation_status')->orWhere('resignation_status', '!=', 'approved'));
@@ -61,25 +65,57 @@ class JobApplicationController extends Controller
             return back()->with('error', 'Lowongan sudah ditutup dan tidak menerima lamaran baru.');
         }
 
-        if ($job->applications()->where('user_id', $request->user()->id)->exists()) {
-            return back()->with('warning', 'Anda sudah mengajukan lamaran untuk lowongan ini.');
+        $existingApp = $job->applications()->where('user_id', $request->user()->id)->first();
+
+        if ($existingApp) {
+            if ($existingApp->status === 'rejected') {
+                if ($existingApp->canBeReappliedTomorrow()) {
+                    $availableAt = $existingApp->reapplyAvailableAt()?->translatedFormat('l, d F Y') ?? 'besok';
+
+                    return back()->with('warning', "Anda baru dapat mengajukan lamaran kembali ke lowongan ini mulai besok ({$availableAt}).");
+                }
+            } else {
+                return back()->with('warning', 'Anda sudah mengajukan lamaran untuk lowongan ini.');
+            }
         }
 
         $resumePath = $request->file('resume')->store('resumes', 'local');
+        $oldResume = $existingApp?->resume_file;
 
         try {
-            DB::transaction(function () use ($job, $request, $resumePath): void {
-                $job->applicants()->attach($request->user()->id, [
-                    'resume_file' => $resumePath,
-                    'note' => $request->validated('note'),
-                    'status' => 'pending',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            DB::transaction(function () use ($job, $request, $resumePath, $existingApp): void {
+                if ($existingApp) {
+                    $existingApp->update([
+                        'resume_file' => $resumePath,
+                        'note' => $request->validated('note'),
+                        'status' => 'pending',
+                        'rejection_reason' => null,
+                        'rejection_notes' => null,
+                        'rejected_at' => null,
+                        'interview_date' => null,
+                        'interview_time' => null,
+                        'interview_type' => null,
+                        'interview_location' => null,
+                        'interview_notes' => null,
+                        'interview_status' => 'pending',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
 
-                $application = JobApplication::where('job_id', $job->id)
-                    ->where('user_id', $request->user()->id)
-                    ->first();
+                    $application = $existingApp;
+                } else {
+                    $job->applicants()->attach($request->user()->id, [
+                        'resume_file' => $resumePath,
+                        'note' => $request->validated('note'),
+                        'status' => 'pending',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    $application = JobApplication::where('job_id', $job->id)
+                        ->where('user_id', $request->user()->id)
+                        ->first();
+                }
 
                 if ($application) {
                     $application->setRelation('job', $job);
@@ -92,6 +128,10 @@ class JobApplicationController extends Controller
                     $request->user()->notify(new JobApplicationSubmittedNotification($application));
                 }
             });
+
+            if ($oldResume && $oldResume !== $resumePath && Storage::disk('local')->exists($oldResume)) {
+                Storage::disk('local')->delete($oldResume);
+            }
         } catch (Throwable $exception) {
             Storage::disk('local')->delete($resumePath);
             report($exception);
@@ -125,6 +165,21 @@ class JobApplicationController extends Controller
         }
 
         return back()->with('success', "Lamaran untuk \"{$jobTitle}\" berhasil dibatalkan.");
+    }
+
+    /**
+     * Hide an application from the jobseeker's application history.
+     */
+    public function hide(Request $request, JobApplication $application): RedirectResponse
+    {
+        if ($application->user_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki hak untuk menghapus riwayat lamaran ini.');
+        }
+
+        $jobTitle = $application->job?->title ?? 'posisi pekerjaan';
+        $application->update(['jobseeker_hidden_at' => now()]);
+
+        return back()->with('success', "Lamaran untuk \"{$jobTitle}\" berhasil dihapus dari riwayat lamaran Anda.");
     }
 
     /**
@@ -170,5 +225,79 @@ class JobApplicationController extends Controller
         }
 
         return back()->with('success', 'Permohonan pengunduran diri (resign) berhasil dikirimkan ke Mitra UMKM.');
+    }
+
+    /**
+     * Respond to an interview schedule (confirm/approve, request reschedule/discussion, or decline).
+     */
+    public function respondToInterview(Request $request, JobApplication $application): RedirectResponse|JsonResponse
+    {
+        if ($application->user_id !== $request->user()->id || $application->status !== 'interview') {
+            abort(403, 'Hanya pelamar yang sedang dalam tahap wawancara yang dapat memberikan tanggapan jadwal.');
+        }
+
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:confirmed,reschedule_requested,declined,confirm,reschedule,decline'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $statusMap = [
+            'confirm' => 'confirmed',
+            'confirmed' => 'confirmed',
+            'reschedule' => 'reschedule_requested',
+            'reschedule_requested' => 'reschedule_requested',
+            'decline' => 'declined',
+            'declined' => 'declined',
+        ];
+
+        $interviewStatus = $statusMap[$validated['action']];
+        $application->update(['interview_status' => $interviewStatus]);
+
+        $application->loadMissing(['job.employer', 'user']);
+        $job = $application->job;
+        $employer = $job?->employer;
+        $candidate = $request->user();
+        $employerName = $employer?->business_name ?: ($employer?->name ?? 'Mitra UMKM');
+        $note = $validated['note'] ?? null;
+
+        $dateFormatted = $application->interview_date
+            ? Carbon::parse($application->interview_date)->locale('id')->translatedFormat('l, d F Y')
+            : null;
+        $timeFormatted = $application->interview_time ? $application->interview_time.' WIB' : null;
+        $scheduleInfo = $dateFormatted ? " pada hari {$dateFormatted}".($timeFormatted ? " pukul {$timeFormatted}" : '') : '';
+
+        $chatMessageText = match ($interviewStatus) {
+            'confirmed' => "✅ [Konfirmasi Kehadiran Wawancara]\n\nHalo {$employerName},\nSaya ({$candidate->name}) MENYETUJUI dan bersedia menghadiri sesi wawancara untuk posisi \"{$job?->title}\"{$scheduleInfo}.".($note ? "\n\n• Catatan Pelamar: {$note}" : '')."\n\nTerima kasih atas kesempatan yang diberikan!",
+            'reschedule_requested' => "💬 [Permohonan Diskusi Jadwal Wawancara]\n\nHalo {$employerName},\nSaya ({$candidate->name}) bermaksud mengajukan penyesuaian jadwal wawancara untuk posisi \"{$job?->title}\".".($note ? "\n\n• Usulan/Alasan Pelamar: {$note}" : '')."\n\nBisakah kita mendiskusikan opsi waktu lain yang memungkinkan? Terima kasih banyak!",
+            'declined' => "❌ [Penolakan Undangan Wawancara]\n\nHalo {$employerName},\nMohon maaf, saya ({$candidate->name}) belum dapat menghadiri undangan wawancara untuk posisi \"{$job?->title}\"{$scheduleInfo}.".($note ? "\n\n• Alasan Pelamar: {$note}" : '')."\n\nTerima kasih banyak atas perhatian dan kesempatan yang telah diberikan.",
+        };
+
+        $flashMessage = match ($interviewStatus) {
+            'confirmed' => 'Jadwal wawancara berhasil disetujui. Pemberitahuan telah dikirimkan ke Mitra.',
+            'reschedule_requested' => 'Permohonan diskusi jadwal berhasil diajukan ke Mitra melalui obrolan.',
+            'declined' => 'Undangan wawancara telah ditolak dan disampaikan ke Mitra.',
+        };
+
+        if ($employer) {
+            $employer->notify(new InterviewResponseNotification($application, $interviewStatus, $note));
+
+            ChatMessage::create([
+                'sender_id' => $candidate->id,
+                'receiver_id' => $employer->id,
+                'message' => $chatMessageText,
+                'is_read' => false,
+            ]);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'interview_status' => $interviewStatus,
+                'message' => $flashMessage,
+                'chat_message' => $chatMessageText,
+            ]);
+        }
+
+        return back()->with('success', $flashMessage);
     }
 }

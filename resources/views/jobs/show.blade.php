@@ -383,6 +383,43 @@
                                     </button>
                                 </form>
                             </div>
+                        @elseif($application?->status === 'rejected' && $application->canBeReapplied() && $job->status === 'open')
+                            <div class="rounded-2xl bg-amber-50 dark:bg-amber-950/40 p-4 border border-amber-200 dark:border-amber-800/80 mb-5">
+                                <div class="flex items-start gap-2.5">
+                                    <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 text-xl shrink-0 mt-0.5">published_with_changes</span>
+                                    <div class="text-xs text-amber-900 dark:text-amber-200">
+                                        <strong class="font-bold text-sm block mb-1">Kesempatan Melamar Kembali Terbuka ✨</strong>
+                                        <p class="leading-relaxed">
+                                            Lamaran Anda sebelumnya belum sesuai pada <strong>{{ $application->rejectionDate()?->translatedFormat('d M Y') }}</strong>. Karena lowongan ini masih dibuka, Anda memiliki kesempatan untuk mengirimkan lamaran kembali dengan resume atau catatan terbaru Anda.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h2 class="text-xl font-bold text-slate-950 dark:text-white">Ajukan Lamaran Ulang</h2>
+                            <p class="mt-1 text-sm text-slate-500">Resume disimpan privat dan hanya dapat diunduh mitra pemilik lowongan serta admin.</p>
+                            <form action="{{ route('applications.store', $job) }}" method="POST" enctype="multipart/form-data" class="mt-6 space-y-5">
+                                @csrf
+                                <div>
+                                    <label for="resume_reapply" class="mb-2 block text-sm font-bold">Resume PDF Baru</label>
+                                    <input id="resume_reapply" name="resume" type="file" accept="application/pdf,.pdf" required class="block w-full rounded-xl border border-slate-200 bg-slate-50 text-xs file:mr-3 file:border-0 file:bg-brand-700 file:px-3 file:py-3 file:font-bold file:text-white dark:border-slate-700 dark:bg-slate-950">
+                                    <p class="mt-1.5 text-xs text-slate-400">Maksimal 2 MB.</p>
+                                    @error('resume')
+                                        <p class="mt-1.5 text-xs font-semibold text-rose-600" role="alert">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label for="note_reapply" class="mb-2 block text-sm font-bold">Catatan Singkat Tambahan</label>
+                                    <textarea id="note_reapply" name="note" rows="4" class="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-brand-900" placeholder="Ceritakan motivasi atau pembaruan kualifikasi Anda...">{{ old('note') }}</textarea>
+                                    @error('note')
+                                        <p class="mt-1.5 text-xs font-semibold text-rose-600" role="alert">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <button type="submit" class="portal-button-primary w-full justify-center">
+                                    <span class="material-symbols-outlined text-[18px]">send</span>
+                                    <span>Kirim Lamaran Ulang</span>
+                                </button>
+                            </form>
                         @else
                             <div class="grid h-12 w-12 place-items-center rounded-2xl {{ $application?->status === 'rejected' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' }}">
                                 <span class="material-symbols-outlined text-[24px]">{{ $application?->status === 'rejected' ? 'cancel' : 'task_alt' }}</span>
@@ -419,6 +456,20 @@
                                     </div>
                                 @endif
                             </div>
+
+                            @if($application?->status === 'rejected' && $application->canBeReappliedTomorrow())
+                                <div class="mt-3 p-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-xs text-amber-900 dark:text-amber-200">
+                                    <div class="flex items-start gap-2">
+                                        <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 text-[18px] shrink-0 mt-0.5">info</span>
+                                        <div>
+                                            <strong class="font-bold block">Kesempatan Melamar Kembali</strong>
+                                            <p class="mt-0.5 leading-relaxed">
+                                                Anda dapat mengajukan lamaran kembali ke lowongan ini mulai besok, <strong>{{ $application->reapplyAvailableAt()?->translatedFormat('l, d F Y') }}</strong>.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
 
                             <p class="mt-3 text-xs leading-relaxed text-slate-500">
                                 {{ $application?->status === 'rejected' ? 'Terima kasih atas partisipasi Anda. Jangan berkecil hati dan tetap semangat melamar peluang lainnya.' : 'Anda tetap dapat memantau rincian tugas, upah, dan kriteria lowongan ini kapan saja selama proses seleksi berlangsung.' }}

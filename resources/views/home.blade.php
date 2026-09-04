@@ -33,6 +33,28 @@
                         <span>Cari peluang</span>
                     </button>
                 </form>
+                {{-- Quick Access Switcher: Cari Peluang & Riwayat Lamaran --}}
+                <div class="mt-3.5 flex flex-wrap items-center gap-2 text-xs">
+                    <span class="text-brand-200/90 font-medium">Navigasi cepat:</span>
+                    <a href="{{ route('jobs.index') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition backdrop-blur-sm border border-white/15">
+                        <span class="material-symbols-outlined text-[16px]">work</span>
+                        <span>Semua Lowongan</span>
+                    </a>
+                    <a href="{{ route('applications.index') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition backdrop-blur-sm border border-white/15">
+                        <span class="material-symbols-outlined text-[16px]">history_edu</span>
+                        <span>Riwayat Lamaran</span>
+                        @auth
+                            @if(auth()->user()->hasRole('jobseeker'))
+                                @php
+                                    $homeJobseekerAppCount = auth()->user()->jobApplications()->whereNull('jobseeker_hidden_at')->count();
+                                @endphp
+                                @if($homeJobseekerAppCount > 0)
+                                    <span class="ml-0.5 rounded-full bg-coral-500 text-white px-1.5 py-0.2 text-[10px] font-extrabold">{{ $homeJobseekerAppCount }}</span>
+                                @endif
+                            @endif
+                        @endauth
+                    </a>
+                </div>
                 <div class="mt-6 sm:mt-8 flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm text-brand-100">
                     <span class="flex items-center gap-1.5 sm:gap-2">
                         <span class="material-symbols-outlined text-[18px] sm:text-[19px] text-brand-300">payments</span>

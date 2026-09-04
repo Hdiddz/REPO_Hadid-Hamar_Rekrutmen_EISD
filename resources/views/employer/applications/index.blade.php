@@ -131,10 +131,31 @@
                                         Telah Resign
                                     </span>
                                 @elseif($application->status === 'interview')
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700 border border-indigo-200">
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700 border border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800">
                                         <span class="material-symbols-outlined text-[13px]">event</span>
                                         Tahap Wawancara
                                     </span>
+                                    @if($application->interview_status === 'confirmed')
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800">
+                                            <span class="material-symbols-outlined text-[13px]">check_circle</span>
+                                            Pelamar Bersedia Hadir
+                                        </span>
+                                    @elseif($application->interview_status === 'reschedule_requested')
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-bold text-sky-700 border border-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-800">
+                                            <span class="material-symbols-outlined text-[13px]">edit_calendar</span>
+                                            Pelamar Ajukan Diskusi Jadwal
+                                        </span>
+                                    @elseif($application->interview_status === 'declined')
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800">
+                                            <span class="material-symbols-outlined text-[13px]">cancel</span>
+                                            Wawancara Ditolak
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                                            <span class="material-symbols-outlined text-[13px]">schedule</span>
+                                            Menunggu Konfirmasi
+                                        </span>
+                                    @endif
                                 @elseif($application->status === 'rejected')
                                     <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700 border border-rose-200">
                                         <span class="material-symbols-outlined text-[13px]">cancel</span>
@@ -225,6 +246,67 @@
                     </div>
                 @endif
 
+                @if($application->status === 'interview')
+                    <div class="mt-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 p-4 border border-indigo-200 dark:border-indigo-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div class="flex items-start gap-3 text-slate-700 dark:text-slate-300 min-w-0">
+                            <span class="material-symbols-outlined text-indigo-600 dark:text-indigo-400 text-[22px] shrink-0 mt-0.5">event</span>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <strong class="font-extrabold text-sm text-slate-900 dark:text-white">Undangan Wawancara Dijadwalkan</strong>
+                                    @if($application->interview_status === 'confirmed')
+                                        <span class="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100/90 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                            <span class="material-symbols-outlined text-[12px]">check_circle</span>
+                                            Pelamar Bersedia Hadir
+                                        </span>
+                                    @elseif($application->interview_status === 'reschedule_requested')
+                                        <span class="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-100/90 px-2.5 py-0.5 text-[10px] font-bold text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300">
+                                            <span class="material-symbols-outlined text-[12px]">edit_calendar</span>
+                                            Pelamar Ingin Diskusi Jadwal Ulang
+                                        </span>
+                                    @elseif($application->interview_status === 'declined')
+                                        <span class="inline-flex items-center gap-1 rounded-full border border-rose-300 bg-rose-100/90 px-2.5 py-0.5 text-[10px] font-bold text-rose-800 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                            <span class="material-symbols-outlined text-[12px]">cancel</span>
+                                            Pelamar Menolak Wawancara
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                            <span class="material-symbols-outlined text-[12px]">schedule</span>
+                                            Menunggu Konfirmasi Pelamar
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-600 dark:text-slate-400">
+                                    @if($application->interview_date)
+                                        <span>Hari & Tanggal: <strong class="font-bold text-slate-800 dark:text-slate-200">{{ $application->interview_date->translatedFormat('l, d F Y') }}</strong></span>
+                                    @endif
+                                    @if($application->interview_time)
+                                        <span>·</span>
+                                        <span>Pukul: <strong class="font-bold text-slate-800 dark:text-slate-200">{{ $application->interview_time }} WIB</strong></span>
+                                    @endif
+                                    @if($application->interview_type)
+                                        <span>·</span>
+                                        <span>Metode: <strong class="font-bold text-slate-800 dark:text-slate-200">{{ $application->interview_type }}</strong></span>
+                                    @endif
+                                </div>
+                                @if($application->interview_location)
+                                    <p class="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
+                                        <strong>Lokasi / Tautan:</strong> {{ $application->interview_location }}
+                                    </p>
+                                @endif
+                                @if($application->interview_notes)
+                                    <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 italic">"{{ $application->interview_notes }}"</p>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <a href="{{ route('chat.index', ['user' => $application->user_id]) }}" class="portal-button-primary !bg-teal-700 hover:!bg-teal-800 text-xs !py-2 !px-3 gap-1.5" title="Buka ruang obrolan dengan kandidat">
+                                <span class="material-symbols-outlined text-[16px]">chat</span>
+                                Koordinasi Chat
+                            </a>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Status Selection Form with Modal Trigger --}}
                 <div class="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-end dark:border-slate-800">
                     <div class="flex-1">
@@ -245,12 +327,44 @@
                             @endforeach
                         </select>
                     </div>
-                    <button type="button"
-                            onclick="triggerStatusModalForApp('{{ $application->id }}')"
-                            class="portal-button-primary sm:mb-px cursor-pointer inline-flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-[18px]">tune</span>
-                        Atur & Perbarui Status
-                    </button>
+
+                    <div class="flex items-center gap-2 flex-wrap sm:mb-px">
+                        <button type="button"
+                                onclick="triggerStatusModalForApp('{{ $application->id }}')"
+                                class="portal-button-primary cursor-pointer inline-flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[18px]">tune</span>
+                            Atur & Perbarui Status
+                        </button>
+
+                        <form id="resetSelectionForm-{{ $application->id }}" action="{{ route('employer.applications.resetSelection', $application) }}" method="POST" class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button"
+                                    data-app-id="{{ $application->id }}"
+                                    data-candidate-name="{{ $application->user->name }}"
+                                    data-job-title="{{ $application->job->title }}"
+                                    onclick="confirmResetSelection(this.dataset.appId, this.dataset.candidateName, this.dataset.jobTitle)"
+                                    class="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50 transition cursor-pointer shadow-xs"
+                                    title="Lepas status seleksi (reset lamaran sehingga kandidat dapat melamar kembali)">
+                                <span class="material-symbols-outlined text-[17px]">restart_alt</span>
+                                <span>Lepas Seleksi</span>
+                            </button>
+                        </form>
+
+                        <form id="hideEmployerAppForm-{{ $application->id }}" action="{{ route('employer.applications.hide', $application) }}" method="POST" class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button"
+                                    data-app-id="{{ $application->id }}"
+                                    data-candidate-name="{{ $application->user->name }}"
+                                    onclick="confirmHideEmployerApp(this.dataset.appId, this.dataset.candidateName)"
+                                    class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-300 transition cursor-pointer shadow-xs"
+                                    title="Hapus kandidat ini dari riwayat daftar pelamar Anda">
+                                <span class="material-symbols-outlined text-[17px]">delete_outline</span>
+                                <span>Hapus Riwayat</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </article>
         @empty
@@ -271,20 +385,20 @@
     {{-- 1. MODAL WAWANCARA (INTERVIEW) --}}
     <div id="modalStatusInterview" class="fixed inset-0 z-[160] hidden bg-slate-950/60 backdrop-blur-xs p-4 overflow-y-auto flex items-center justify-center" role="dialog" aria-modal="true">
         <div class="fixed inset-0 -z-10" onclick="closeAllStatusModals()"></div>
-        <div class="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop">
-            <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                <div class="flex items-center gap-3">
+        <div class="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop overflow-hidden">
+            <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800 min-w-0">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
                     <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 shrink-0">
                         <span class="material-symbols-outlined text-2xl">event</span>
                     </div>
-                    <div>
-                        <h3 class="text-base font-bold text-slate-950 dark:text-white">Atur Jadwal Wawancara</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-base font-bold text-slate-950 dark:text-white truncate">Atur Jadwal Wawancara</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 break-words">
                             Kandidat: <strong id="interviewCandidateName" class="text-slate-800 dark:text-slate-200"></strong> · <span id="interviewJobTitle"></span>
                         </p>
                     </div>
                 </div>
-                <button type="button" onclick="closeAllStatusModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition cursor-pointer" aria-label="Tutup">
+                <button type="button" onclick="closeAllStatusModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition cursor-pointer shrink-0" aria-label="Tutup">
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
             </div>
@@ -341,20 +455,20 @@
     {{-- 2. MODAL DITERIMA (ACCEPTED) --}}
     <div id="modalStatusAccepted" class="fixed inset-0 z-[160] hidden bg-slate-950/60 backdrop-blur-xs p-4 overflow-y-auto flex items-center justify-center" role="dialog" aria-modal="true">
         <div class="fixed inset-0 -z-10" onclick="closeAllStatusModals()"></div>
-        <div class="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop">
-            <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                <div class="flex items-center gap-3">
+        <div class="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop overflow-hidden">
+            <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800 min-w-0">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
                     <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 shrink-0">
                         <span class="material-symbols-outlined text-2xl">how_to_reg</span>
                     </div>
-                    <div>
-                        <h3 class="text-base font-bold text-slate-950 dark:text-white">Konfirmasi Penerimaan Kerja</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-base font-bold text-slate-950 dark:text-white truncate">Konfirmasi Penerimaan Kerja</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 break-words">
                             Kandidat: <strong id="acceptedCandidateName" class="text-slate-800 dark:text-slate-200"></strong> · <span id="acceptedJobTitle"></span>
                         </p>
                     </div>
                 </div>
-                <button type="button" onclick="closeAllStatusModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition cursor-pointer" aria-label="Tutup">
+                <button type="button" onclick="closeAllStatusModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition cursor-pointer shrink-0" aria-label="Tutup">
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
             </div>
@@ -398,20 +512,20 @@
     {{-- 3. MODAL DITOLAK (REJECTED) --}}
     <div id="modalStatusRejected" class="fixed inset-0 z-[160] hidden bg-slate-950/60 backdrop-blur-xs p-4 overflow-y-auto flex items-center justify-center" role="dialog" aria-modal="true">
         <div class="fixed inset-0 -z-10" onclick="closeAllStatusModals()"></div>
-        <div class="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop">
-            <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                <div class="flex items-center gap-3">
+        <div class="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop overflow-hidden">
+            <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800 min-w-0">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
                     <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 shrink-0">
                         <span class="material-symbols-outlined text-2xl">cancel</span>
                     </div>
-                    <div>
-                        <h3 class="text-base font-bold text-slate-950 dark:text-white">Pembaruan Seleksi: Belum Lolos</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-base font-bold text-slate-950 dark:text-white truncate">Pembaruan Seleksi: Belum Lolos</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 break-words">
                             Kandidat: <strong id="rejectedCandidateName" class="text-slate-800 dark:text-slate-200"></strong> · <span id="rejectedJobTitle"></span>
                         </p>
                     </div>
                 </div>
-                <button type="button" onclick="closeAllStatusModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition cursor-pointer" aria-label="Tutup">
+                <button type="button" onclick="closeAllStatusModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition cursor-pointer shrink-0" aria-label="Tutup">
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
             </div>
@@ -453,14 +567,14 @@
     {{-- 4. MODAL MENUNGGU TINJAUAN (PENDING) --}}
     <div id="modalStatusPending" class="fixed inset-0 z-[160] hidden bg-slate-950/60 backdrop-blur-xs p-4 overflow-y-auto flex items-center justify-center" role="dialog" aria-modal="true">
         <div class="fixed inset-0 -z-10" onclick="closeAllStatusModals()"></div>
-        <div class="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop">
-            <div class="flex items-start gap-4">
+        <div class="relative w-full max-w-md rounded-3xl bg-white p-5 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop overflow-hidden">
+            <div class="flex items-start gap-3 sm:gap-4 min-w-0">
                 <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 shrink-0">
                     <span class="material-symbols-outlined text-2xl">hourglass_empty</span>
                 </div>
                 <div class="min-w-0 flex-1">
-                    <h3 class="text-base font-bold text-slate-950 dark:text-white">Kembalikan ke Menunggu Tinjauan</h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    <h3 class="text-base font-bold text-slate-950 dark:text-white truncate">Kembalikan ke Menunggu Tinjauan</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed break-words">
                         Apakah Anda yakin ingin mengembalikan status lamaran <strong id="pendingCandidateName" class="text-slate-800 dark:text-slate-200"></strong> untuk posisi <span id="pendingJobTitle"></span> ke status <strong>Menunggu Tinjauan</strong>?
                     </p>
                 </div>
@@ -563,5 +677,35 @@
             closeAllStatusModals(true);
         }
     });
+
+    async function confirmResetSelection(appId, candidateName, jobTitle) {
+        const confirmed = await window.showAppConfirm({
+            title: 'Lepas Status Seleksi Kandidat?',
+            message: `Apakah Anda yakin ingin melepas status seleksi untuk ${candidateName} pada posisi "${jobTitle}"?\n\nKandidat akan dilepas dari daftar seleksi ini. Kandidat akan menerima pemberitahuan bahwa proses seleksi di-reset dan memiliki kesempatan untuk mengajukan lamaran kembali jika diinginkan.`,
+            confirmText: 'Ya, Lepas Status Seleksi',
+            cancelText: 'Batal',
+            type: 'warning',
+            icon: 'restart_alt'
+        });
+
+        if (confirmed) {
+            document.getElementById(`resetSelectionForm-${appId}`)?.submit();
+        }
+    }
+
+    async function confirmHideEmployerApp(appId, candidateName) {
+        const confirmed = await window.showAppConfirm({
+            title: 'Hapus dari Riwayat Pelamar?',
+            message: `Apakah Anda yakin ingin menghapus ${candidateName} dari riwayat pelamar Anda?\n\nKandidat ini tidak akan ditampilkan lagi di daftar riwayat pelamar Anda.`,
+            confirmText: 'Ya, Hapus dari Riwayat',
+            cancelText: 'Batal',
+            type: 'danger',
+            icon: 'delete'
+        });
+
+        if (confirmed) {
+            document.getElementById(`hideEmployerAppForm-${appId}`)?.submit();
+        }
+    }
 </script>
 @endpush

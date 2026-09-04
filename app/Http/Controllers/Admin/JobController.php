@@ -86,7 +86,7 @@ class JobController extends Controller
             'category:id,name',
             'skills:id,name',
             'workplacePhotos',
-            'applications' => fn ($q) => $q->with('user:id,name,username,email,phone')->latest('id'),
+            'applications' => fn ($q) => $q->with('user:id,name,username,email,phone,avatar,created_at,banned_at,banned_until,ban_reason')->latest('id'),
             'reports' => fn ($q) => $q->with('reporter:id,name,email')->latest('id'),
         ]);
 

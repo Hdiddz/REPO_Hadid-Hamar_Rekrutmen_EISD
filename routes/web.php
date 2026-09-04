@@ -51,14 +51,18 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
 
     Route::get('/profil', [ProfileController::class, 'show'])->name('profile.index');
+    Route::get('/riwayat-laporan', [JobReportController::class, 'index'])->name('reports.index');
+    Route::post('/lowongan/{job}/lapor', [JobReportController::class, 'store'])->name('jobs.report');
+    Route::delete('/riwayat-laporan/{report}', [JobReportController::class, 'destroy'])->name('reports.destroy');
 
     Route::middleware('role:jobseeker')->group(function (): void {
-        Route::post('/lowongan/{job}/lapor', [JobReportController::class, 'store'])->name('jobs.report');
         Route::post('/lowongan/{job}/lamar', [JobApplicationController::class, 'store'])->name('applications.store');
         Route::get('/riwayat-lamaran', [JobApplicationController::class, 'index'])->name('applications.index');
         Route::redirect('/lamaran', '/riwayat-lamaran')->name('applications.alias');
         Route::post('/riwayat-lamaran/{application}/resign', [JobApplicationController::class, 'requestResignation'])->name('applications.resign');
+        Route::post('/riwayat-lamaran/{application}/interview-response', [JobApplicationController::class, 'respondToInterview'])->name('applications.interview.response');
         Route::delete('/riwayat-lamaran/{application}', [JobApplicationController::class, 'destroy'])->name('applications.destroy');
+        Route::delete('/riwayat-lamaran/{application}/hapus', [JobApplicationController::class, 'hide'])->name('applications.hide');
         Route::get('/riwayat-lamaran/{application}/resume/preview', [EmployerApplicationController::class, 'preview'])->name('applications.resume.preview');
     });
 
@@ -72,6 +76,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/pelamar', [EmployerApplicationController::class, 'index'])->name('applications.index');
         Route::patch('/pelamar/{application}', [EmployerApplicationController::class, 'update'])->name('applications.update');
         Route::patch('/pelamar/{application}/resign-decision', [EmployerApplicationController::class, 'resignDecision'])->name('applications.resignDecision');
+        Route::delete('/pelamar/{application}/hapus', [EmployerApplicationController::class, 'hide'])->name('applications.hide');
+        Route::delete('/pelamar/{application}/lepas-seleksi', [EmployerApplicationController::class, 'resetSelection'])->name('applications.resetSelection');
         Route::get('/pelamar/{application}/resume', [EmployerApplicationController::class, 'download'])->name('applications.resume');
         Route::get('/pelamar/{application}/resume/preview', [EmployerApplicationController::class, 'preview'])->name('applications.resume.preview');
     });

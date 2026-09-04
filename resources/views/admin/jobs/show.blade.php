@@ -238,7 +238,34 @@
                                 @endif
                             </div>
 
-                            <div class="flex items-center gap-2 shrink-0">
+                            <div class="flex items-center gap-2 shrink-0 flex-wrap">
+                                <button type="button"
+                                        onclick="openApplicantProfileModal({{ json_encode([
+                                            'id' => $application->user->id,
+                                            'name' => $application->user->name,
+                                            'username' => $application->user->username ?? '-',
+                                            'email' => $application->user->email,
+                                            'phone' => $application->user->phone ?? 'Belum dicantumkan',
+                                            'avatar_url' => $application->user->avatar ? asset('storage/'.$application->user->avatar) : null,
+                                            'avatar_initials' => strtoupper(substr($application->user->name, 0, 2)),
+                                            'is_banned' => $application->user->isBanned(),
+                                            'ban_status' => $application->user->ban_status_text,
+                                            'ban_reason' => $application->user->ban_reason,
+                                            'registered_at' => $application->user->created_at->translatedFormat('d F Y, H:i') . ' WIB',
+                                            'applied_at' => $application->created_at->translatedFormat('d M Y, H:i') . ' WIB',
+                                            'status_label' => match($application->status) {'accepted' => 'Disetujui / Diterima', 'interview' => 'Wawancara', 'rejected' => 'Ditolak', 'reviewed' => 'Ditinjau Mitra', 'resigned' => 'Telah Resign', default => 'Belum Ditinjau (Pending)'},
+                                            'status_color' => match($application->status) {'accepted' => 'emerald', 'interview' => 'indigo', 'rejected' => 'rose', 'reviewed' => 'blue', 'resigned' => 'slate', default => 'amber'},
+                                            'note' => $application->note,
+                                            'profile_url' => route('admin.users.show', ['user' => $application->user, 'return_to' => request()->fullUrl()]),
+                                            'resume_preview_url' => $application->resume_file ? route('admin.applications.resume.preview', $application) : null,
+                                            'resume_download_url' => $application->resume_file ? route('admin.applications.resume', $application) : null,
+                                        ]) }})"
+                                        class="portal-button-secondary !py-1.5 !px-3 text-xs gap-1.5 shadow-xs whitespace-nowrap cursor-pointer inline-flex items-center"
+                                        title="Lihat profil pencari kerja ini">
+                                    <span class="material-symbols-outlined text-[16px]">person</span>
+                                    <span>Lihat Profil</span>
+                                </button>
+
                                 @if($application->resume_file)
                                     <button type="button" data-preview-url="{{ route('admin.applications.resume.preview', $application) }}" data-applicant-name="{{ $application->user->name }}" data-download-url="{{ route('admin.applications.resume', $application) }}" onclick="openPdfViewer(this.dataset.previewUrl, this.dataset.applicantName, this.dataset.downloadUrl)" class="portal-button-primary !py-1.5 !px-3 text-xs gap-1.5 cursor-pointer shadow-xs whitespace-nowrap" title="Pratinjau CV/Resume kandidat di browser">
                                         <span class="material-symbols-outlined text-[16px]">visibility</span>
@@ -457,10 +484,189 @@
 
         </div>
     </div>
+
+    <!-- ================= MODAL PROFIL PENCARI KERJA ================= -->
+    <div id="applicantProfileModal" class="fixed inset-0 z-[110] hidden bg-slate-950/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto flex items-center justify-center" onclick="if(event.target === this) closeApplicantProfileModal()">
+        <div class="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop overflow-hidden max-h-[92dvh] flex flex-col my-auto">
+            {{-- Modal Header --}}
+            <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800 shrink-0">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <div id="modalApplicantAvatarBox" class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold text-lg flex items-center justify-center shrink-0 border border-brand-200/60 dark:border-brand-900/40 overflow-hidden">
+                        <span id="modalApplicantInitials">--</span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 id="modalApplicantName" class="text-base font-bold text-slate-900 dark:text-white truncate">Nama Pelamar</h3>
+                            <span class="portal-badge bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px]">Pencari Kerja</span>
+                        </div>
+                        <p id="modalApplicantUsername" class="text-xs font-mono font-semibold text-brand-700 dark:text-brand-300 mt-0.5">@username</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeApplicantProfileModal()" class="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-slate-800 flex items-center justify-center transition shrink-0 cursor-pointer" aria-label="Tutup">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+
+            {{-- Modal Body --}}
+            <div class="py-4 overflow-y-auto flex-1 space-y-4">
+                {{-- Ban Status Alert if Banned --}}
+                <div id="modalApplicantBanBox" class="hidden rounded-2xl bg-rose-50 p-3.5 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/50">
+                    <div class="flex items-center gap-2 text-rose-700 dark:text-rose-300 font-bold text-xs">
+                        <span class="material-symbols-outlined text-[16px]">block</span>
+                        <span>Akun Sedang Dibekukan (Ban)</span>
+                    </div>
+                    <p id="modalApplicantBanReason" class="text-[11px] text-rose-800 dark:text-rose-200 mt-1 italic"></p>
+                </div>
+
+                {{-- Status Seleksi Lowongan Ini --}}
+                <div class="rounded-2xl bg-slate-50 dark:bg-slate-850/60 p-3.5 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs text-slate-500 dark:text-slate-400">Status Seleksi di Lowongan Ini:</span>
+                        <span id="modalApplicantStatusBadge" class="portal-badge text-[11px] font-bold">Status</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 text-xs">
+                        <span class="text-slate-500 dark:text-slate-400">Tanggal Melamar:</span>
+                        <span id="modalApplicantAppliedAt" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                    </div>
+                    <div id="modalApplicantNoteBox" class="hidden pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                        <span class="text-[11px] font-bold text-slate-500 block mb-1">Catatan Pengantar Lamaran:</span>
+                        <p id="modalApplicantNote" class="text-xs text-slate-700 dark:text-slate-300 italic bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 leading-relaxed"></p>
+                    </div>
+                </div>
+
+                {{-- Data Profil & Kontak --}}
+                <div class="rounded-2xl border border-slate-100 dark:border-slate-800 p-3.5 space-y-3 text-xs">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[15px] text-slate-400">mail</span>
+                            Email
+                        </span>
+                        <span id="modalApplicantEmail" class="font-semibold text-slate-800 dark:text-slate-200 break-all text-right"></span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[15px] text-slate-400">call</span>
+                            No. Telepon / WhatsApp
+                        </span>
+                        <span id="modalApplicantPhone" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[15px] text-slate-400">calendar_today</span>
+                            Terdaftar Sejak
+                        </span>
+                        <span id="modalApplicantRegisteredAt" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Modal Footer Actions --}}
+            <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4 dark:border-slate-800 shrink-0">
+                <div class="flex items-center gap-2">
+                    <div id="modalApplicantResumeBtnBox" class="hidden">
+                        <button type="button" id="modalApplicantResumeBtn" class="portal-button-secondary !py-2 !px-3 text-xs gap-1.5 cursor-pointer">
+                            <span class="material-symbols-outlined text-[16px]">visibility</span>
+                            <span>Resume PDF</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="closeApplicantProfileModal()" class="portal-button-secondary !py-2 !px-3 text-xs cursor-pointer">
+                        Tutup
+                    </button>
+                    <a id="modalApplicantFullProfileLink" href="#" class="portal-button-primary !py-2 !px-3.5 text-xs gap-1.5 inline-flex items-center cursor-pointer" title="Buka detail lengkap profil & kelola akun pengguna">
+                        <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+                        <span>Buka Halaman Akun Penuh</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 @endpush
 
 @push('scripts')
 <script>
+    function openApplicantProfileModal(data) {
+        document.getElementById('modalApplicantName').textContent = data.name || 'Nama Pelamar';
+        document.getElementById('modalApplicantUsername').textContent = `@${data.username}`;
+        document.getElementById('modalApplicantEmail').textContent = data.email || '-';
+        document.getElementById('modalApplicantPhone').textContent = data.phone || 'Belum dicantumkan';
+        document.getElementById('modalApplicantRegisteredAt').textContent = data.registered_at || '-';
+        document.getElementById('modalApplicantAppliedAt').textContent = data.applied_at || '-';
+
+        // Avatar
+        const avatarBox = document.getElementById('modalApplicantAvatarBox');
+        if (data.avatar_url) {
+            avatarBox.innerHTML = `<img src="${data.avatar_url}" alt="${data.name}" class="w-full h-full object-cover">`;
+        } else {
+            avatarBox.innerHTML = `<span>${data.avatar_initials || '--'}</span>`;
+        }
+
+        // Ban Status
+        const banBox = document.getElementById('modalApplicantBanBox');
+        const banReason = document.getElementById('modalApplicantBanReason');
+        if (data.is_banned) {
+            banBox.classList.remove('hidden');
+            banReason.textContent = data.ban_reason ? `Alasan: "${data.ban_reason}"` : `Status: ${data.ban_status}`;
+        } else {
+            banBox.classList.add('hidden');
+        }
+
+        // Application Status Badge
+        const statusBadge = document.getElementById('modalApplicantStatusBadge');
+        const colorClasses = {
+            emerald: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
+            indigo: 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800',
+            rose: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800',
+            blue: 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800',
+            slate: 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+            amber: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
+        };
+        statusBadge.className = `portal-badge border text-[11px] font-bold ${colorClasses[data.status_color] || colorClasses.amber}`;
+        statusBadge.textContent = data.status_label || 'Pending';
+
+        // Note
+        const noteBox = document.getElementById('modalApplicantNoteBox');
+        const noteEl = document.getElementById('modalApplicantNote');
+        if (data.note) {
+            noteBox.classList.remove('hidden');
+            noteEl.textContent = data.note;
+        } else {
+            noteBox.classList.add('hidden');
+        }
+
+        // Resume PDF Button
+        const resumeBox = document.getElementById('modalApplicantResumeBtnBox');
+        const resumeBtn = document.getElementById('modalApplicantResumeBtn');
+        if (data.resume_preview_url) {
+            resumeBox.classList.remove('hidden');
+            resumeBtn.onclick = () => {
+                closeApplicantProfileModal();
+                openPdfViewer(data.resume_preview_url, data.name, data.resume_download_url);
+            };
+        } else {
+            resumeBox.classList.add('hidden');
+        }
+
+        // Full Profile Link
+        document.getElementById('modalApplicantFullProfileLink').href = data.profile_url;
+
+        // Open Modal
+        const modal = document.getElementById('applicantProfileModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeApplicantProfileModal() {
+        const modal = document.getElementById('applicantProfileModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
     function openCloseJobModal(jobId, jobTitle) {
         const modal = document.getElementById('closeJobModal');
         const form = document.getElementById('closeJobForm');
@@ -517,6 +723,7 @@
         if (e.key === 'Escape') {
             closeCloseJobModal();
             closeDeleteJobModal();
+            closeApplicantProfileModal();
         }
     });
 </script>

@@ -14,6 +14,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -26,6 +27,7 @@ class ApplicationController extends Controller
 
         $applications = JobApplication::query()
             ->whereHas('job', fn ($query) => $query->whereBelongsTo($employer, 'employer'))
+            ->whereNull('employer_hidden_at')
             ->with(['user', 'job.skills', 'job.category'])
             ->when($request->filled('job'), fn ($q) => $q->where('job_id', $request->integer('job')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
@@ -56,12 +58,14 @@ class ApplicationController extends Controller
             $updateData['interview_type'] = $request->input('interview_type');
             $updateData['interview_location'] = $request->input('interview_location');
             $updateData['interview_notes'] = $request->input('interview_notes');
+            $updateData['interview_status'] = 'pending';
         } elseif ($status === 'accepted') {
             $updateData['start_date'] = $request->input('start_date');
             $updateData['acceptance_notes'] = $request->input('acceptance_notes');
         } elseif ($status === 'rejected') {
             $updateData['rejection_reason'] = $request->input('rejection_reason');
             $updateData['rejection_notes'] = $request->input('rejection_notes');
+            $updateData['rejected_at'] = now();
         }
 
         $application->update($updateData);
@@ -252,5 +256,58 @@ class ApplicationController extends Controller
         }
 
         return back()->with('success', $message);
+    }
+
+    /**
+     * Hide an applicant from the employer's applicant list.
+     */
+    public function hide(Request $request, JobApplication $application): RedirectResponse
+    {
+        $application->loadMissing('job');
+        if ($application->job?->employer_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki hak untuk menghapus riwayat pelamar ini.');
+        }
+
+        $candidateName = $application->user?->name ?? 'Kandidat';
+        $application->update(['employer_hidden_at' => now()]);
+
+        return back()->with('success', "Riwayat pelamar \"{$candidateName}\" berhasil dihapus dari daftar pelamar Anda.");
+    }
+
+    /**
+     * Remove candidate from selection completely (reset application so candidate can re-apply).
+     */
+    public function resetSelection(Request $request, JobApplication $application): RedirectResponse
+    {
+        $application->loadMissing(['job', 'user']);
+        if ($application->job?->employer_id !== $request->user()->id) {
+            abort(403, 'Anda tidak memiliki hak untuk melepas status seleksi pelamar ini.');
+        }
+
+        $candidate = $application->user;
+        $candidateName = $candidate?->name ?? 'Kandidat';
+        $job = $application->job;
+        $jobTitle = $job?->title ?? 'posisi pekerjaan';
+        $resumeFile = $application->resume_file;
+        $employer = $request->user();
+
+        DB::transaction(function () use ($application): void {
+            $application->delete();
+        });
+
+        if ($resumeFile && Storage::disk('local')->exists($resumeFile)) {
+            Storage::disk('local')->delete($resumeFile);
+        }
+
+        if ($candidate) {
+            ChatMessage::create([
+                'sender_id' => $employer->id,
+                'receiver_id' => $candidate->id,
+                'message' => "🔄 [Status Seleksi Dilepas / Reset]\n\nHalo {$candidateName},\nStatus lamaran Anda untuk posisi \"{$jobTitle}\" telah dilepas dari proses seleksi oleh {$employer->business_name}.\n\nRiwayat lamaran Anda untuk posisi ini telah di-reset sehingga Anda dapat mengajukan lamaran baru kembali jika berminat.",
+                'is_read' => false,
+            ]);
+        }
+
+        return back()->with('success', "Status seleksi untuk \"{$candidateName}\" berhasil dilepas. Lamaran kandidat telah di-reset dan kandidat kini dapat mengajukan lamaran kembali.");
     }
 }

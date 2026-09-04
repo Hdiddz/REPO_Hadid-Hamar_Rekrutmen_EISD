@@ -49,7 +49,7 @@
     </button>
 
     {{-- Dropdown Panel --}}
-    <div id="notification-dropdown-menu" data-menu onclick="event.stopPropagation()" class="fixed inset-x-3 top-[68px] sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 hidden w-auto sm:w-96 overflow-hidden rounded-3xl border border-slate-200/90 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 z-50">
+    <div id="notification-dropdown-menu" data-menu onclick="event.stopPropagation()" class="fixed inset-x-3 top-[68px] sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 hidden w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-3xl border border-slate-200/90 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 z-50">
         {{-- Header --}}
         <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
             <div class="flex items-center gap-2">
@@ -156,8 +156,14 @@
                     iconColor = 'text-teal-700 bg-teal-50 dark:bg-teal-950 dark:text-teal-300';
                 } else if (d.status === 'new_applicant') {
                     iconColor = 'text-blue-700 bg-blue-50 dark:bg-blue-950 dark:text-blue-300';
-                } else if (d.status === 'report_pending') {
+                } else if (d.status === 'report_pending' || d.status === 'report_employer_action') {
                     iconColor = 'text-rose-700 bg-rose-50 dark:bg-rose-950 dark:text-rose-300';
+                } else if (d.status === 'report_reviewed') {
+                    iconColor = 'text-amber-700 bg-amber-50 dark:bg-amber-950 dark:text-amber-300';
+                } else if (d.status === 'report_action_taken') {
+                    iconColor = 'text-emerald-700 bg-emerald-50 dark:bg-emerald-950 dark:text-emerald-300';
+                } else if (d.status === 'report_dismissed') {
+                    iconColor = 'text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-300';
                 }
 
                 return `
@@ -184,8 +190,8 @@
                             <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
                                 ${escapeHtml(d.message || '')}
                             </p>
-                            <div class="mt-1.5 flex items-center justify-between gap-2">
-                                ${d.employer_name ? `<span class="inline-block text-[10px] font-semibold text-brand-700 dark:text-brand-300 truncate">${escapeHtml(d.employer_name)}</span>` : '<span></span>'}
+                            <div class="mt-1.5 flex items-center justify-between gap-2 min-w-0">
+                                ${d.employer_name ? `<span class="inline-block text-[10px] font-semibold text-brand-700 dark:text-brand-300 truncate min-w-0 flex-1">${escapeHtml(d.employer_name)}</span>` : '<span class="flex-1"></span>'}
                                 <span class="text-[10px] font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 inline-flex items-center gap-0.5 shrink-0">
                                     Lihat rincian <span class="material-symbols-outlined text-[13px]">chevron_right</span>
                                 </span>
@@ -236,8 +242,14 @@
                 iconBox.classList.add('text-teal-700', 'bg-teal-50', 'dark:bg-teal-950', 'dark:text-teal-300');
             } else if (d.status === 'new_applicant') {
                 iconBox.classList.add('text-blue-700', 'bg-blue-50', 'dark:bg-blue-950', 'dark:text-blue-300');
-            } else if (d.status === 'report_pending') {
+            } else if (d.status === 'report_pending' || d.status === 'report_employer_action') {
                 iconBox.classList.add('text-rose-700', 'bg-rose-50', 'dark:bg-rose-950', 'dark:text-rose-300');
+            } else if (d.status === 'report_reviewed') {
+                iconBox.classList.add('text-amber-700', 'bg-amber-50', 'dark:bg-amber-950', 'dark:text-amber-300');
+            } else if (d.status === 'report_action_taken') {
+                iconBox.classList.add('text-emerald-700', 'bg-emerald-50', 'dark:bg-emerald-950', 'dark:text-emerald-300');
+            } else if (d.status === 'report_dismissed') {
+                iconBox.classList.add('text-slate-700', 'bg-slate-100', 'dark:bg-slate-800', 'dark:text-slate-300');
             } else {
                 iconBox.classList.add('text-brand-700', 'bg-brand-50', 'dark:bg-brand-950', 'dark:text-brand-300');
             }

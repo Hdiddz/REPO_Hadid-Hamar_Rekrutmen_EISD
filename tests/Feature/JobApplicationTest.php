@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Job;
 use App\Models\JobApplication;
 use App\Models\User;
+use App\Notifications\InterviewResponseNotification;
 use App\Notifications\ResignationDecisionNotification;
 use App\Notifications\ResignationSubmittedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -280,7 +281,43 @@ class JobApplicationTest extends TestCase
         $response->assertOk()
             ->assertSee('Selamat! Anda Resmi Diterima Bekerja 🎉')
             ->assertSee($startDate->translatedFormat('l, d F Y'))
-            ->assertDontSee('id="cancelAppForm-'.$application->id.'"', false);
+            ->assertDontSee('id="cancelAppForm-'.$application->id.'"', false)
+            ->assertSee('id="hideAppForm-'.$application->id.'"', false);
+    }
+
+    public function test_pending_application_only_shows_cancel_button_while_non_pending_shows_hide_button(): void
+    {
+        $jobseeker = User::factory()->jobseeker()->create();
+        $jobPending = Job::factory()->create(['title' => 'Pending Job']);
+        $appPending = JobApplication::factory()->for($jobPending)->for($jobseeker, 'user')->create([
+            'status' => 'pending',
+        ]);
+
+        $jobInterview = Job::factory()->create(['title' => 'Interview Job']);
+        $appInterview = JobApplication::factory()->for($jobInterview)->for($jobseeker, 'user')->create([
+            'status' => 'interview',
+        ]);
+
+        $jobRejected = Job::factory()->create(['title' => 'Rejected Job']);
+        $appRejected = JobApplication::factory()->for($jobRejected)->for($jobseeker, 'user')->create([
+            'status' => 'rejected',
+        ]);
+
+        $response = $this->actingAs($jobseeker)->get(route('applications.index'));
+
+        $response->assertOk();
+
+        // Pending application only has Batalkan, never Hapus Riwayat
+        $response->assertSee('id="cancelAppForm-'.$appPending->id.'"', false);
+        $response->assertDontSee('id="hideAppForm-'.$appPending->id.'"', false);
+
+        // Interview application only has Hapus Riwayat, never Batalkan
+        $response->assertDontSee('id="cancelAppForm-'.$appInterview->id.'"', false);
+        $response->assertSee('id="hideAppForm-'.$appInterview->id.'"', false);
+
+        // Rejected application only has Hapus Riwayat, never Batalkan
+        $response->assertDontSee('id="cancelAppForm-'.$appRejected->id.'"', false);
+        $response->assertSee('id="hideAppForm-'.$appRejected->id.'"', false);
     }
 
     public function test_jobseeker_can_filter_applications_by_status(): void
@@ -519,5 +556,344 @@ class JobApplicationTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('pending_resignation.job_title', 'Admin Gudang')
             ->assertJsonPath('pending_resignation.resignation_reason', 'Alasan Pribadi');
+    }
+
+    public function test_jobseeker_can_confirm_interview_schedule_and_creates_chat_and_notification(): void
+    {
+        Notification::fake();
+
+        $employer = User::factory()->employer()->create(['business_name' => 'Studio Desain Maju']);
+        $jobseeker = User::factory()->jobseeker()->create(['name' => 'Ahmad Fauzi']);
+        $job = Job::factory()->for($employer, 'employer')->create(['title' => 'UI Designer']);
+
+        $application = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create([
+            'status' => 'interview',
+            'interview_date' => now()->addDays(2)->toDateString(),
+            'interview_time' => '14:00',
+            'interview_type' => 'Online (Google Meet)',
+            'interview_location' => 'https://meet.google.com/abc-defg-hij',
+            'interview_status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($jobseeker)->postJson(route('applications.interview.response', $application), [
+            'action' => 'confirmed',
+            'note' => 'Terima kasih, saya siap hadir tepat waktu.',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('interview_status', 'confirmed');
+
+        $this->assertDatabaseHas('job_applications', [
+            'id' => $application->id,
+            'interview_status' => 'confirmed',
+        ]);
+
+        Notification::assertSentTo($employer, InterviewResponseNotification::class, function ($notification) {
+            return $notification->responseType === 'confirmed';
+        });
+
+        $this->assertDatabaseHas('chat_messages', [
+            'sender_id' => $jobseeker->id,
+            'receiver_id' => $employer->id,
+        ]);
+    }
+
+    public function test_jobseeker_can_request_reschedule_with_note(): void
+    {
+        Notification::fake();
+
+        $employer = User::factory()->employer()->create(['business_name' => 'Kopi Sejahtera']);
+        $jobseeker = User::factory()->jobseeker()->create(['name' => 'Dewi Lestari']);
+        $job = Job::factory()->for($employer, 'employer')->create(['title' => 'Barista']);
+
+        $application = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create([
+            'status' => 'interview',
+            'interview_date' => now()->addDays(3)->toDateString(),
+            'interview_time' => '09:00',
+            'interview_status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($jobseeker)->post(route('applications.interview.response', $application), [
+            'action' => 'reschedule_requested',
+            'note' => 'Apakah memungkinkan jadwal digeser ke jam 14:00?',
+        ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('job_applications', [
+            'id' => $application->id,
+            'interview_status' => 'reschedule_requested',
+        ]);
+
+        Notification::assertSentTo($employer, InterviewResponseNotification::class, function ($notification) {
+            return $notification->responseType === 'reschedule_requested' && $notification->responseNotes === 'Apakah memungkinkan jadwal digeser ke jam 14:00?';
+        });
+    }
+
+    public function test_jobseeker_can_decline_interview(): void
+    {
+        Notification::fake();
+
+        $employer = User::factory()->employer()->create(['business_name' => 'Teknologi Unggul']);
+        $jobseeker = User::factory()->jobseeker()->create();
+        $job = Job::factory()->for($employer, 'employer')->create();
+
+        $application = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create([
+            'status' => 'interview',
+            'interview_status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($jobseeker)->postJson(route('applications.interview.response', $application), [
+            'action' => 'declined',
+            'note' => 'Sudah diterima di tempat lain.',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('interview_status', 'declined');
+
+        $this->assertDatabaseHas('job_applications', [
+            'id' => $application->id,
+            'interview_status' => 'declined',
+        ]);
+
+        Notification::assertSentTo($employer, InterviewResponseNotification::class, function ($notification) {
+            return $notification->responseType === 'declined';
+        });
+    }
+
+    public function test_unauthorized_user_cannot_respond_to_interview(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $owner = User::factory()->jobseeker()->create();
+        $otherUser = User::factory()->jobseeker()->create();
+        $job = Job::factory()->for($employer, 'employer')->create();
+
+        $application = JobApplication::factory()->for($job)->for($owner, 'user')->create([
+            'status' => 'interview',
+            'interview_status' => 'pending',
+        ]);
+
+        $this->actingAs($otherUser)
+            ->postJson(route('applications.interview.response', $application), [
+                'action' => 'confirmed',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('job_applications', [
+            'id' => $application->id,
+            'interview_status' => 'pending',
+        ]);
+    }
+
+    public function test_employer_applications_index_shows_interview_status_badges(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $job = Job::factory()->for($employer, 'employer')->create(['title' => 'Staf Operasional']);
+
+        $candidateA = User::factory()->jobseeker()->create(['name' => 'Calon Hadir']);
+        JobApplication::factory()->for($job)->for($candidateA, 'user')->create([
+            'status' => 'interview',
+            'interview_status' => 'confirmed',
+            'interview_date' => now()->addDays(2)->toDateString(),
+            'interview_time' => '10:00',
+        ]);
+
+        $candidateB = User::factory()->jobseeker()->create(['name' => 'Calon Diskusi']);
+        JobApplication::factory()->for($job)->for($candidateB, 'user')->create([
+            'status' => 'interview',
+            'interview_status' => 'reschedule_requested',
+            'interview_date' => now()->addDays(3)->toDateString(),
+            'interview_time' => '13:00',
+        ]);
+
+        $response = $this->actingAs($employer)->get(route('employer.applications.index'));
+
+        $response->assertOk()
+            ->assertSee('Tahap Wawancara')
+            ->assertSee('Pelamar Bersedia Hadir')
+            ->assertSee('Pelamar Ajukan Diskusi Jadwal')
+            ->assertSee('Undangan Wawancara Dijadwalkan');
+    }
+
+    public function test_rejected_applicant_cannot_reapply_on_same_day(): void
+    {
+        Storage::fake('local');
+        $jobseeker = User::factory()->jobseeker()->create();
+        $job = Job::factory()->create(['status' => 'open']);
+
+        $application = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create([
+            'status' => 'rejected',
+            'rejected_at' => now(),
+            'rejection_reason' => 'Kriteria belum mencukupi',
+        ]);
+
+        $response = $this->actingAs($jobseeker)->post(route('applications.store', $job), [
+            'resume' => UploadedFile::fake()->create('new_resume.pdf', 150, 'application/pdf'),
+            'note' => 'Mencoba melamar lagi hari ini.',
+        ]);
+
+        $response->assertSessionHas('warning');
+        $this->assertStringContainsString('mulai besok', session('warning'));
+
+        $application->refresh();
+        $this->assertSame('rejected', $application->status);
+        $this->assertNotNull($application->rejected_at);
+    }
+
+    public function test_rejected_applicant_can_reapply_next_day_and_resets_status(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('resumes/old_resume.pdf', '%PDF old');
+
+        $jobseeker = User::factory()->jobseeker()->create();
+        $job = Job::factory()->create(['status' => 'open']);
+
+        $application = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create([
+            'status' => 'rejected',
+            'rejected_at' => now()->subDay(),
+            'rejection_reason' => 'Kriteria belum sesuai sebelumnya',
+            'resume_file' => 'resumes/old_resume.pdf',
+        ]);
+
+        $response = $this->actingAs($jobseeker)->post(route('applications.store', $job), [
+            'resume' => UploadedFile::fake()->create('updated_resume.pdf', 150, 'application/pdf'),
+            'note' => 'Saya telah memperbarui CV dan sertifikasi keahlian saya.',
+        ]);
+
+        $response->assertRedirect(route('applications.index'))
+            ->assertSessionHas('success');
+
+        $application->refresh();
+        $this->assertSame('pending', $application->status);
+        $this->assertNull($application->rejected_at);
+        $this->assertNull($application->rejection_reason);
+        $this->assertSame('Saya telah memperbarui CV dan sertifikasi keahlian saya.', $application->note);
+
+        Storage::disk('local')->assertMissing('resumes/old_resume.pdf');
+        Storage::disk('local')->assertExists($application->resume_file);
+    }
+
+    public function test_job_show_displays_reapply_states_for_rejected_user(): void
+    {
+        $jobseeker = User::factory()->jobseeker()->create();
+        $job = Job::factory()->create(['status' => 'open']);
+
+        // Case 1: Rejected today -> cooling off notice
+        $app = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create([
+            'status' => 'rejected',
+            'rejected_at' => now(),
+        ]);
+
+        $this->actingAs($jobseeker)->get(route('jobs.show', $job))
+            ->assertOk()
+            ->assertSee('Kesempatan Melamar Kembali')
+            ->assertSee('mulai besok')
+            ->assertDontSee('Kirim Lamaran Ulang');
+
+        // Case 2: Rejected yesterday -> reapply form available
+        $app->update(['rejected_at' => now()->subDay()]);
+
+        $this->actingAs($jobseeker)->get(route('jobs.show', $job))
+            ->assertOk()
+            ->assertSee('Kesempatan Melamar Kembali Terbuka')
+            ->assertSee('Kirim Lamaran Ulang');
+    }
+
+    public function test_jobseeker_can_hide_application_from_history(): void
+    {
+        $jobseeker = User::factory()->jobseeker()->create();
+        $otherJobseeker = User::factory()->jobseeker()->create();
+        $job = Job::factory()->create();
+
+        $application = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create();
+
+        // Other jobseeker cannot hide this application
+        $this->actingAs($otherJobseeker)
+            ->delete(route('applications.hide', $application))
+            ->assertForbidden();
+
+        // Owner jobseeker can hide application
+        $response = $this->actingAs($jobseeker)
+            ->delete(route('applications.hide', $application));
+
+        $response->assertSessionHas('success');
+        $this->assertNotNull($application->fresh()->jobseeker_hidden_at);
+
+        // Application no longer appears on jobseeker's history index
+        $this->flushSession();
+        $this->actingAs($jobseeker)->get(route('applications.index'))
+            ->assertOk()
+            ->assertDontSee($job->title);
+    }
+
+    public function test_employer_can_hide_applicant_from_list(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $otherEmployer = User::factory()->employer()->create();
+        $jobseeker = User::factory()->jobseeker()->create(['name' => 'Budi Pratama']);
+        $job = Job::factory()->for($employer, 'employer')->create();
+
+        $application = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create();
+
+        // Other employer cannot hide applicant
+        $this->actingAs($otherEmployer)
+            ->delete(route('employer.applications.hide', $application))
+            ->assertForbidden();
+
+        // Owner employer can hide applicant
+        $response = $this->actingAs($employer)
+            ->delete(route('employer.applications.hide', $application));
+
+        $response->assertSessionHas('success');
+        $this->assertNotNull($application->fresh()->employer_hidden_at);
+
+        // Applicant no longer appears on employer's applicants index
+        $this->flushSession();
+        $this->actingAs($employer)->get(route('employer.applications.index'))
+            ->assertOk()
+            ->assertDontSee('Budi Pratama');
+    }
+
+    public function test_employer_can_reset_selection_allowing_jobseeker_to_reapply(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('resumes/budi_resume.pdf', 'dummy content');
+
+        $employer = User::factory()->employer()->create();
+        $otherEmployer = User::factory()->employer()->create();
+        $jobseeker = User::factory()->jobseeker()->create(['name' => 'Budi Pratama']);
+        $job = Job::factory()->for($employer, 'employer')->create(['status' => 'open']);
+
+        $application = JobApplication::factory()->for($job)->for($jobseeker, 'user')->create([
+            'resume_file' => 'resumes/budi_resume.pdf',
+            'status' => 'interview',
+        ]);
+
+        // Other employer cannot reset selection
+        $this->actingAs($otherEmployer)
+            ->delete(route('employer.applications.resetSelection', $application))
+            ->assertForbidden();
+
+        // Owner employer can reset selection
+        $response = $this->actingAs($employer)
+            ->delete(route('employer.applications.resetSelection', $application));
+
+        $response->assertSessionHas('success');
+
+        // Application record is deleted
+        $this->assertModelMissing($application);
+        Storage::disk('local')->assertMissing('resumes/budi_resume.pdf');
+
+        // Chat notification message was created
+        $this->assertDatabaseHas('chat_messages', [
+            'sender_id' => $employer->id,
+            'receiver_id' => $jobseeker->id,
+        ]);
+
+        // Candidate POV: sees job as unapplied and can apply again
+        $this->actingAs($jobseeker)->get(route('jobs.show', $job))
+            ->assertOk()
+            ->assertSee('Kirim lamaran');
     }
 }

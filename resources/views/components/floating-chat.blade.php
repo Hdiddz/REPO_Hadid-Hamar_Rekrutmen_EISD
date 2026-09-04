@@ -70,36 +70,75 @@
         <div id="popupChatDetailView" class="hidden flex-col h-full">
             <!-- Header Detail Percakapan -->
             <div class="p-3 bg-teal-800 text-white flex items-center justify-between shadow-xs">
-                <div class="flex items-center gap-2 min-w-0">
-                    <button type="button" onclick="showPopupChatList()" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors cursor-pointer" title="Kembali ke Daftar Kontak">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                    <button type="button" onclick="showPopupChatList()" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors cursor-pointer shrink-0" title="Kembali ke Daftar Kontak">
                         <span class="material-symbols-outlined text-base">arrow_back</span>
                     </button>
                     <div class="w-7 h-7 rounded-lg bg-teal-600 text-white font-bold flex items-center justify-center text-xs shrink-0" id="detailChatAvatar">
                         --
                     </div>
-                    <div class="min-w-0">
-                        <div class="text-xs font-bold leading-tight truncate max-w-[150px]" id="detailChatTitle">
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold leading-tight truncate max-w-[125px] sm:max-w-[160px]" id="detailChatTitle">
                             Pengguna
                         </div>
-                        <div class="text-[10px] text-teal-200 flex items-center gap-1" id="detailChatSubtitle">
+                        <div class="text-[10px] text-teal-200 flex items-center gap-1 min-w-0 truncate" id="detailChatSubtitle">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
                             <span class="truncate" id="detailChatOwner">Online</span>
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center gap-1">
-                    <button type="button" onclick="confirmRemovePopupPerson()" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-rose-200 transition-colors cursor-pointer" title="Hapus kontak percakapan">
-                        <span class="material-symbols-outlined text-base">person_remove</span>
+                <div class="flex items-center gap-0.5 shrink-0">
+                    <!-- Profile Header Button -->
+                    <button type="button" id="popupProfileHeaderBtn" onclick="openPopupProfileModal()" class="hidden p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors cursor-pointer" title="Lihat Profil">
+                        <span class="material-symbols-outlined text-base">badge</span>
                     </button>
-                    <button type="button" onclick="confirmClearPopupChat()" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-rose-200 transition-colors cursor-pointer" title="Bersihkan seluruh obrolan (Clear Chat)">
-                        <span class="material-symbols-outlined text-base">delete_sweep</span>
-                    </button>
+                    <!-- Hamburger / More Options Menu -->
+                    <div class="relative" id="popupActionMenuContainer">
+                        <button type="button" onclick="togglePopupActionMenu(event)" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors cursor-pointer" title="Opsi Obrolan">
+                            <span class="material-symbols-outlined text-base">more_vert</span>
+                        </button>
+                        <div id="popupActionMenuDropdown" class="hidden absolute right-0 mt-1 w-44 bg-white dark:bg-slate-850 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-30 animate-page-enter">
+                            <button type="button" onclick="openPopupProfileModal(); togglePopupActionMenu();" class="w-full text-left px-3 py-2 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition cursor-pointer">
+                                <span class="material-symbols-outlined text-[15px] text-teal-600 dark:text-teal-400">badge</span>
+                                <span>Lihat Profil Lawan Bicara</span>
+                            </button>
+                            <div class="my-0.5 border-t border-slate-100 dark:border-slate-700/60"></div>
+                            <button type="button" onclick="confirmClearPopupChat(); togglePopupActionMenu();" class="w-full text-left px-3 py-2 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition cursor-pointer">
+                                <span class="material-symbols-outlined text-[15px] text-slate-400">delete_sweep</span>
+                                <span>Bersihkan Obrolan</span>
+                            </button>
+                            <div class="my-0.5 border-t border-slate-100 dark:border-slate-700/60"></div>
+                            <button type="button" onclick="confirmRemovePopupPerson(); togglePopupActionMenu();" class="w-full text-left px-3 py-2 text-[11px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 transition cursor-pointer">
+                                <span class="material-symbols-outlined text-[15px] text-rose-500">person_remove</span>
+                                <span>Hapus Kontak</span>
+                            </button>
+                        </div>
+                    </div>
                     <a href="{{ route('chat.index') }}" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors" title="Buka Halaman Penuh">
                         <span class="material-symbols-outlined text-base">open_in_new</span>
                     </a>
                     <button type="button" onclick="toggleFloatingChat()" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors cursor-pointer" title="Tutup Chat">
                         <span class="material-symbols-outlined text-base">close</span>
                     </button>
+                </div>
+            </div>
+
+            <!-- Popup Interview Invitation Banner -->
+            <div id="popupInterviewBanner" class="hidden border-b border-indigo-200 bg-indigo-50/95 p-2.5 px-3 flex-col gap-1.5 text-xs shrink-0 animate-page-enter">
+                <div class="flex items-start gap-2 min-w-0">
+                    <div class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <span class="material-symbols-outlined text-[14px]">event_available</span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center justify-between gap-1 flex-wrap">
+                            <strong class="font-bold text-slate-900 text-[11px] truncate" id="popupInterviewTitle">Wawancara Kerja</strong>
+                            <span id="popupInterviewStatusBadge" class="rounded-full px-1.5 py-0.2 text-[9px] font-bold border">Status</span>
+                        </div>
+                        <p class="text-[10px] text-slate-600 mt-0.5" id="popupInterviewDetails"></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 justify-end flex-wrap" id="popupInterviewActions">
+                    <!-- Action buttons -->
                 </div>
             </div>
 
@@ -125,11 +164,27 @@
             <!-- Input Bar -->
             <div class="p-2.5 border-t border-slate-200 bg-white shrink-0">
                 <form id="popupChatSendForm" onsubmit="handlePopupChatSend(event)" class="flex items-center gap-1.5">
-                    <input type="text" id="popupChatInput" placeholder="Ketik pesan..." class="flex-1 py-2 px-3 bg-slate-100 focus:bg-white rounded-xl border border-transparent focus:border-teal-600 text-xs text-slate-900 outline-none transition-all" autocomplete="off" required>
+                    <input type="text" id="popupChatInput" placeholder="Ketik pesan..." class="flex-1 py-2 px-3 bg-slate-100 focus:bg-white rounded-xl border border-transparent focus:border-teal-600 text-base sm:text-xs text-slate-900 outline-none transition-all" autocomplete="off" required>
                     <button type="submit" class="p-2 bg-teal-700 hover:bg-teal-800 active:scale-95 text-white rounded-xl cursor-pointer transition-all flex items-center justify-center">
                         <span class="material-symbols-outlined text-base">send</span>
                     </button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Floating Chat Profile Modal Overlay -->
+        <div id="popupProfileModal" class="hidden absolute inset-0 z-40 bg-white flex flex-col overflow-hidden animate-page-enter">
+            <div class="p-3 bg-teal-800 text-white flex items-center justify-between shadow-xs shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base">badge</span>
+                    <span class="text-xs font-bold" id="popupProfileModalTitle">Profil Lawan Bicara</span>
+                </div>
+                <button type="button" onclick="closePopupProfileModal()" class="p-1 hover:bg-teal-700 rounded-lg text-teal-200 hover:text-white transition-colors cursor-pointer" title="Kembali ke Obrolan">
+                    <span class="material-symbols-outlined text-base">close</span>
+                </button>
+            </div>
+            <div class="flex-1 p-3 overflow-y-auto space-y-3 text-xs" id="popupProfileModalContent">
+                <!-- Dynamically populated -->
             </div>
         </div>
 
@@ -150,9 +205,27 @@
     let chatPollInterval = null;
     let listPollInterval = null;
     let popupReply = null;
+    let popupCurrentInterview = null;
+    let popupCurrentProfile = null;
     const currentUserId = {{ Auth::id() }};
     const currentUserInitials = {{ Js::from(strtoupper(substr(Auth::user()->name ?? 'U', 0, 2))) }};
     const csrfToken = {{ Js::from(csrf_token()) }};
+
+    function togglePopupActionMenu(event) {
+        if (event) event.stopPropagation();
+        const dropdown = document.getElementById('popupActionMenuDropdown');
+        if (dropdown) dropdown.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (event) => {
+        const container = document.getElementById('popupActionMenuContainer');
+        const dropdown = document.getElementById('popupActionMenuDropdown');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            if (!container || !container.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        }
+    });
 
     function showPopupChatList() {
         activeChatUserId = null;
@@ -174,6 +247,18 @@
             listView.classList.add('animate-chat-slide-left');
             setTimeout(() => listView.classList.remove('animate-chat-slide-left'), 300);
         }
+
+        closePopupProfileModal();
+        const interviewBanner = document.getElementById('popupInterviewBanner');
+        if (interviewBanner) {
+            interviewBanner.classList.add('hidden');
+            interviewBanner.classList.remove('flex');
+        }
+        const profileHeaderBtn = document.getElementById('popupProfileHeaderBtn');
+        if (profileHeaderBtn) profileHeaderBtn.classList.add('hidden');
+        popupCurrentInterview = null;
+        popupCurrentProfile = null;
+
         loadPopupConversations();
     }
 
@@ -297,6 +382,36 @@
     }
 
     function renderPopupMessageHTML(msg, otherUser) {
+        if (msg.is_deleted) {
+            if (msg.is_me) {
+                return `
+                    <div data-msg-id="${msg.id}" data-msg-deleted="true" class="relative flex items-start justify-end gap-1 ml-auto max-w-[90%]">
+                        <div class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 p-2 rounded-2xl rounded-tr-sm shadow-2xs space-y-0.5 text-left min-w-[70px] italic flex items-center gap-1.5 text-[11px]">
+                            <span class="material-symbols-outlined text-[14px] opacity-60 not-italic">block</span>
+                            <span>Pesan ini telah dihapus</span>
+                            <span class="text-[8px] text-slate-400 not-italic ml-1.5">${msg.time}</span>
+                        </div>
+                        <div class="w-6 h-6 rounded-lg bg-slate-800 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5 opacity-60">
+                            ${escapeHtml(currentUserInitials)}
+                        </div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div data-msg-id="${msg.id}" data-msg-deleted="true" class="relative flex items-start gap-1 max-w-[90%]">
+                        <div class="w-6 h-6 rounded-lg bg-teal-700 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5 opacity-60">
+                            ${escapeHtml(otherUser.initials)}
+                        </div>
+                        <div class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 p-2 rounded-2xl rounded-tl-sm shadow-2xs space-y-0.5 text-left min-w-[70px] italic flex items-center gap-1.5 text-[11px]">
+                            <span class="material-symbols-outlined text-[14px] opacity-60 not-italic">block</span>
+                            <span>Pesan ini telah dihapus</span>
+                            <span class="text-[8px] text-slate-400 not-italic ml-1.5">${msg.time}</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
         let replyHtml = '';
         if (msg.reply_to) {
             if (msg.is_me) {
@@ -325,7 +440,7 @@
         if (msg.is_me) {
             return `
                 <div data-msg-id="${msg.id}" class="group relative flex items-start justify-end gap-1 ml-auto max-w-[90%]">
-                    <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
+                    <div class="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
                         <button type="button" data-popup-chat-action="reply" title="Balas pesan ini" class="p-1 text-slate-400 hover:text-teal-700 hover:bg-slate-100 rounded cursor-pointer">
                             <span class="material-symbols-outlined text-[15px]">reply</span>
                         </button>
@@ -354,12 +469,9 @@
                         <p class="text-slate-800 leading-relaxed whitespace-pre-line text-xs">${escapeHtml(msg.message)}</p>
                         <span class="text-[8px] text-slate-400 block text-right">${msg.time}</span>
                     </div>
-                    <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
+                    <div class="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-0.5 self-center shrink-0">
                         <button type="button" data-popup-chat-action="reply" title="Balas pesan ini" class="p-1 text-slate-400 hover:text-teal-700 hover:bg-slate-100 rounded cursor-pointer">
                             <span class="material-symbols-outlined text-[15px]">reply</span>
-                        </button>
-                        <button type="button" data-popup-chat-action="delete" title="Hapus pesan dari pengguna ini" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded cursor-pointer">
-                            <span class="material-symbols-outlined text-[15px]">delete</span>
                         </button>
                     </div>
                 </div>
@@ -368,6 +480,7 @@
     }
 
     function bindPopupMessageActions(element, message, otherUser) {
+        if (message.is_deleted) return;
         element.querySelector('[data-popup-chat-action="reply"]')?.addEventListener('click', () => {
             const senderName = message.is_me ? 'Anda' : otherUser.name;
             startPopupReply(message.id, senderName, message.message);
@@ -388,6 +501,30 @@
             });
             if (!res.ok) return;
             const data = await res.json();
+
+            popupCurrentInterview = data.interview_invitation || null;
+            popupCurrentProfile = data.profile || null;
+
+            const profileHeaderBtn = document.getElementById('popupProfileHeaderBtn');
+            if (profileHeaderBtn) {
+                if (popupCurrentProfile) {
+                    profileHeaderBtn.classList.remove('hidden');
+                } else {
+                    profileHeaderBtn.classList.add('hidden');
+                }
+            }
+
+            const interviewBanner = document.getElementById('popupInterviewBanner');
+            if (interviewBanner) {
+                if (data.interview_invitation) {
+                    interviewBanner.classList.remove('hidden');
+                    interviewBanner.classList.add('flex');
+                    renderPopupInterviewBanner(data.interview_invitation);
+                } else {
+                    interviewBanner.classList.add('hidden');
+                    interviewBanner.classList.remove('flex');
+                }
+            }
 
             const existingElements = Array.from(stream.querySelectorAll('[data-msg-id]'));
             const existingIds = new Set(existingElements.map(el => parseInt(el.dataset.msgId)));
@@ -427,7 +564,37 @@
                 let hasNew = false;
                 let hasMyNew = false;
                 data.messages.forEach(msg => {
-                    if (!existingIds.has(msg.id)) {
+                    if (existingIds.has(msg.id)) {
+                        const existingEl = stream.querySelector(`[data-msg-id="${msg.id}"]`);
+                        if (existingEl && msg.is_deleted && !existingEl.dataset.msgDeleted) {
+                            existingEl.dataset.msgDeleted = 'true';
+                            if (msg.is_me) {
+                                existingEl.className = 'relative flex items-start justify-end gap-1 ml-auto max-w-[90%]';
+                                existingEl.innerHTML = `
+                                    <div class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 p-2 rounded-2xl rounded-tr-sm shadow-2xs space-y-0.5 text-left min-w-[70px] italic flex items-center gap-1.5 text-[11px]">
+                                        <span class="material-symbols-outlined text-[14px] opacity-60 not-italic">block</span>
+                                        <span>Pesan ini telah dihapus</span>
+                                        <span class="text-[8px] text-slate-400 not-italic ml-1.5">${msg.time}</span>
+                                    </div>
+                                    <div class="w-6 h-6 rounded-lg bg-slate-800 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5 opacity-60">
+                                        ${escapeHtml(currentUserInitials)}
+                                    </div>
+                                `;
+                            } else {
+                                existingEl.className = 'relative flex items-start gap-1 max-w-[90%]';
+                                existingEl.innerHTML = `
+                                    <div class="w-6 h-6 rounded-lg bg-teal-700 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5 opacity-60">
+                                        ${escapeHtml(data.user.initials)}
+                                    </div>
+                                    <div class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 p-2 rounded-2xl rounded-tl-sm shadow-2xs space-y-0.5 text-left min-w-[70px] italic flex items-center gap-1.5 text-[11px]">
+                                        <span class="material-symbols-outlined text-[14px] opacity-60 not-italic">block</span>
+                                        <span>Pesan ini telah dihapus</span>
+                                        <span class="text-[8px] text-slate-400 not-italic ml-1.5">${msg.time}</span>
+                                    </div>
+                                `;
+                            }
+                        }
+                    } else {
                         const temp = document.createElement('div');
                         temp.innerHTML = renderPopupMessageHTML(msg, data.user).trim();
                         const el = temp.firstElementChild;
@@ -506,8 +673,8 @@
     async function deletePopupMessage(msgId) {
         const confirmed = await window.showAppConfirm({
             title: 'Hapus Pesan Obrolan?',
-            message: 'Pesan yang telah dihapus tidak dapat dipulihkan kembali.',
-            confirmText: 'Ya, Hapus Pesan',
+            message: 'Pesan akan dihapus dari obrolan ini.',
+            confirmText: 'Ya, Hapus',
             type: 'danger',
             icon: 'delete'
         });
@@ -523,7 +690,21 @@
             });
             if (res.ok) {
                 const el = document.querySelector(`[data-msg-id="${msgId}"]`);
-                if (el) el.remove();
+                if (el) {
+                    const timeSpan = el.querySelector('span.text-\\[8px\\]')?.textContent || '';
+                    el.className = 'relative flex items-start justify-end gap-1 ml-auto max-w-[90%]';
+                    el.dataset.msgDeleted = 'true';
+                    el.innerHTML = `
+                        <div class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 p-2 rounded-2xl rounded-tr-sm shadow-2xs space-y-0.5 text-left min-w-[70px] italic flex items-center gap-1.5 text-[11px]">
+                            <span class="material-symbols-outlined text-[14px] opacity-60 not-italic">block</span>
+                            <span>Pesan ini telah dihapus</span>
+                            <span class="text-[8px] text-slate-400 not-italic ml-1.5">${timeSpan}</span>
+                        </div>
+                        <div class="w-6 h-6 rounded-lg bg-slate-800 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5 opacity-60">
+                            ${escapeHtml(currentUserInitials)}
+                        </div>
+                    `;
+                }
                 loadPopupConversations();
             }
         } catch (e) {
@@ -610,6 +791,226 @@
                 }
             }
         }
+    }
+
+    function renderPopupInterviewBanner(invitation) {
+        const titleEl = document.getElementById('popupInterviewTitle');
+        if (titleEl) {
+            titleEl.textContent = `Wawancara: ${invitation.job_title || 'Lowongan'}`;
+        }
+
+        const badgeEl = document.getElementById('popupInterviewStatusBadge');
+        if (badgeEl) {
+            let badgeText = 'Menunggu Konfirmasi';
+            let badgeClass = 'border-amber-300 bg-amber-100 text-amber-800';
+
+            if (invitation.interview_status === 'confirmed') {
+                badgeText = 'Disetujui Pelamar';
+                badgeClass = 'border-emerald-300 bg-emerald-100 text-emerald-800';
+            } else if (invitation.interview_status === 'reschedule_requested') {
+                badgeText = 'Ajukan Diskusi';
+                badgeClass = 'border-sky-300 bg-sky-100 text-sky-800';
+            } else if (invitation.interview_status === 'declined') {
+                badgeText = 'Ditolak';
+                badgeClass = 'border-rose-300 bg-rose-100 text-rose-800';
+            }
+
+            badgeEl.className = `rounded-full px-1.5 py-0.2 text-[9px] font-bold border ${badgeClass}`;
+            badgeEl.textContent = badgeText;
+        }
+
+        const detailsEl = document.getElementById('popupInterviewDetails');
+        if (detailsEl) {
+            let details = [];
+            if (invitation.interview_date) details.push(invitation.interview_date);
+            if (invitation.interview_time) details.push(invitation.interview_time);
+            if (invitation.interview_type) details.push(invitation.interview_type);
+            detailsEl.textContent = details.join(' · ') || 'Jadwal telah ditentukan';
+        }
+
+        const actionsEl = document.getElementById('popupInterviewActions');
+        if (actionsEl) {
+            actionsEl.innerHTML = '';
+            if (invitation.can_respond) {
+                if (invitation.interview_status === 'pending' || invitation.interview_status === 'reschedule_requested') {
+                    actionsEl.innerHTML = `
+                        <button type="button" onclick="confirmPopupInterviewDirect(${invitation.application_id})" class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs hover:bg-emerald-700 transition cursor-pointer">
+                            <span class="material-symbols-outlined text-[13px]">check</span>
+                            <span>Setujui</span>
+                        </button>
+                        <a href="{{ route('chat.index') }}?user=${activeChatUserId}" class="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs hover:bg-sky-700 transition">
+                            <span class="material-symbols-outlined text-[13px]">chat</span>
+                            <span>Diskusi / Detail</span>
+                        </a>
+                    `;
+                } else if (invitation.interview_status === 'confirmed') {
+                    actionsEl.innerHTML = `
+                        <span class="text-[10px] font-bold text-emerald-700 flex items-center gap-0.5">
+                            <span class="material-symbols-outlined text-[13px]">check_circle</span>
+                            <span>Telah Disetujui</span>
+                        </span>
+                    `;
+                }
+            } else {
+                if (invitation.interview_status === 'confirmed') {
+                    actionsEl.innerHTML = `
+                        <span class="text-[10px] font-bold text-emerald-700 flex items-center gap-0.5">
+                            <span class="material-symbols-outlined text-[13px]">check_circle</span>
+                            <span>Pelamar bersedia hadir</span>
+                        </span>
+                    `;
+                } else if (invitation.interview_status === 'reschedule_requested') {
+                    actionsEl.innerHTML = `
+                        <span class="text-[10px] font-bold text-sky-700 flex items-center gap-0.5">
+                            <span class="material-symbols-outlined text-[13px]">schedule</span>
+                            <span>Pelamar mengajak diskusi</span>
+                        </span>
+                    `;
+                }
+            }
+        }
+    }
+
+    async function confirmPopupInterviewDirect(applicationId) {
+        const confirmed = await window.showAppConfirm({
+            title: 'Setujui Jadwal Wawancara?',
+            message: 'Apakah Anda bersedia menghadiri sesi wawancara sesuai jadwal mitra?',
+            confirmText: 'Ya, Setujui',
+            type: 'primary',
+            icon: 'event_available'
+        });
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(`/riwayat-lamaran/${applicationId}/interview-response`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ action: 'confirmed' })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                fetchChatMessages();
+                loadPopupConversations();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function openPopupProfileModal() {
+        if (!popupCurrentProfile) return;
+        const modal = document.getElementById('popupProfileModal');
+        const content = document.getElementById('popupProfileModalContent');
+        if (!modal || !content) return;
+
+        let html = '';
+        if (popupCurrentProfile.type === 'jobseeker') {
+            const avatarHtml = popupCurrentProfile.avatar_url
+                ? `<img src="${popupCurrentProfile.avatar_url}" alt="${escapeHtml(popupCurrentProfile.name)}" class="w-10 h-10 rounded-xl object-cover border border-teal-500 shrink-0">`
+                : `<div class="w-10 h-10 rounded-xl bg-teal-700 text-white font-bold flex items-center justify-center text-xs shrink-0">${escapeHtml(popupCurrentProfile.initials || '--')}</div>`;
+
+            let appsList = '';
+            if (popupCurrentProfile.applications && popupCurrentProfile.applications.length > 0) {
+                appsList = popupCurrentProfile.applications.map(a => `
+                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-800 text-[11px] truncate">${escapeHtml(a.job_title)}</span>
+                            <span class="px-1.5 py-0.2 rounded-md bg-teal-100 text-teal-800 text-[9px] font-bold">${escapeHtml(a.status_label)}</span>
+                        </div>
+                        ${a.has_resume && a.resume_preview_url ? `
+                            <a href="${a.resume_preview_url}" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 hover:underline pt-1">
+                                <span class="material-symbols-outlined text-[12px]">visibility</span>
+                                <span>Lihat CV / Resume</span>
+                            </a>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } else {
+                appsList = `<p class="text-slate-400 text-[11px] italic">Belum ada riwayat lamaran.</p>`;
+            }
+
+            html = `
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2.5">
+                        ${avatarHtml}
+                        <div class="min-w-0 flex-1">
+                            <h5 class="font-bold text-xs text-slate-900 truncate">${escapeHtml(popupCurrentProfile.name)}</h5>
+                            <span class="text-[10px] text-teal-700 font-semibold">Pelamar / Pencari Kerja</span>
+                        </div>
+                    </div>
+                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1 text-[11px]">
+                        <p class="text-slate-600 truncate">Email: <span class="font-medium text-slate-800">${escapeHtml(popupCurrentProfile.email)}</span></p>
+                        <p class="text-slate-600 truncate">Telepon: <span class="font-medium text-slate-800">${escapeHtml(popupCurrentProfile.phone)}</span></p>
+                    </div>
+                    <div>
+                        <h6 class="font-bold text-slate-800 text-[11px] mb-1.5 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-teal-600 text-sm">assignment</span>
+                            <span>Lamaran pada Usaha Anda</span>
+                        </h6>
+                        <div class="space-y-1.5 max-h-40 overflow-y-auto">
+                            ${appsList}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (popupCurrentProfile.type === 'employer') {
+            const avatarHtml = popupCurrentProfile.avatar_url
+                ? `<img src="${popupCurrentProfile.avatar_url}" alt="${escapeHtml(popupCurrentProfile.name)}" class="w-10 h-10 rounded-xl object-cover border border-teal-500 shrink-0">`
+                : `<div class="w-10 h-10 rounded-xl bg-teal-800 text-white font-bold flex items-center justify-center text-xs shrink-0">${escapeHtml(popupCurrentProfile.initials || '--')}</div>`;
+
+            let jobsList = '';
+            if (popupCurrentProfile.open_jobs && popupCurrentProfile.open_jobs.length > 0) {
+                jobsList = popupCurrentProfile.open_jobs.map(j => `
+                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-1">
+                        <div class="min-w-0">
+                            <p class="font-bold text-slate-800 text-[11px] truncate">${escapeHtml(j.title)}</p>
+                            <p class="text-[10px] text-slate-500">${escapeHtml(j.location)}</p>
+                        </div>
+                        <a href="${j.url}" target="_blank" class="text-teal-700 text-[10px] font-bold hover:underline shrink-0">Buka</a>
+                    </div>
+                `).join('');
+            } else {
+                jobsList = `<p class="text-slate-400 text-[11px] italic">Tidak ada lowongan aktif.</p>`;
+            }
+
+            html = `
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2.5">
+                        ${avatarHtml}
+                        <div class="min-w-0 flex-1">
+                            <h5 class="font-bold text-xs text-slate-900 truncate">${escapeHtml(popupCurrentProfile.name)}</h5>
+                            <span class="text-[10px] text-teal-700 font-semibold">Mitra UMKM</span>
+                        </div>
+                    </div>
+                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1 text-[11px]">
+                        <p class="text-slate-600 truncate">Kontak: <span class="font-medium text-slate-800">${escapeHtml(popupCurrentProfile.owner_name)}</span></p>
+                        <p class="text-slate-600 truncate">Email: <span class="font-medium text-slate-800">${escapeHtml(popupCurrentProfile.email)}</span></p>
+                        <p class="text-slate-600 truncate">Telepon: <span class="font-medium text-slate-800">${escapeHtml(popupCurrentProfile.phone)}</span></p>
+                    </div>
+                    <div>
+                        <h6 class="font-bold text-slate-800 text-[11px] mb-1.5 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-teal-600 text-sm">work</span>
+                            <span>Lowongan Terbuka</span>
+                        </h6>
+                        <div class="space-y-1.5 max-h-40 overflow-y-auto">
+                            ${jobsList}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        content.innerHTML = html;
+        modal.classList.remove('hidden');
+    }
+
+    function closePopupProfileModal() {
+        const modal = document.getElementById('popupProfileModal');
+        if (modal) modal.classList.add('hidden');
     }
 
     function escapeHtml(str) {

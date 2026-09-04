@@ -32,4 +32,17 @@ class JobApplicationFactory extends Factory
     {
         return $this->state(fn (): array => ['status' => 'accepted']);
     }
+
+    public function interview(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => 'interview',
+            'interview_date' => now()->addDays(2)->toDateString(),
+            'interview_time' => '10:00',
+            'interview_type' => 'Wawancara Langsung',
+            'interview_location' => 'Kantor Mitra',
+            'interview_notes' => 'Silakan hadir tepat waktu.',
+            'interview_status' => 'pending',
+        ]);
+    }
 }

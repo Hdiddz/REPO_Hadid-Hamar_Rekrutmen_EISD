@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\ChatMessage;
+use App\Models\Job;
+use App\Models\JobApplication;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -80,7 +82,7 @@ class ChatTest extends TestCase
         $homeResponse->assertDontSee('100% Bebas Calo');
     }
 
-    public function test_user_can_delete_message_received_or_sent(): void
+    public function test_user_can_only_delete_their_own_sent_message(): void
     {
         $userA = User::factory()->create(['role' => 'jobseeker']);
         $userB = User::factory()->create(['role' => 'employer']);
@@ -93,13 +95,26 @@ class ChatTest extends TestCase
             'is_read' => false,
         ]);
 
-        // User A (receiver) can delete message from other user
-        $response = $this->actingAs($userA)->deleteJson("/chat/messages/{$message->id}");
-        $response->assertOk();
-        $response->assertJson(['success' => true]);
+        // User A (receiver) cannot delete message sent by User B
+        $forbiddenResponse = $this->actingAs($userA)->deleteJson("/chat/messages/{$message->id}");
+        $forbiddenResponse->assertForbidden();
 
-        $this->assertDatabaseMissing('chat_messages', [
+        // User B (sender) can delete their own message
+        $response = $this->actingAs($userB)->deleteJson("/chat/messages/{$message->id}");
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'chat_message' => [
+                'id' => $message->id,
+                'is_deleted' => true,
+                'message' => 'Pesan ini telah dihapus',
+            ],
+        ]);
+
+        $this->assertDatabaseHas('chat_messages', [
             'id' => $message->id,
+            'is_deleted' => true,
+            'message' => 'Pesan ini telah dihapus',
         ]);
     }
 
@@ -237,5 +252,88 @@ class ChatTest extends TestCase
         $response->assertJson(['success' => true]);
 
         $this->assertDatabaseCount('chat_messages', 0);
+    }
+
+    public function test_deleted_messages_appear_as_deleted_placeholder_in_messages_and_conversations(): void
+    {
+        $userA = User::factory()->create(['role' => 'jobseeker']);
+        $userB = User::factory()->create(['role' => 'employer']);
+
+        $message = ChatMessage::create([
+            'sender_id' => $userA->id,
+            'receiver_id' => $userB->id,
+            'message' => 'Pesan rahasia',
+            'is_deleted' => true,
+        ]);
+
+        $reply = ChatMessage::create([
+            'sender_id' => $userB->id,
+            'receiver_id' => $userA->id,
+            'reply_to_id' => $message->id,
+            'message' => 'Balasan pesan',
+            'is_deleted' => false,
+        ]);
+
+        $messagesResponse = $this->actingAs($userA)->getJson("/chat/messages/{$userB->id}");
+        $messagesResponse->assertOk();
+        $messagesResponse->assertJsonPath('messages.0.is_deleted', true);
+        $messagesResponse->assertJsonPath('messages.0.message', 'Pesan ini telah dihapus');
+        $messagesResponse->assertJsonPath('messages.1.reply_to.message', 'Pesan ini telah dihapus');
+
+        $conversationsResponse = $this->actingAs($userA)->getJson('/chat/conversations');
+        $conversationsResponse->assertOk();
+        $conversationsResponse->assertJsonPath('0.last_message', 'Balasan pesan');
+    }
+
+    public function test_chat_messages_endpoint_returns_interview_invitation_and_profile_for_applicant_and_employer(): void
+    {
+        $employer = User::factory()->employer()->create([
+            'name' => 'Budi Santoso',
+            'business_name' => 'Toko Buku Aksara',
+            'email' => 'toko@aksara.test',
+        ]);
+        $jobseeker = User::factory()->jobseeker()->create([
+            'name' => 'Sari Indah',
+            'email' => 'sari@test.com',
+            'phone' => '08123456789',
+        ]);
+        $job = Job::factory()->create([
+            'employer_id' => $employer->id,
+            'title' => 'Staf Penjualan Toko',
+            'status' => 'open',
+        ]);
+
+        $application = JobApplication::factory()->create([
+            'job_id' => $job->id,
+            'user_id' => $jobseeker->id,
+            'status' => 'interview',
+            'interview_date' => now()->addDays(2)->toDateString(),
+            'interview_time' => '10:00',
+            'interview_type' => 'Tatap Muka Langsung',
+            'interview_location' => 'Jl. Braga No. 20, Bandung',
+            'interview_notes' => 'Harap membawa portofolio.',
+            'interview_status' => 'pending',
+        ]);
+
+        // 1. Employer views chat with jobseeker
+        $employerResp = $this->actingAs($employer)->getJson(route('chat.messages', $jobseeker));
+        $employerResp->assertOk();
+        $employerResp->assertJsonPath('interview_invitation.can_respond', false);
+        $employerResp->assertJsonPath('interview_invitation.job_title', 'Staf Penjualan Toko');
+        $employerResp->assertJsonPath('interview_invitation.interview_status', 'pending');
+        $employerResp->assertJsonPath('profile.type', 'jobseeker');
+        $employerResp->assertJsonPath('profile.name', 'Sari Indah');
+        $employerResp->assertJsonPath('profile.phone', '08123456789');
+        $employerResp->assertJsonPath('profile.applications.0.job_title', 'Staf Penjualan Toko');
+
+        // 2. Jobseeker views chat with employer
+        $jobseekerResp = $this->actingAs($jobseeker)->getJson(route('chat.messages', $employer));
+        $jobseekerResp->assertOk();
+        $jobseekerResp->assertJsonPath('interview_invitation.can_respond', true);
+        $jobseekerResp->assertJsonPath('interview_invitation.job_title', 'Staf Penjualan Toko');
+        $jobseekerResp->assertJsonPath('profile.type', 'employer');
+        $jobseekerResp->assertJsonPath('profile.business_name', 'Toko Buku Aksara');
+        $jobseekerResp->assertJsonPath('profile.owner_name', 'Budi Santoso');
+        $this->assertNotEmpty($jobseekerResp->json('profile.open_jobs'));
     }
 }

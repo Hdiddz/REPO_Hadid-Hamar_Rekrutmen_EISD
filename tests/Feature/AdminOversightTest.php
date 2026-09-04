@@ -29,7 +29,9 @@ class AdminOversightTest extends TestCase
             ->assertSee('Barista Lokal')
             ->assertSee('Kedai Sudut Temu')
             ->assertSee('hendra@example.test')
-            ->assertSee('Budi Santoso');
+            ->assertSee('Budi Santoso')
+            ->assertSee('Lihat Profil')
+            ->assertSee('applicantProfileModal');
     }
 
     public function test_admin_can_close_a_job(): void

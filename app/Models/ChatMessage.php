@@ -16,10 +16,12 @@ class ChatMessage extends Model
         'reply_to_id',
         'message',
         'is_read',
+        'is_deleted',
     ];
 
     protected $casts = [
         'is_read' => 'boolean',
+        'is_deleted' => 'boolean',
     ];
 
     public function sender(): BelongsTo
