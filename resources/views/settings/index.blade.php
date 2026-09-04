@@ -223,6 +223,18 @@
                 </div>
             </div>
 
+            @if(!$user->canChangeUsername())
+                <div class="mb-5 rounded-2xl bg-amber-50 p-4 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50 flex items-start gap-3">
+                    <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 text-xl shrink-0 mt-0.5">schedule</span>
+                    <div>
+                        <h4 class="text-xs font-bold text-amber-900 dark:text-amber-200">Masa Cooldown Ganti Username Aktif (7 Hari)</h4>
+                        <p class="text-xs text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
+                            Username terakhir diubah pada <strong>{{ $user->username_changed_at->translatedFormat('d F Y, H:i') }} WIB</strong>. Demi keamanan dan konsistensi data akun, Anda dapat mengganti username kembali dalam <strong>{{ $user->daysUntilUsernameChange() }} hari</strong> (mulai <strong>{{ $user->nextUsernameChangeDate()->translatedFormat('d F Y') }}</strong>).
+                        </p>
+                    </div>
+                </div>
+            @endif
+
             <form action="{{ route('settings.username.update') }}" method="POST" class="max-w-xl space-y-4">
                 @csrf
                 @method('PUT')
@@ -231,19 +243,28 @@
                     <label for="username" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Username Baru</label>
                     <div class="relative flex items-center">
                         <span class="pointer-events-none absolute left-3.5 text-sm font-bold text-slate-400 dark:text-slate-500">@</span>
-                        <input id="username" name="username" type="text" required value="{{ old('username', $user->username) }}" placeholder="masukkan_username_baru" class="min-h-11 w-full rounded-xl border bg-slate-50 pl-8 pr-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-900 dark:focus:ring-brand-900/60 {{ $errors->has('username') ? 'border-rose-500' : 'border-slate-200' }}">
+                        <input id="username" name="username" type="text" required value="{{ old('username', $user->username) }}" placeholder="masukkan_username_baru" 
+                               {{ !$user->canChangeUsername() ? 'disabled' : '' }}
+                               class="min-h-11 w-full rounded-xl border {{ !$user->canChangeUsername() ? 'bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-850 dark:text-slate-500' : 'bg-slate-50 text-slate-900 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100' }} pl-8 pr-3.5 py-2.5 text-sm font-medium outline-none transition placeholder:text-slate-400 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-900 dark:focus:ring-brand-900/60 {{ $errors->has('username') ? 'border-rose-500' : 'border-slate-200' }}">
                     </div>
                     @error('username')
                         <p class="mt-1.5 text-xs font-semibold text-rose-600" role="alert">{{ $message }}</p>
                     @else
-                        <p class="mt-1.5 text-xs text-slate-400">Minimal 3 karakter. Hanya huruf, angka, titik (.), tanda hubung (-), dan garis bawah (_). Bebas spasi.</p>
+                        @if($user->canChangeUsername())
+                            <p class="mt-1.5 text-xs text-slate-400">
+                                Minimal 3 karakter. Hanya huruf, angka, titik (.), tanda hubung (-), dan garis bawah (_). Bebas spasi.
+                                <span class="block mt-1 text-slate-500 dark:text-slate-400 font-medium">💡 <strong>Catatan:</strong> Setelah username diganti, terdapat masa <em>cooldown</em> selama 7 hari sebelum Anda dapat menggantinya kembali.</span>
+                            </p>
+                        @endif
                     @enderror
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-800 focus:outline-none focus:ring-4 focus:ring-brand-200 dark:bg-brand-600 dark:hover:bg-brand-500">
-                        <span class="material-symbols-outlined text-[18px]">check</span>
-                        Simpan Username Baru
+                    <button type="submit" 
+                            {{ !$user->canChangeUsername() ? 'disabled' : '' }}
+                            class="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-sm transition {{ !$user->canChangeUsername() ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed opacity-60' : 'bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-4 focus:ring-brand-200 dark:bg-brand-600 dark:hover:bg-brand-500 cursor-pointer' }}">
+                        <span class="material-symbols-outlined text-[18px]">{{ $user->canChangeUsername() ? 'check' : 'lock_clock' }}</span>
+                        <span>{{ $user->canChangeUsername() ? 'Simpan Username Baru' : 'Cooldown 7 Hari (Terkunci)' }}</span>
                     </button>
                 </div>
             </form>
@@ -318,114 +339,117 @@
 
 @push('modals')
     {{-- Modal Pratinjau, Cropping & Resizing Foto Profil (1080x1080) --}}
-    <div id="cropPhotoModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md transition-all duration-200" role="dialog" aria-modal="true" aria-labelledby="cropModalTitle">
-        <div class="relative w-full max-w-xl overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 animate-page-enter">
-            <!-- Modal Header -->
-            <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
-                <div class="flex items-center gap-2.5">
-                    <span class="grid h-9 w-9 place-items-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300">
-                        <span class="material-symbols-outlined text-[20px]">crop</span>
-                    </span>
-                    <div>
-                        <h3 id="cropModalTitle" class="text-base font-bold text-slate-950 dark:text-white">Sesuaikan &amp; Potong Foto</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Geser dan atur perbesaran untuk hasil foto 1080 × 1080 piksel.</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeCropModal()" class="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition cursor-pointer" aria-label="Tutup">
-                    <span class="material-symbols-outlined text-[20px]">close</span>
-                </button>
-            </div>
-
-            <!-- Modal Body -->
-            <div class="p-6 space-y-5">
-                <div class="flex flex-col md:flex-row items-center gap-6 justify-center">
-                    <!-- Canvas Stage with 1:1 Crop Area -->
-                    <div class="relative flex flex-col items-center">
-                        <div class="relative h-[300px] w-[300px] sm:h-[320px] sm:w-[320px] overflow-hidden rounded-2xl border-2 border-brand-500 bg-slate-950 shadow-inner select-none touch-none cursor-grab active:cursor-grabbing" id="cropCanvasContainer">
-                            <canvas id="cropCanvas" width="320" height="320" class="block h-full w-full"></canvas>
-
-                            <!-- Circular Crop Guide Overlay -->
-                            <div class="pointer-events-none absolute inset-0 rounded-full border-2 border-white/50 border-dashed shadow-[0_0_0_9999px_rgba(15,23,42,0.45)]"></div>
-                            <!-- Rule of Thirds Grid Lines -->
-                            <div class="pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-25">
-                                <div class="border-r border-b border-white"></div>
-                                <div class="border-r border-b border-white"></div>
-                                <div class="border-b border-white"></div>
-                                <div class="border-r border-b border-white"></div>
-                                <div class="border-r border-b border-white"></div>
-                                <div class="border-b border-white"></div>
-                                <div class="border-r border-white"></div>
-                                <div class="border-r border-white"></div>
-                                <div></div>
-                            </div>
-                        </div>
-                        <span class="mt-2 text-[11px] text-slate-400 flex items-center gap-1 font-medium">
-                            <span class="material-symbols-outlined text-[15px]">pan_tool</span>
-                            Klik &amp; geser foto untuk mengubah posisi
+    <div id="cropPhotoModal" class="fixed inset-0 z-[100] hidden overflow-y-auto bg-slate-950/75 p-2 sm:p-4 backdrop-blur-md transition-all duration-200" role="dialog" aria-modal="true" aria-labelledby="cropModalTitle" onclick="if(event.target === this) closeCropModal()">
+        <div class="flex min-h-full items-center justify-center p-0 text-center sm:p-0" onclick="if(event.target === this) closeCropModal()">
+            <div class="relative w-full max-w-xl my-auto rounded-3xl border border-slate-200/80 bg-white text-left shadow-2xl dark:border-slate-800 dark:bg-slate-900 animate-page-enter flex flex-col max-h-[92dvh] sm:max-h-[calc(100dvh-3rem)] overflow-hidden" onclick="event.stopPropagation()">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4 dark:border-slate-800 shrink-0">
+                    <div class="flex items-center gap-2.5">
+                        <span class="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300">
+                            <span class="material-symbols-outlined text-[18px] sm:text-[20px]">crop</span>
                         </span>
-                    </div>
-
-                    <!-- Right Side Controls & Live Preview -->
-                    <div class="flex flex-col items-center md:items-start gap-4 w-full md:w-48">
                         <div>
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2 text-center md:text-left">
-                                Pratinjau Avatar
-                            </span>
-                            <!-- Live Mini Preview Canvas (Circular) -->
-                            <div class="mx-auto md:mx-0 relative h-20 w-20 overflow-hidden rounded-full ring-4 ring-brand-500/20 bg-slate-100 dark:bg-slate-800 shadow-md">
-                                <canvas id="miniPreviewCanvas" width="80" height="80" class="h-full w-full object-cover"></canvas>
+                            <h3 id="cropModalTitle" class="text-sm sm:text-base font-bold text-slate-950 dark:text-white">Sesuaikan &amp; Potong Foto</h3>
+                            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">Geser dan atur perbesaran untuk hasil foto 1080 × 1080 piksel.</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeCropModal()" class="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition cursor-pointer" aria-label="Tutup">
+                        <span class="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+                </div>
+
+                <!-- Modal Body (Scrollable with overscroll-contain) -->
+                <div class="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1 overscroll-contain">
+                    <div class="flex flex-col md:flex-row items-center gap-5 sm:gap-6 justify-center">
+                        <!-- Canvas Stage with 1:1 Crop Area -->
+                        <div class="relative flex flex-col items-center">
+                            <div class="relative h-[250px] w-[250px] xs:h-[280px] xs:w-[280px] sm:h-[320px] sm:w-[320px] max-w-full overflow-hidden rounded-2xl border-2 border-brand-500 bg-slate-950 shadow-inner select-none touch-none cursor-grab active:cursor-grabbing" id="cropCanvasContainer">
+                                <canvas id="cropCanvas" width="320" height="320" class="block h-full w-full"></canvas>
+
+                                <!-- Circular Crop Guide Overlay -->
+                                <div class="pointer-events-none absolute inset-0 rounded-full border-2 border-white/50 border-dashed shadow-[0_0_0_9999px_rgba(15,23,42,0.45)]"></div>
+                                <!-- Rule of Thirds Grid Lines -->
+                                <div class="pointer-events-none absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-25">
+                                    <div class="border-r border-b border-white"></div>
+                                    <div class="border-r border-b border-white"></div>
+                                    <div class="border-b border-white"></div>
+                                    <div class="border-r border-b border-white"></div>
+                                    <div class="border-r border-b border-white"></div>
+                                    <div class="border-b border-white"></div>
+                                    <div class="border-r border-white"></div>
+                                    <div class="border-r border-white"></div>
+                                    <div></div>
+                                </div>
                             </div>
+                            <span class="mt-2 text-[11px] text-slate-400 flex items-center gap-1 font-medium text-center">
+                                <span class="material-symbols-outlined text-[15px]">pan_tool</span>
+                                Usap foto untuk menggeser posisi
+                            </span>
                         </div>
 
-                        <div class="w-full space-y-1.5">
-                            <span class="text-xs font-semibold text-slate-600 dark:text-slate-400 block">Perbesaran (Zoom)</span>
-                            <div class="flex items-center gap-2">
-                                <button type="button" onclick="adjustZoom(-0.15)" class="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 cursor-pointer transition" title="Perkecil">
-                                    <span class="material-symbols-outlined text-[17px]">remove</span>
+                        <!-- Right Side Controls & Live Preview -->
+                        <div class="flex flex-col items-center md:items-start gap-3.5 sm:gap-4 w-full md:w-48">
+                            <div class="flex md:flex-col items-center md:items-start gap-3 w-full justify-center md:justify-start">
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block text-center md:text-left">
+                                    Pratinjau Avatar
+                                </span>
+                                <!-- Live Mini Preview Canvas (Circular) -->
+                                <div class="relative h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-full ring-4 ring-brand-500/20 bg-slate-100 dark:bg-slate-800 shadow-md shrink-0">
+                                    <canvas id="miniPreviewCanvas" width="80" height="80" class="h-full w-full object-cover"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="w-full space-y-1.5">
+                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-400 block">Perbesaran (Zoom)</span>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="adjustZoom(-0.15)" class="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 cursor-pointer transition" title="Perkecil">
+                                        <span class="material-symbols-outlined text-[17px]">remove</span>
+                                    </button>
+                                    <input type="range" id="cropZoomRange" min="1" max="3" step="0.02" value="1" oninput="setCropZoom(this.value)" class="flex-1 accent-brand-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg dark:bg-slate-700">
+                                    <button type="button" onclick="adjustZoom(0.15)" class="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 cursor-pointer transition" title="Perbesar">
+                                        <span class="material-symbols-outlined text-[17px]">add</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 w-full pt-1">
+                                <button type="button" onclick="rotateCropImage()" class="flex-1 portal-button-secondary !py-2 !px-2 text-xs font-semibold gap-1 justify-center cursor-pointer" title="Putar 90 derajat searah jarum jam">
+                                    <span class="material-symbols-outlined text-[16px]">rotate_right</span>
+                                    Putar
                                 </button>
-                                <input type="range" id="cropZoomRange" min="1" max="3" step="0.02" value="1" oninput="setCropZoom(this.value)" class="flex-1 accent-brand-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg dark:bg-slate-700">
-                                <button type="button" onclick="adjustZoom(0.15)" class="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 cursor-pointer transition" title="Perbesar">
-                                    <span class="material-symbols-outlined text-[17px]">add</span>
+                                <button type="button" onclick="resetCropTransform()" class="portal-button-secondary !py-2 !px-2 text-xs font-semibold gap-1 justify-center cursor-pointer" title="Reset posisi dan zoom">
+                                    <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                                    Reset
                                 </button>
                             </div>
-                        </div>
 
-                        <div class="flex items-center gap-2 w-full pt-1">
-                            <button type="button" onclick="rotateCropImage()" class="flex-1 portal-button-secondary !py-2 !px-2.5 text-xs font-semibold gap-1 justify-center cursor-pointer" title="Putar 90 derajat searah jarum jam">
-                                <span class="material-symbols-outlined text-[16px]">rotate_right</span>
-                                Putar
-                            </button>
-                            <button type="button" onclick="resetCropTransform()" class="portal-button-secondary !py-2 !px-2.5 text-xs font-semibold gap-1 justify-center cursor-pointer" title="Reset posisi dan zoom">
-                                <span class="material-symbols-outlined text-[16px]">restart_alt</span>
-                                Reset
-                            </button>
-                        </div>
-
-                        <div class="rounded-2xl bg-teal-50/70 p-3 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-900/40 w-full text-[11px] text-teal-900 dark:text-teal-200 leading-tight">
-                            <span class="font-bold flex items-center gap-1 mb-1 text-teal-800 dark:text-teal-300">
-                                <span class="material-symbols-outlined text-[15px]">verified</span>
-                                Output 1080 × 1080 px
-                            </span>
-                            Rasio 1:1 tajam &amp; beresolusi tinggi otomatis diekspor.
+                            <div class="rounded-2xl bg-teal-50/70 p-2.5 sm:p-3 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-900/40 w-full text-[11px] text-teal-900 dark:text-teal-200 leading-tight">
+                                <span class="font-bold flex items-center gap-1 mb-0.5 sm:mb-1 text-teal-800 dark:text-teal-300">
+                                    <span class="material-symbols-outlined text-[15px]">verified</span>
+                                    Output 1080 × 1080 px
+                                </span>
+                                Rasio 1:1 tajam &amp; resolusi tinggi siap dipasang.
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Modal Footer -->
-            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
-                <button type="button" onclick="document.getElementById('avatarFileInput').click()" class="portal-button-secondary !py-2 !px-3.5 text-xs font-semibold gap-1 cursor-pointer">
-                    <span class="material-symbols-outlined text-[16px]">add_photo_alternate</span>
-                    Ganti Berkas
-                </button>
-                <div class="flex items-center gap-2">
-                    <button type="button" onclick="closeCropModal()" class="portal-button-secondary !py-2 !px-4 text-xs font-semibold cursor-pointer">
-                        Batal
+                <!-- Modal Footer (Sticky / Pinned at bottom of card) -->
+                <div class="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 border-t border-slate-100 px-4 py-3 sm:px-6 sm:py-4 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/80 shrink-0">
+                    <button type="button" onclick="document.getElementById('avatarFileInput').click()" class="portal-button-secondary !py-2 !px-3 text-xs font-semibold gap-1 cursor-pointer">
+                        <span class="material-symbols-outlined text-[16px]">add_photo_alternate</span>
+                        <span class="hidden xs:inline">Ganti Berkas</span>
+                        <span class="xs:hidden">Ganti</span>
                     </button>
-                    <button type="button" id="applyCropBtn" onclick="applyAndUploadCrop()" class="portal-button-primary !py-2 !px-5 text-xs font-bold gap-1.5 cursor-pointer">
-                        <span class="material-symbols-outlined text-[17px]">check_circle</span>
-                        Terapkan &amp; Simpan Foto
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="closeCropModal()" class="portal-button-secondary !py-2 !px-3 sm:!px-4 text-xs font-semibold cursor-pointer">
+                            Batal
+                        </button>
+                        <button type="button" id="applyCropBtn" onclick="applyAndUploadCrop()" class="portal-button-primary !py-2 !px-4 sm:!px-5 text-xs font-bold gap-1.5 cursor-pointer">
+                            <span class="material-symbols-outlined text-[17px]">check_circle</span>
+                            <span>Terapkan &amp; Simpan</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -513,7 +537,7 @@
         if (zoomRange) zoomRange.value = 1.0;
 
         modal.classList.remove('hidden');
-        modal.classList.add('flex');
+        modal.classList.add('block');
         document.body.style.overflow = 'hidden';
 
         renderCrop();
@@ -524,6 +548,7 @@
         const modal = document.getElementById('cropPhotoModal');
         if (modal) {
             modal.classList.add('hidden');
+            modal.classList.remove('block');
             modal.classList.remove('flex');
         }
         document.body.style.overflow = '';

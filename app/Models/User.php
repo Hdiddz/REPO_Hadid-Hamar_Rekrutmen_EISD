@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'username', 'email', 'password', 'role', 'phone', 'avatar', 'business_name', 'banned_at', 'banned_until', 'ban_reason'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'phone', 'avatar', 'business_name', 'banned_at', 'banned_until', 'ban_reason', 'username_changed_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -31,7 +32,35 @@ class User extends Authenticatable
             'password' => 'hashed',
             'banned_at' => 'datetime',
             'banned_until' => 'datetime',
+            'username_changed_at' => 'datetime',
         ];
+    }
+
+    public function canChangeUsername(): bool
+    {
+        if (! $this->username_changed_at) {
+            return true;
+        }
+
+        return $this->username_changed_at->copy()->addDays(7)->isPast();
+    }
+
+    public function daysUntilUsernameChange(): int
+    {
+        if ($this->canChangeUsername()) {
+            return 0;
+        }
+
+        return max(1, (int) ceil(now()->floatDiffInDays($this->username_changed_at->copy()->addDays(7), false)));
+    }
+
+    public function nextUsernameChangeDate(): ?Carbon
+    {
+        if (! $this->username_changed_at) {
+            return null;
+        }
+
+        return $this->username_changed_at->copy()->addDays(7);
     }
 
     public function isBanned(): bool

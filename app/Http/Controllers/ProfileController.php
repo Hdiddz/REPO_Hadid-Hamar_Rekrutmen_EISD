@@ -27,6 +27,22 @@ class ProfileController extends Controller
 
     public function updateUsername(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        $inputUsername = strtolower(trim((string) $request->input('username')));
+
+        if ($inputUsername === strtolower((string) $user->username)) {
+            return back()->with('info', 'Username Anda saat ini sudah menggunakan @'.$user->username.'.');
+        }
+
+        if (! $user->canChangeUsername()) {
+            $daysLeft = $user->daysUntilUsernameChange();
+            $nextDate = $user->nextUsernameChangeDate()?->translatedFormat('d F Y') ?? '7 hari lagi';
+
+            return back()->withErrors([
+                'username' => "Username hanya dapat diubah sekali setiap 7 hari. Anda dapat menggantinya kembali dalam {$daysLeft} hari ({$nextDate}).",
+            ]);
+        }
+
         $validated = $request->validate([
             'username' => [
                 'required',
@@ -34,7 +50,7 @@ class ProfileController extends Controller
                 'min:3',
                 'max:30',
                 'regex:/^[a-zA-Z0-9._-]+$/',
-                Rule::unique('users', 'username')->ignore($request->user()->id),
+                Rule::unique('users', 'username')->ignore($user->id),
             ],
         ], [
             'username.required' => 'Username wajib diisi.',
@@ -46,11 +62,12 @@ class ProfileController extends Controller
 
         $username = strtolower(trim($validated['username']));
 
-        $request->user()->update([
+        $user->update([
             'username' => $username,
+            'username_changed_at' => now(),
         ]);
 
-        return back()->with('success', "Username berhasil diubah menjadi @{$username}.");
+        return back()->with('success', "Username berhasil diubah menjadi @{$username}. Anda dapat menggantinya kembali setelah masa cooldown 7 hari.");
     }
 
     public function updatePassword(Request $request): RedirectResponse
