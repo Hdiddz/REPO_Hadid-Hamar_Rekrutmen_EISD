@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['employer_id', 'category_id', 'title', 'description', 'cover_image', 'location', 'salary_type', 'salary_amount', 'work_hours_per_day', 'status', 'closed_reason', 'closed_until', 'closed_by_admin'])]
+#[Fillable(['employer_id', 'category_id', 'title', 'description', 'cover_image', 'location', 'salary_type', 'salary_amount', 'work_hours_per_day', 'status', 'closed_reason', 'closed_until', 'closed_by_admin', 'admin_warning_category', 'admin_warning_message', 'admin_warned_at'])]
 class Job extends Model
 {
     /** @use HasFactory<JobFactory> */
@@ -23,6 +23,7 @@ class Job extends Model
             'work_hours_per_day' => 'integer',
             'closed_until' => 'datetime',
             'closed_by_admin' => 'boolean',
+            'admin_warned_at' => 'datetime',
         ];
     }
 
@@ -66,6 +67,22 @@ class Job extends Model
     public function isClosedByAdmin(): bool
     {
         return $this->closed_by_admin && $this->status === 'closed';
+    }
+
+    public function hasAdminWarning(): bool
+    {
+        return ! empty($this->admin_warning_message) && ! empty($this->admin_warned_at);
+    }
+
+    public function getAdminWarningCategoryLabelAttribute(): ?string
+    {
+        return match ($this->admin_warning_category) {
+            'salary_not_standard' => 'Upah Tidak Sesuai / Di Bawah Standar Kelayakan',
+            'excessive_hours' => 'Jam Kerja Melebihi Batas Etis (>8 jam/hari)',
+            'misleading_info' => 'Informasi Lowongan Tidak Jelas / Menyesatkan',
+            'unethical_conditions' => 'Persyaratan Kerja Tidak Wajar / Diskriminatif',
+            default => 'Pelanggaran Standar Kepatuhan',
+        };
     }
 
     public function getCoverImageUrlAttribute(): ?string

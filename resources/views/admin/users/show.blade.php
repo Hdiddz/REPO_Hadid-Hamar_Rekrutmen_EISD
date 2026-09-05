@@ -150,9 +150,6 @@
                                     <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs">
                                         Detail &amp; Pelamar
                                     </a>
-                                    <a href="{{ route('admin.jobs.edit', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2 text-xs" title="Edit lowongan">
-                                        <span class="material-symbols-outlined text-[16px]">edit</span>
-                                    </a>
                                 </div>
                             </div>
                         @empty

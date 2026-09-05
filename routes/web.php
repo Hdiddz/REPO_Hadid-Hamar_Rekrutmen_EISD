@@ -88,8 +88,8 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
         Route::get('/lowongan', [AdminJobController::class, 'index'])->name('jobs.index');
         Route::get('/lowongan/{job}', [AdminJobController::class, 'show'])->name('jobs.show');
-        Route::get('/lowongan/{job}/edit', [AdminJobController::class, 'edit'])->name('jobs.edit');
-        Route::put('/lowongan/{job}', [AdminJobController::class, 'update'])->name('jobs.update');
+        Route::post('/lowongan/{job}/peringatan', [AdminJobController::class, 'warn'])->name('jobs.warn');
+        Route::delete('/lowongan/{job}/peringatan', [AdminJobController::class, 'dismissWarning'])->name('jobs.dismissWarning');
         Route::post('/lowongan/{job}/tutup', [AdminJobController::class, 'close'])->name('jobs.close');
         Route::post('/lowongan/{job}/buka', [AdminJobController::class, 'reopen'])->name('jobs.reopen');
         Route::delete('/lowongan/{job}', [AdminJobController::class, 'destroy'])->name('jobs.destroy');

@@ -7,8 +7,8 @@ use App\Models\Category;
 use App\Models\ChatMessage;
 use App\Models\Job;
 use App\Models\JobApplication;
-use App\Models\Skill;
 use App\Notifications\ApplicationStatusUpdatedNotification;
+use App\Notifications\JobComplianceWarningNotification;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -101,88 +101,99 @@ class JobController extends Controller
         return view('admin.jobs.show', compact('job', 'returnUrl'));
     }
 
-    public function edit(Request $request, Job $job): View
-    {
-        $categories = Category::orderBy('name')->get();
-        $skills = Skill::orderBy('name')->get();
-        $job->load('skills:id,name');
-
-        $previousUrl = url()->previous();
-        if ($request->filled('return_to')) {
-            $returnTo = $request->string('return_to')->toString();
-            $appUrl = url('/');
-            if ((str_starts_with($returnTo, '/') && ! str_starts_with($returnTo, '//')) || str_starts_with($returnTo, $appUrl)) {
-                session()->put('admin_jobs_edit_return_to', $returnTo);
-            }
-        } elseif ($previousUrl && $previousUrl !== $request->fullUrl() && ! str_contains($previousUrl, '/admin/lowongan/'.$job->id.'/edit')) {
-            if (str_starts_with($previousUrl, url('/')) && ! str_contains($previousUrl, 'login') && ! str_contains($previousUrl, 'logout')) {
-                session()->put('admin_jobs_edit_return_to', $previousUrl);
-            }
-        }
-
-        $returnUrl = session('admin_jobs_edit_return_to', route('admin.jobs.show', $job));
-
-        return view('admin.jobs.edit', compact('job', 'categories', 'skills', 'returnUrl'));
-    }
-
-    public function update(Request $request, Job $job): RedirectResponse
+    public function warn(Request $request, Job $job): RedirectResponse
     {
         $validated = $request->validate([
-            'category_id' => ['required', 'exists:categories,id'],
-            'title' => ['required', 'string', 'max:150'],
-            'description' => ['required', 'string', 'min:20'],
-            'location' => ['required', 'string', 'max:100'],
-            'salary_type' => ['nullable', 'in:hourly,daily,monthly'],
-            'salary_amount' => ['nullable', 'numeric', 'min:0'],
-            'work_hours_per_day' => ['required', 'integer', 'between:1,8'],
-            'status' => ['required', 'in:open,closed'],
-            'skills' => ['nullable', 'array'],
-            'skills.*' => ['exists:skills,id'],
+            'warning_category' => ['required', 'string', 'in:salary_not_standard,excessive_hours,misleading_info,unethical_conditions,other'],
+            'warning_message' => ['required', 'string', 'min:5', 'max:2000'],
+            'also_close_job' => ['nullable', 'boolean'],
+            'duration_type' => ['nullable', 'in:7_days,14_days,30_days,custom,permanent'],
+            'custom_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
         ], [
-            'work_hours_per_day.between' => 'Jam kerja harus berada di antara 1 sampai 8 jam per hari.',
+            'warning_category.required' => 'Kategori pelanggaran kepatuhan wajib dipilih.',
+            'warning_category.in' => 'Kategori pelanggaran yang dipilih tidak valid.',
+            'warning_message.required' => 'Catatan peringatan wajib diisi.',
+            'warning_message.min' => 'Catatan peringatan minimal 5 karakter.',
+            'warning_message.max' => 'Catatan peringatan maksimal 2000 karakter.',
         ]);
 
+        $alsoClose = $request->boolean('also_close_job');
+
         $updateData = [
-            'category_id' => $validated['category_id'],
-            'title' => $validated['title'],
-            'description' => $validated['description'],
-            'location' => $validated['location'],
-            'salary_type' => $validated['salary_type'] ?? $job->salary_type,
-            'salary_amount' => $validated['salary_amount'] ?? $job->salary_amount,
-            'work_hours_per_day' => $validated['work_hours_per_day'],
-            'status' => $validated['status'],
+            'admin_warning_category' => $validated['warning_category'],
+            'admin_warning_message' => $validated['warning_message'],
+            'admin_warned_at' => now(),
         ];
 
-        if ($validated['status'] === 'open' && $job->closed_by_admin) {
-            $updateData['closed_by_admin'] = false;
-            $updateData['closed_reason'] = null;
-            $updateData['closed_until'] = null;
+        if ($alsoClose) {
+            $closedUntil = match ($validated['duration_type'] ?? 'permanent') {
+                '7_days' => now()->addDays(7),
+                '14_days' => now()->addDays(14),
+                '30_days' => now()->addDays(30),
+                'custom' => ! empty($validated['custom_days']) ? now()->addDays((int) $validated['custom_days']) : null,
+                default => null,
+            };
 
-            $job->reports()
-                ->where('status', 'action_taken')
-                ->where('action_taken', 'like', '%tutup%')
-                ->update([
-                    'status' => 'resolved',
-                    'action_taken' => 'Lowongan telah dibuka kembali oleh Admin (Sanksi Selesai)',
-                ]);
+            $updateData['status'] = 'closed';
+            $updateData['closed_by_admin'] = true;
+            $updateData['closed_reason'] = 'Ditutup Administrator terkait Peringatan Kepatuhan: '.$validated['warning_message'];
+            $updateData['closed_until'] = $closedUntil;
         }
 
         $job->update($updateData);
 
-        $job->skills()->sync($request->input('skills', []));
-        $job->touch();
+        // Send Database Notification to employer
+        if ($job->employer) {
+            $job->employer->notify(new JobComplianceWarningNotification(
+                job: $job,
+                category: $validated['warning_category'],
+                warningMessage: $validated['warning_message'],
+                alsoClosed: $alsoClose,
+            ));
 
-        // Kirim pesan notifikasi ke Mitra UMKM bahwa lowongannya telah diperbarui oleh Administrator
-        $admin = $request->user();
-        $nowFormatted = now()->translatedFormat('d F Y, H:i');
-        ChatMessage::create([
-            'sender_id' => $admin->id,
-            'receiver_id' => $job->employer_id,
-            'message' => "📢 [Pemberitahuan Penyesuaian Lowongan]\n\nHalo {$job->employer->name}, Administrator telah memperbarui rincian lowongan kerja Anda \"{$job->title}\" pada {$nowFormatted} WIB demi menjamin kesesuaian informasi dan standar kepatuhan kerja layak.\n\nSilakan periksa detailnya pada menu Lowongan Saya. Anda dapat membalas pesan ini jika membutuhkan konfirmasi lebih lanjut.",
-            'is_read' => false,
+            // Send ChatMessage to employer
+            $admin = $request->user();
+            $categoryLabel = $job->admin_warning_category_label;
+            $nowFormatted = now()->translatedFormat('d F Y, H:i');
+            $closeInfo = $alsoClose
+                ? "\n\n⚠️ Lowongan ini juga telah dinonaktifkan/ditutup sementara hingga perbaikan dilakukan dan disetujui."
+                : "\n\nSilakan tinjau dan perbarui rincian lowongan kerja Anda pada menu Lowongan Kerja Saya agar sesuai dengan standar kerja layak.";
+
+            ChatMessage::create([
+                'sender_id' => $admin->id,
+                'receiver_id' => $job->employer_id,
+                'message' => "⚠️ [Peringatan Kepatuhan Lowongan Kerja]\n\nHalo {$job->employer->name}, Administrator telah menerbitkan peringatan untuk lowongan \"{$job->title}\" pada {$nowFormatted} WIB.\n\nKategori: {$categoryLabel}\nCatatan Admin: \"{$validated['warning_message']}\"{$closeInfo}\n\nAnda dapat membalas pesan ini atau mengedit lowongan Anda untuk memenuhi kepatuhan.",
+                'is_read' => false,
+            ]);
+        }
+
+        $notice = $alsoClose
+            ? 'Peringatan kepatuhan berhasil dikirimkan dan status lowongan telah ditutup sementara.'
+            : 'Peringatan kepatuhan berhasil dikirimkan kepada Mitra UMKM.';
+
+        return redirect()->route('admin.jobs.show', $job)->with('success', $notice);
+    }
+
+    public function dismissWarning(Request $request, Job $job): RedirectResponse
+    {
+        $job->update([
+            'admin_warning_category' => null,
+            'admin_warning_message' => null,
+            'admin_warned_at' => null,
         ]);
 
-        return redirect()->route('admin.jobs.show', $job)->with('success', 'Informasi lowongan berhasil diperbarui oleh administrator.');
+        if ($job->employer) {
+            $admin = $request->user();
+            $nowFormatted = now()->translatedFormat('d F Y, H:i');
+            ChatMessage::create([
+                'sender_id' => $admin->id,
+                'receiver_id' => $job->employer_id,
+                'message' => "✅ [Peringatan Kepatuhan Dicabut]\n\nHalo {$job->employer->name}, catatan peringatan kepatuhan untuk lowongan \"{$job->title}\" telah dicabut oleh Administrator pada {$nowFormatted} WIB. Terima kasih atas kepatuhan Anda terhadap standar kerja layak.",
+                'is_read' => false,
+            ]);
+        }
+
+        return redirect()->route('admin.jobs.show', $job)->with('success', 'Peringatan kepatuhan untuk lowongan ini telah dicabut.');
     }
 
     public function close(Request $request, Job $job): RedirectResponse

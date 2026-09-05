@@ -120,7 +120,6 @@ class AllPagesRenderingSmokeTest extends TestCase
             ->assertDontSee('Master data');
         $this->actingAs($admin)->get(route('admin.jobs.index'))->assertOk();
         $this->actingAs($admin)->get(route('admin.jobs.show', $job))->assertOk();
-        $this->actingAs($admin)->get(route('admin.jobs.edit', $job))->assertOk();
         $this->actingAs($admin)->get(route('admin.users.index'))->assertOk();
         $this->actingAs($admin)->get(route('admin.users.show', $employer))->assertOk();
         $this->actingAs($admin)->get(route('admin.users.show', $jobseeker))->assertOk();

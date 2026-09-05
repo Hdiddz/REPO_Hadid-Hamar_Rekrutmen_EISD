@@ -27,60 +27,80 @@ class AdminJobManagementTest extends TestCase
             ->assertSee('Kreatif');
     }
 
-    public function test_admin_can_edit_job_details(): void
+    public function test_admin_can_issue_compliance_warning_to_job_and_employer_receives_chat_and_notification(): void
     {
         $admin = User::factory()->admin()->create();
-        $category = Category::factory()->create();
-        $job = Job::factory()->create(['title' => 'Judul Awal']);
+        $job = Job::factory()->create(['title' => 'Staff Cuci Piring']);
 
-        $response = $this->actingAs($admin)->put(route('admin.jobs.update', $job), [
-            'category_id' => $category->id,
-            'title' => 'Judul Diperbarui Admin',
-            'description' => 'Deskripsi pekerjaan yang telah diperbarui admin untuk memenuhi standar.',
-            'location' => 'Kota Bandung',
-            'salary_type' => 'monthly',
-            'salary_amount' => 4500000,
-            'work_hours_per_day' => 8,
-            'status' => 'open',
+        $response = $this->actingAs($admin)->post(route('admin.jobs.warn', $job), [
+            'warning_category' => 'salary_not_standard',
+            'warning_message' => 'Upah yang dicantumkan berada di bawah batas minimum kelayakan regional.',
+            'also_close_job' => 0,
         ]);
 
         $response->assertRedirect(route('admin.jobs.show', $job))
             ->assertSessionHas('success');
 
         $job->refresh();
-        $this->assertSame('Judul Diperbarui Admin', $job->title);
-        $this->assertSame('Kota Bandung', $job->location);
+        $this->assertSame('salary_not_standard', $job->admin_warning_category);
+        $this->assertSame('Upah yang dicantumkan berada di bawah batas minimum kelayakan regional.', $job->admin_warning_message);
+        $this->assertNotNull($job->admin_warned_at);
+        $this->assertTrue($job->hasAdminWarning());
+        $this->assertSame('open', $job->status);
 
         $this->assertDatabaseHas('chat_messages', [
             'sender_id' => $admin->id,
             'receiver_id' => $job->employer_id,
         ]);
+
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $job->employer_id,
+            'notifiable_type' => User::class,
+        ]);
     }
 
-    public function test_admin_cannot_set_job_hours_above_eight(): void
+    public function test_admin_can_issue_warning_and_simultaneously_close_job(): void
     {
         $admin = User::factory()->admin()->create();
-        $category = Category::factory()->create();
-        $job = Job::factory()->create(['work_hours_per_day' => 8]);
+        $job = Job::factory()->create(['status' => 'open']);
 
-        $response = $this->actingAs($admin)
-            ->from(route('admin.jobs.edit', $job))
-            ->put(route('admin.jobs.update', $job), [
-                'category_id' => $category->id,
-                'title' => 'Lowongan Dengan Jam Tidak Etis',
-                'description' => 'Deskripsi pekerjaan yang cukup panjang untuk melewati validasi minimum.',
-                'location' => 'Bandung',
-                'salary_type' => 'monthly',
-                'salary_amount' => 4500000,
-                'work_hours_per_day' => 9,
-                'status' => 'open',
-            ]);
+        $response = $this->actingAs($admin)->post(route('admin.jobs.warn', $job), [
+            'warning_category' => 'excessive_hours',
+            'warning_message' => 'Jam kerja tertera melebihi standar etis 8 jam per hari.',
+            'also_close_job' => 1,
+        ]);
 
-        $response->assertRedirect(route('admin.jobs.edit', $job))
-            ->assertSessionHasErrors([
-                'work_hours_per_day' => 'Jam kerja harus berada di antara 1 sampai 8 jam per hari.',
-            ]);
-        $this->assertSame(8, $job->fresh()->work_hours_per_day);
+        $response->assertRedirect(route('admin.jobs.show', $job))
+            ->assertSessionHas('success');
+
+        $job->refresh();
+        $this->assertSame('excessive_hours', $job->admin_warning_category);
+        $this->assertSame('closed', $job->status);
+        $this->assertTrue($job->closed_by_admin);
+        $this->assertStringContainsString('Peringatan Kepatuhan', (string) $job->closed_reason);
+    }
+
+    public function test_admin_can_dismiss_warning(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $job = Job::factory()->create([
+            'admin_warning_category' => 'misleading_info',
+            'admin_warning_message' => 'Deskripsi tidak jelas.',
+            'admin_warned_at' => now(),
+        ]);
+
+        $this->assertTrue($job->hasAdminWarning());
+
+        $response = $this->actingAs($admin)->delete(route('admin.jobs.dismissWarning', $job));
+
+        $response->assertRedirect(route('admin.jobs.show', $job))
+            ->assertSessionHas('success');
+
+        $job->refresh();
+        $this->assertNull($job->admin_warning_category);
+        $this->assertNull($job->admin_warning_message);
+        $this->assertNull($job->admin_warned_at);
+        $this->assertFalse($job->hasAdminWarning());
     }
 
     public function test_admin_can_close_and_reopen_job_with_reason(): void

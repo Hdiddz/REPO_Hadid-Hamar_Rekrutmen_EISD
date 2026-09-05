@@ -14,15 +14,10 @@
         <span class="hidden sm:inline">Kembali</span>
     </a>
 
-    <a href="{{ route('admin.jobs.edit', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-action-btn !px-2.5 sm:!px-3" title="Edit Lowongan">
-        <span class="material-symbols-outlined text-[17px]">edit</span>
-        <span>Edit<span class="hidden sm:inline"> Lowongan</span></span>
-    </a>
-
     @if($job->status === 'open')
-        <button type="button" data-job-id="{{ $job->id }}" data-job-title="{{ $job->title }}" onclick="openCloseJobModal(this.dataset.jobId, this.dataset.jobTitle)" class="portal-action-btn-warning !px-2.5 sm:!px-3" title="Tutup Lowongan">
-            <span class="material-symbols-outlined text-[17px]">lock</span>
-            <span>Tutup<span class="hidden sm:inline"> Lowongan</span></span>
+        <button type="button" onclick="openComplianceActionModal()" class="portal-action-btn-warning !px-2.5 sm:!px-3 cursor-pointer" title="Tindak Kepatuhan atau Tutup Lowongan">
+            <span class="material-symbols-outlined text-[17px]">gavel</span>
+            <span>Tindak<span class="hidden sm:inline"> Kepatuhan</span></span>
         </button>
     @else
         <form action="{{ route('admin.jobs.reopen', $job) }}" method="POST">
@@ -41,6 +36,42 @@
 @endsection
 
 @section('content')
+    <!-- Warning Banner if Job has Admin Compliance Warning -->
+    @if($job->hasAdminWarning())
+        <div class="mb-6 rounded-2xl bg-amber-50 p-4 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 text-2xl shrink-0 mt-0.5">warning</span>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h3 class="font-bold text-sm text-amber-900 dark:text-amber-200">Catatan Peringatan Kepatuhan Aktif</h3>
+                        <span class="portal-badge bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 text-[11px]">
+                            {{ $job->admin_warning_category_label }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-amber-800 dark:text-amber-300 mt-1">
+                        <strong>Catatan Admin:</strong> "{{ $job->admin_warning_message }}"
+                    </p>
+                    <p class="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
+                        Diterbitkan pada {{ $job->admin_warned_at?->translatedFormat('d F Y, H:i') }} WIB &bull; Telah dinotifikasikan dan dikirimkan via obrolan resmi ke Mitra UMKM.
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                <button type="button" onclick="openComplianceActionModal('warning_only')" class="portal-button-secondary !py-1.5 !px-3 text-xs !bg-white dark:!bg-slate-900 cursor-pointer">
+                    Ubah Peringatan
+                </button>
+                <form action="{{ route('admin.jobs.dismissWarning', $job) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mencabut catatan peringatan kepatuhan untuk lowongan ini?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="inline-flex items-center gap-1 py-1.5 px-3 text-xs font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition cursor-pointer">
+                        <span class="material-symbols-outlined text-[15px]">check_circle</span>
+                        <span>Cabut Peringatan</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    @endif
+
     <!-- Closure Banner if Closed by Admin -->
     @if($job->isClosedByAdmin())
         <div class="mb-6 rounded-2xl bg-rose-50 p-4 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/50 flex items-start gap-3">
@@ -381,61 +412,138 @@
 @endsection
 
 @push('modals')
-    <!-- ================= MODAL TUTUP LOWONGAN ================= -->
-    <div id="closeJobModal" class="fixed inset-0 z-[100] hidden bg-slate-950/60 backdrop-blur-sm p-4 overflow-y-auto flex items-center justify-center" onclick="if(event.target === this) closeCloseJobModal()">
-        <div class="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl shadow-slate-950/20 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop">
-            <div class="flex items-start justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800">
-                <div class="flex items-center gap-3.5">
-                    <div class="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/40 flex items-center justify-center shrink-0">
-                        <span class="material-symbols-outlined text-[24px]">lock</span>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight" id="closeJobModalTitle">Tutup Lowongan Pekerjaan</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Nonaktifkan penerimaan lamaran baru untuk lowongan ini.</p>
-                    </div>
+    <!-- ================= MODAL TINDAK KEPATUHAN & PENGAWASAN LOWONGAN ================= -->
+    <div id="complianceActionModal" class="fixed inset-0 z-[100] hidden bg-slate-950/60 backdrop-blur-sm p-4 overflow-y-auto flex items-center justify-center" onclick="if(event.target === this) closeComplianceActionModal()">
+        <div class="relative w-full max-w-xl rounded-3xl bg-white p-6 sm:p-7 shadow-2xl shadow-slate-950/20 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 animate-modal-pop">
+            
+            {{-- Modal Header --}}
+            <div class="flex items-start gap-3.5 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[24px]">gavel</span>
                 </div>
-                <button type="button" onclick="closeCloseJobModal()" class="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-slate-800 flex items-center justify-center transition">
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
+                        Tindak Kepatuhan Lowongan
+                    </h3>
+                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed truncate">
+                        {{ $job->title }} &bull; <span class="font-medium text-slate-700 dark:text-slate-300">{{ $job->employer->business_name ?: $job->employer->name }}</span>
+                    </p>
+                </div>
+                <button type="button" onclick="closeComplianceActionModal()" class="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-slate-800 flex items-center justify-center transition shrink-0 cursor-pointer" aria-label="Tutup">
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
             </div>
 
-            <form id="closeJobForm" method="POST" class="mt-5 space-y-4">
+            {{-- Mode Selector Cards --}}
+            <div class="mt-4">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                    Pilih Tindakan Pengawasan:
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <label id="modeCardWarning" class="relative flex flex-col p-3 rounded-2xl border cursor-pointer transition select-none bg-amber-50/70 border-amber-500 dark:bg-amber-950/40 dark:border-amber-600">
+                        <input type="radio" name="compliance_action_type" value="warning_only" checked onchange="handleComplianceActionTypeChange(this.value)" class="sr-only">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+                            <span class="material-symbols-outlined text-[16px] text-amber-600">warning</span>
+                            <span>Peringatan</span>
+                        </div>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                            Tegur mitra untuk revisi. Lowongan tetap buka.
+                        </span>
+                    </label>
+
+                    <label id="modeCardWarningClose" class="relative flex flex-col p-3 rounded-2xl border cursor-pointer transition select-none bg-slate-50/70 dark:bg-slate-850 border-slate-200 dark:border-slate-700">
+                        <input type="radio" name="compliance_action_type" value="warning_and_close" onchange="handleComplianceActionTypeChange(this.value)" class="sr-only">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+                            <span class="material-symbols-outlined text-[16px] text-amber-600">lock_clock</span>
+                            <span>Peringatan &amp; Tutup</span>
+                        </div>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                            Tegur mitra dan nonaktifkan lowongan sementara.
+                        </span>
+                    </label>
+
+                    <label id="modeCardClose" class="relative flex flex-col p-3 rounded-2xl border cursor-pointer transition select-none bg-slate-50/70 dark:bg-slate-850 border-slate-200 dark:border-slate-700">
+                        <input type="radio" name="compliance_action_type" value="close_only" onchange="handleComplianceActionTypeChange(this.value)" class="sr-only">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+                            <span class="material-symbols-outlined text-[16px] text-slate-600">lock</span>
+                            <span>Tutup Saja</span>
+                        </div>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                            Tutup lowongan dengan alasan umum penutupan.
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            {{-- Dynamic Form --}}
+            <form id="complianceActionForm" method="POST" action="{{ route('admin.jobs.warn', $job) }}" class="mt-4 space-y-4">
                 @csrf
-                <div>
-                    <label for="close_reason" class="portal-label text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <input type="hidden" id="action_also_close_job" name="also_close_job" value="0">
+
+                {{-- Group A: Warning Fields (shown for warning_only and warning_and_close) --}}
+                <div id="complianceWarningFields" class="space-y-4">
+                    <div>
+                        <label for="action_warning_category" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                            Kategori Pelanggaran Kepatuhan <span class="text-rose-500">*</span>
+                        </label>
+                        <select id="action_warning_category" name="warning_category" required class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-xs font-medium text-slate-900 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none transition dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:focus:bg-slate-950">
+                            <option value="salary_not_standard" {{ old('warning_category', $job->admin_warning_category) === 'salary_not_standard' ? 'selected' : '' }}>Upah Tidak Sesuai / Di Bawah Standar Kelayakan</option>
+                            <option value="excessive_hours" {{ old('warning_category', $job->admin_warning_category) === 'excessive_hours' ? 'selected' : '' }}>Jam Kerja Melebihi Batas Etis (>8 Jam/Hari)</option>
+                            <option value="misleading_info" {{ old('warning_category', $job->admin_warning_category) === 'misleading_info' ? 'selected' : '' }}>Informasi Lowongan Tidak Jelas / Menyesatkan</option>
+                            <option value="unethical_conditions" {{ old('warning_category', $job->admin_warning_category) === 'unethical_conditions' ? 'selected' : '' }}>Persyaratan Kerja Tidak Wajar / Diskriminatif</option>
+                            <option value="other" {{ old('warning_category', $job->admin_warning_category) === 'other' ? 'selected' : '' }}>Lainnya / Pelanggaran Standar Kepatuhan Lainnya</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="action_warning_message" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                            Catatan Peringatan &amp; Saran Perbaikan <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea id="action_warning_message" name="warning_message" rows="3" required minlength="5" maxlength="2000" placeholder="Tuliskan bagian mana yang tidak sesuai standar dan arahan perbaikan untuk Mitra UMKM..." class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none transition dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:focus:bg-slate-950 leading-relaxed">{{ old('warning_message', $job->admin_warning_message) }}</textarea>
+                        <p class="text-[11px] text-slate-400 mt-1">Pesan ini otomatis dikirimkan ke obrolan resmi dan notifikasi akun Mitra UMKM.</p>
+                    </div>
+                </div>
+
+                {{-- Group B: Close Reason (shown ONLY for close_only) --}}
+                <div id="complianceCloseReasonField" class="hidden space-y-1.5">
+                    <label for="action_close_reason" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
                         Alasan Penutupan Lowongan <span class="text-rose-500">*</span>
                     </label>
-                    <textarea id="close_reason" name="close_reason" rows="3" required placeholder="Jelaskan alasan penutupan sementara atau evaluasi kepatuhan etis..." class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none transition dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:focus:bg-slate-950"></textarea>
-                    <p class="mt-1 text-[11px] text-slate-400">Alasan ini akan tercatat dalam log audit dan tampil pada detail lowongan.</p>
+                    <textarea id="action_close_reason" name="close_reason" rows="3" maxlength="1000" placeholder="Jelaskan alasan penutupan lowongan kerja ini..." class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none transition dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:focus:bg-slate-950 leading-relaxed"></textarea>
+                    <p class="text-[11px] text-slate-400">Alasan ini akan tercatat dalam log audit dan dikirimkan ke mitra.</p>
                 </div>
 
-                <div>
-                    <label for="job_duration_type" class="portal-label text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        Durasi Penutupan <span class="text-rose-500">*</span>
-                    </label>
-                    <select id="job_duration_type" name="duration_type" required onchange="handleJobDurationChange(this.value)" class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none transition dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:focus:bg-slate-950">
-                        <option value="7_days">7 Hari (1 Minggu)</option>
-                        <option value="14_days" selected>14 Hari (2 Minggu)</option>
-                        <option value="30_days">30 Hari (1 Bulan)</option>
-                        <option value="custom">Kustom Jumlah Hari...</option>
-                        <option value="permanent">Permanen (Sampai dibuka manual)</option>
-                    </select>
+                {{-- Group C: Duration Fields (shown for warning_and_close and close_only) --}}
+                <div id="complianceDurationFields" class="hidden space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div>
+                        <label for="action_duration_type" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                            Durasi Penutupan Lowongan <span class="text-rose-500">*</span>
+                        </label>
+                        <select id="action_duration_type" name="duration_type" onchange="handleActionDurationChange(this.value)" class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-xs font-medium text-slate-900 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none transition dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:focus:bg-slate-950">
+                            <option value="7_days">7 Hari (1 Minggu)</option>
+                            <option value="14_days" selected>14 Hari (2 Minggu)</option>
+                            <option value="30_days">30 Hari (1 Bulan)</option>
+                            <option value="custom">Kustom Jumlah Hari...</option>
+                            <option value="permanent">Permanen (Sampai dibuka manual)</option>
+                        </select>
+                    </div>
+
+                    <div id="actionCustomDaysContainer" class="hidden">
+                        <label for="action_custom_days" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            Jumlah Hari Kustom <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="number" id="action_custom_days" name="custom_days" min="1" max="3650" placeholder="Contoh: 21" class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-2.5 text-xs text-slate-900 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none transition dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100">
+                    </div>
                 </div>
 
-                <div id="jobCustomDaysContainer" class="hidden">
-                    <label for="job_custom_days" class="portal-label text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        Jumlah Hari Kustom <span class="text-rose-500">*</span>
-                    </label>
-                    <input type="number" id="job_custom_days" name="custom_days" min="1" max="3650" placeholder="Contoh: 21" class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-3 text-sm text-slate-900 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none transition dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100">
-                </div>
-
+                {{-- Modal Footer Buttons --}}
                 <div class="pt-4 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" onclick="closeCloseJobModal()" class="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition">
+                    <button type="button" onclick="closeComplianceActionModal()" class="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">
                         Batal
                     </button>
-                    <button type="submit" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-600 px-5 text-xs sm:text-sm font-semibold text-white shadow-sm shadow-amber-600/25 hover:bg-amber-700 active:translate-y-px transition">
-                        <span class="material-symbols-outlined text-[18px]">lock</span>
-                        Tutup Lowongan Ini
+                    <button type="submit" id="complianceActionSubmitBtn" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-600 px-5 text-xs sm:text-sm font-semibold text-white shadow-sm shadow-amber-600/25 hover:bg-amber-700 active:translate-y-px transition cursor-pointer">
+                        <span class="material-symbols-outlined text-[18px]">send</span>
+                        <span id="complianceActionSubmitBtnText">Kirimkan Peringatan</span>
                     </button>
                 </div>
             </form>
@@ -705,9 +813,103 @@
         }
     }
 
-    function handleJobDurationChange(val) {
-        const container = document.getElementById('jobCustomDaysContainer');
-        const input = document.getElementById('job_custom_days');
+    const complianceWarnUrl = "{{ route('admin.jobs.warn', $job) }}";
+    const complianceCloseUrl = "{{ route('admin.jobs.close', $job) }}";
+
+    function openComplianceActionModal(initialMode = 'warning_only') {
+        const modal = document.getElementById('complianceActionModal');
+        if (modal) {
+            const radio = document.querySelector(`input[name="compliance_action_type"][value="${initialMode}"]`);
+            if (radio) {
+                radio.checked = true;
+            }
+            handleComplianceActionTypeChange(initialMode);
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeComplianceActionModal() {
+        const modal = document.getElementById('complianceActionModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function handleComplianceActionTypeChange(mode) {
+        const form = document.getElementById('complianceActionForm');
+        const warningFields = document.getElementById('complianceWarningFields');
+        const closeReasonField = document.getElementById('complianceCloseReasonField');
+        const durationFields = document.getElementById('complianceDurationFields');
+        const alsoCloseInput = document.getElementById('action_also_close_job');
+        const submitBtnText = document.getElementById('complianceActionSubmitBtnText');
+        const warningCategory = document.getElementById('action_warning_category');
+        const warningMessage = document.getElementById('action_warning_message');
+        const closeReason = document.getElementById('action_close_reason');
+
+        const cardWarning = document.getElementById('modeCardWarning');
+        const cardWarningClose = document.getElementById('modeCardWarningClose');
+        const cardClose = document.getElementById('modeCardClose');
+
+        const activeClasses = ['bg-amber-50/70', 'border-amber-500', 'dark:bg-amber-950/40', 'dark:border-amber-600'];
+        const inactiveClasses = ['bg-slate-50/70', 'border-slate-200', 'dark:bg-slate-850', 'dark:border-slate-700'];
+
+        [cardWarning, cardWarningClose, cardClose].forEach(card => {
+            if (card) {
+                card.classList.remove(...activeClasses);
+                card.classList.add(...inactiveClasses);
+            }
+        });
+
+        if (mode === 'warning_only') {
+            if (cardWarning) {
+                cardWarning.classList.remove(...inactiveClasses);
+                cardWarning.classList.add(...activeClasses);
+            }
+            form.action = complianceWarnUrl;
+            alsoCloseInput.value = '0';
+            warningFields.classList.remove('hidden');
+            closeReasonField.classList.add('hidden');
+            durationFields.classList.add('hidden');
+            submitBtnText.textContent = 'Kirimkan Peringatan';
+            warningCategory.required = true;
+            warningMessage.required = true;
+            closeReason.required = false;
+        } else if (mode === 'warning_and_close') {
+            if (cardWarningClose) {
+                cardWarningClose.classList.remove(...inactiveClasses);
+                cardWarningClose.classList.add(...activeClasses);
+            }
+            form.action = complianceWarnUrl;
+            alsoCloseInput.value = '1';
+            warningFields.classList.remove('hidden');
+            closeReasonField.classList.add('hidden');
+            durationFields.classList.remove('hidden');
+            submitBtnText.textContent = 'Kirim Peringatan & Tutup';
+            warningCategory.required = true;
+            warningMessage.required = true;
+            closeReason.required = false;
+        } else if (mode === 'close_only') {
+            if (cardClose) {
+                cardClose.classList.remove(...inactiveClasses);
+                cardClose.classList.add(...activeClasses);
+            }
+            form.action = complianceCloseUrl;
+            alsoCloseInput.value = '0';
+            warningFields.classList.add('hidden');
+            closeReasonField.classList.remove('hidden');
+            durationFields.classList.remove('hidden');
+            submitBtnText.textContent = 'Tutup Lowongan Ini';
+            warningCategory.required = false;
+            warningMessage.required = false;
+            closeReason.required = true;
+        }
+    }
+
+    function handleActionDurationChange(val) {
+        const container = document.getElementById('actionCustomDaysContainer');
+        const input = document.getElementById('action_custom_days');
         if (container) {
             if (val === 'custom') {
                 container.classList.remove('hidden');
@@ -719,9 +921,23 @@
         }
     }
 
+    // Backwards-compatible aliases
+    function openWarnJobModal() {
+        openComplianceActionModal('warning_only');
+    }
+    function closeWarnJobModal() {
+        closeComplianceActionModal();
+    }
+    function openCloseJobModal(jobId, jobTitle) {
+        openComplianceActionModal('close_only');
+    }
+    function closeCloseJobModal() {
+        closeComplianceActionModal();
+    }
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            closeCloseJobModal();
+            closeComplianceActionModal();
             closeDeleteJobModal();
             closeApplicantProfileModal();
         }

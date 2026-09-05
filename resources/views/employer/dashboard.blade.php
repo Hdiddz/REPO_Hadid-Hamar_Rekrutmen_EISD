@@ -47,9 +47,36 @@
                             @else
                                 <span class="rounded-md px-2 py-1 text-[11px] font-bold {{ $job->status === 'open' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">{{ $job->status === 'open' ? 'Dibuka' : 'Ditutup' }}</span>
                             @endif
+                            @if($job->hasAdminWarning())
+                                <span class="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-2 py-1 text-[11px] font-bold text-amber-700 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-300">
+                                    <span class="material-symbols-outlined text-[13px]">warning</span>
+                                    Peringatan Kepatuhan
+                                </span>
+                            @endif
                         </div>
                         <h3 class="mt-2 text-base font-bold text-slate-950 dark:text-white">{{ $job->title }}</h3>
                         <p class="mt-1 text-xs text-slate-500">{{ $job->location }} · Rp {{ number_format($job->salary_amount, 0, ',', '.') }} / {{ $job->salary_type === 'monthly' ? 'bulan' : 'hari' }} · {{ $job->applications_count }} pelamar</p>
+                        @if($job->hasAdminWarning())
+                            <div class="mt-2.5 rounded-xl bg-amber-50/90 border border-amber-200/90 p-3 dark:bg-amber-950/40 dark:border-amber-900/60 text-xs">
+                                <div class="flex items-start gap-2.5">
+                                    <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 text-lg shrink-0 mt-0.5">warning</span>
+                                    <div class="space-y-1">
+                                        <div class="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2 flex-wrap">
+                                            <span>Catatan Administrator:</span>
+                                            <span class="px-2 py-0.5 rounded-md bg-amber-200/70 text-amber-900 dark:bg-amber-900 dark:text-amber-200 text-[10px] font-bold">
+                                                {{ $job->admin_warning_category_label }}
+                                            </span>
+                                        </div>
+                                        <p class="text-amber-800 dark:text-amber-300 italic leading-relaxed">
+                                            "{{ $job->admin_warning_message }}"
+                                        </p>
+                                        <p class="text-[11px] text-amber-700 dark:text-amber-400 pt-0.5">
+                                            Silakan klik <strong>Edit</strong> untuk menyesuaikan informasi lowongan Anda agar memenuhi standar kerja yang etis dan layak.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                         @if($job->isClosedByAdmin() && $job->closed_reason)
                             <p class="mt-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium line-clamp-1" title="{{ $job->closed_reason }}">
                                 <span class="font-bold">Catatan Pengawas:</span> {{ $job->closed_reason }}

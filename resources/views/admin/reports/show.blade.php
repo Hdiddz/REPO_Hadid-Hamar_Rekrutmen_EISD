@@ -316,13 +316,10 @@
                     </div>
                 </div>
 
-                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                    <a href="{{ route('admin.jobs.show', ['job' => $report->job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1.5 !px-3 text-xs flex-1 justify-center !text-indigo-700 hover:!bg-indigo-50 hover:!border-indigo-300 dark:!text-indigo-300 dark:hover:!bg-indigo-950/50 transition">
+                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <a href="{{ route('admin.jobs.show', ['job' => $report->job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1.5 !px-3 text-xs w-full justify-center !text-indigo-700 hover:!bg-indigo-50 hover:!border-indigo-300 dark:!text-indigo-300 dark:hover:!bg-indigo-950/50 transition">
                         <span class="material-symbols-outlined text-[16px]">visibility</span>
                         <span>Buka Halaman Lowongan</span>
-                    </a>
-                    <a href="{{ route('admin.jobs.edit', ['job' => $report->job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1.5 !px-2.5 text-xs text-slate-600 hover:text-indigo-700 dark:text-slate-400 dark:hover:text-indigo-300 transition" title="Edit lowongan ini">
-                        <span class="material-symbols-outlined text-[16px]">edit</span>
                     </a>
                 </div>
             </div>

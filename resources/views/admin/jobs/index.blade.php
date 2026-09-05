@@ -126,6 +126,15 @@
                                     Ditutup Mitra
                                 </span>
                             @endif
+
+                            @if($job->hasAdminWarning())
+                                <div class="mt-1">
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800" title="Catatan: {{ $job->admin_warning_message }}">
+                                        <span class="material-symbols-outlined text-[12px]">warning</span>
+                                        Peringatan
+                                    </span>
+                                </div>
+                            @endif
                         </td>
                         <td class="whitespace-nowrap">
                             <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}#pelamar" class="inline-flex items-center gap-1 text-xs font-bold text-brand-700 dark:text-brand-300 hover:underline">
@@ -136,13 +145,8 @@
                         <td class="whitespace-nowrap text-right">
                             <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
                                 <!-- Detail Button -->
-                                <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2 text-xs" title="Lihat detail lowongan dan pelamar">
+                                <a href="{{ route('admin.jobs.show', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2.5 text-xs" title="Lihat detail lowongan dan pelamar">
                                     Detail
-                                </a>
-
-                                <!-- Edit Button -->
-                                <a href="{{ route('admin.jobs.edit', ['job' => $job, 'return_to' => url()->full()]) }}" class="portal-button-secondary !py-1 !px-2 text-xs" title="Edit informasi lowongan">
-                                    <span class="material-symbols-outlined text-[16px]">edit</span>
                                 </a>
 
                                 <!-- Close / Reopen Button -->
