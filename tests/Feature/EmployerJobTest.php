@@ -569,4 +569,65 @@ class EmployerJobTest extends TestCase
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertTrue(session()->has('error'));
     }
+
+    public function test_jobs_closed_by_employer_are_visible_on_jobs_index_with_closed_badge(): void
+    {
+        $employer = User::factory()->employer()->create();
+        $jobseeker = User::factory()->jobseeker()->create();
+
+        $openJob = Job::factory()->for($employer, 'employer')->create([
+            'title' => 'Lowongan Barista Aktif',
+            'status' => 'open',
+            'closed_by_admin' => false,
+        ]);
+
+        $closedByMitraJob = Job::factory()->for($employer, 'employer')->create([
+            'title' => 'Lowongan Kasir Ditutup Mitra',
+            'status' => 'closed',
+            'closed_by_admin' => false,
+        ]);
+
+        $closedByAdminJob = Job::factory()->for($employer, 'employer')->create([
+            'title' => 'Lowongan Dibekukan Admin Pengawas',
+            'status' => 'closed',
+            'closed_by_admin' => true,
+        ]);
+
+        $response = $this->actingAs($jobseeker)->get(route('jobs.index'));
+
+        $response->assertOk()
+            ->assertSee($openJob->title)
+            ->assertSee($closedByMitraJob->title)
+            ->assertSee('Ditutup Mitra')
+            ->assertDontSee($closedByAdminJob->title);
+    }
+
+    public function test_jobs_index_can_filter_by_status(): void
+    {
+        $employer = User::factory()->employer()->create();
+
+        $openJob = Job::factory()->for($employer, 'employer')->create([
+            'title' => 'Lowongan Programmer Aktif',
+            'status' => 'open',
+            'closed_by_admin' => false,
+        ]);
+
+        $closedJob = Job::factory()->for($employer, 'employer')->create([
+            'title' => 'Lowongan Desainer Sudah Tutup',
+            'status' => 'closed',
+            'closed_by_admin' => false,
+        ]);
+
+        // Filter: Open only
+        $openResponse = $this->get(route('jobs.index', ['status' => 'open']));
+        $openResponse->assertOk()
+            ->assertSee($openJob->title)
+            ->assertDontSee($closedJob->title);
+
+        // Filter: Closed only
+        $closedResponse = $this->get(route('jobs.index', ['status' => 'closed']));
+        $closedResponse->assertOk()
+            ->assertSee($closedJob->title)
+            ->assertDontSee($openJob->title);
+    }
 }

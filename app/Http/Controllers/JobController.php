@@ -15,8 +15,23 @@ class JobController extends Controller
      */
     public function index(Request $request): View
     {
+        $status = $request->string('status')->toString();
+
         $jobs = Job::query()
-            ->where('status', 'open')
+            ->where(function ($query) use ($status): void {
+                if ($status === 'open') {
+                    $query->where('status', 'open');
+                } elseif ($status === 'closed') {
+                    $query->where('status', 'closed')
+                        ->where('closed_by_admin', false);
+                } else {
+                    $query->where('status', 'open')
+                        ->orWhere(function ($sub): void {
+                            $sub->where('status', 'closed')
+                                ->where('closed_by_admin', false);
+                        });
+                }
+            })
             ->with(['category:id,name', 'employer:id,name,business_name', 'skills:id,name'])
             ->withCount(['applications', 'workplacePhotos'])
             ->when($request->filled('q'), function ($query) use ($request): void {
@@ -28,6 +43,7 @@ class JobController extends Controller
             })
             ->when($request->integer('category'), fn ($query, $category) => $query->where('category_id', $category))
             ->when($request->integer('skill'), fn ($query, $skill) => $query->whereHas('skills', fn ($skillQuery) => $skillQuery->whereKey($skill)))
+            ->orderByRaw("CASE WHEN status = 'open' THEN 0 ELSE 1 END")
             ->latest('id')
             ->paginate(9)
             ->withQueryString();
