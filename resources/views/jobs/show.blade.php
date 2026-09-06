@@ -513,12 +513,13 @@
 
                             <h2 class="text-xl font-bold text-slate-950 dark:text-white">Ajukan Lamaran Ulang</h2>
                             <p class="mt-1 text-sm text-slate-500">Resume disimpan privat dan hanya dapat diunduh mitra pemilik lowongan serta admin.</p>
-                            <form action="{{ route('applications.store', $job) }}" method="POST" enctype="multipart/form-data" class="mt-6 space-y-5">
+                            <form id="jobReapplyForm" action="{{ route('applications.store', $job) }}" method="POST" enctype="multipart/form-data" class="mt-6 space-y-5">
                                 @csrf
                                 <div>
                                     <label for="resume_reapply" class="mb-2 block text-sm font-bold">Resume PDF Baru</label>
                                     <input id="resume_reapply" name="resume" type="file" accept="application/pdf,.pdf" required class="block w-full rounded-xl border border-slate-200 bg-slate-50 text-xs file:mr-3 file:border-0 file:bg-brand-700 file:px-3 file:py-3 file:font-bold file:text-white dark:border-slate-700 dark:bg-slate-950">
                                     <p class="mt-1.5 text-xs text-slate-400">Maksimal 2 MB.</p>
+                                    <div id="resume_reapply-feedback" class="mt-2 hidden"></div>
                                     @error('resume')
                                         <p class="mt-1.5 text-xs font-semibold text-rose-600" role="alert">{{ $message }}</p>
                                     @enderror
@@ -613,8 +614,8 @@
                         @endif
                     @elseif($job->status === 'open')
                         <h2 class="text-xl font-bold">Ajukan lamaran</h2><p class="mt-1 text-sm text-slate-500">Resume disimpan privat dan hanya dapat diunduh mitra pemilik lowongan serta admin.</p>
-                        <form action="{{ route('applications.store', $job) }}" method="POST" enctype="multipart/form-data" class="mt-6 space-y-5">@csrf
-                            <div><label for="resume" class="mb-2 block text-sm font-bold">Resume PDF</label><input id="resume" name="resume" type="file" accept="application/pdf,.pdf" required class="block w-full rounded-xl border border-slate-200 bg-slate-50 text-xs file:mr-3 file:border-0 file:bg-brand-700 file:px-3 file:py-3 file:font-bold file:text-white dark:border-slate-700 dark:bg-slate-950"><p class="mt-1.5 text-xs text-slate-400">Maksimal 2 MB.</p>@error('resume')<p class="mt-1.5 text-xs font-semibold text-rose-600" role="alert">{{ $message }}</p>@enderror</div>
+                        <form id="jobApplicationForm" action="{{ route('applications.store', $job) }}" method="POST" enctype="multipart/form-data" class="mt-6 space-y-5">@csrf
+                            <div><label for="resume" class="mb-2 block text-sm font-bold">Resume PDF</label><input id="resume" name="resume" type="file" accept="application/pdf,.pdf" required class="block w-full rounded-xl border border-slate-200 bg-slate-50 text-xs file:mr-3 file:border-0 file:bg-brand-700 file:px-3 file:py-3 file:font-bold file:text-white dark:border-slate-700 dark:bg-slate-950"><p class="mt-1.5 text-xs text-slate-400">Maksimal 2 MB.</p><div id="resume-feedback" class="mt-2 hidden"></div>@error('resume')<p class="mt-1.5 text-xs font-semibold text-rose-600" role="alert">{{ $message }}</p>@enderror</div>
                             <div><label for="note" class="mb-2 block text-sm font-bold">Catatan singkat</label><textarea id="note" name="note" rows="4" class="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-brand-900" placeholder="Ceritakan pengalaman yang relevan">{{ old('note') }}</textarea>@error('note')<p class="mt-1.5 text-xs font-semibold text-rose-600" role="alert">{{ $message }}</p>@enderror</div>
                             <button class="portal-button-primary w-full"><span class="material-symbols-outlined text-[18px]">send</span>Kirim lamaran</button>
                         </form>
@@ -1246,5 +1247,105 @@
             document.getElementById(`cancelApplicationForm-${applicationId}`)?.submit();
         }
     }
+
+    // Client-side Resume File Validation (Max 2 MB & PDF only)
+    function initResumeFileInput(inputId, feedbackId, formId) {
+        const input = document.getElementById(inputId);
+        const feedback = document.getElementById(feedbackId);
+        const form = document.getElementById(formId);
+        if (!input || !feedback) return;
+
+        const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+
+        function handleValidation(file) {
+            if (!file) {
+                feedback.className = 'mt-2 hidden';
+                feedback.innerHTML = '';
+                return true;
+            }
+
+            const fileName = file.name || 'Berkas';
+            const isPdf = file.type === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
+
+            if (!isPdf) {
+                input.value = '';
+                feedback.className = 'mt-2.5 flex items-start gap-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 p-3 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-200';
+                feedback.innerHTML = `
+                    <span class="material-symbols-outlined text-rose-600 dark:text-rose-400 text-[18px] shrink-0 mt-0.5">error</span>
+                    <div>
+                        <strong class="font-bold block mb-0.5">Format Berkas Tidak Sesuai</strong>
+                        <p>Berkas harus berformat <strong>PDF (.pdf)</strong>. Berkas <em>"${fileName}"</em> tidak dapat diproses.</p>
+                    </div>
+                `;
+                if (window.showAppAlert) {
+                    window.showAppAlert({
+                        title: 'Format Berkas Tidak Sesuai',
+                        message: `Berkas "${fileName}" bukan berkas PDF. Silakan pilih berkas dokumen dengan format .pdf.`,
+                        type: 'warning'
+                    });
+                }
+                return false;
+            }
+
+            if (file.size > MAX_BYTES) {
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                input.value = '';
+                feedback.className = 'mt-2.5 flex items-start gap-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 p-3.5 border border-rose-300 dark:border-rose-800 text-xs text-rose-900 dark:text-rose-200 shadow-sm';
+                feedback.innerHTML = `
+                    <span class="material-symbols-outlined text-rose-600 dark:text-rose-400 text-[20px] shrink-0 mt-0.5">warning</span>
+                    <div>
+                        <strong class="font-bold text-[13px] block mb-1">Ukuran Berkas Terlalu Besar (Maksimal 2 MB)</strong>
+                        <p class="leading-relaxed">
+                            Berkas <strong>"${fileName}"</strong> berukuran <strong>${sizeMB} MB</strong>, melebihi batas sistem yang ditentukan (maksimal <strong>2.00 MB</strong>).
+                            <br>Silakan pilih berkas resume lain atau kompres berkas PDF Anda terlebih dahulu agar dapat diunggah.
+                        </p>
+                    </div>
+                `;
+                if (window.showAppAlert) {
+                    window.showAppAlert({
+                        title: 'Ukuran Berkas Melebihi Batas',
+                        message: `Berkas "${fileName}" berukuran ${sizeMB} MB. Batas maksimal resume adalah 2 MB. Silakan kompres atau pilih berkas PDF lain.`,
+                        type: 'warning'
+                    });
+                }
+                return false;
+            }
+
+            const sizeFormatted = file.size >= 1024 * 1024
+                ? (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+                : Math.round(file.size / 1024) + ' KB';
+
+            feedback.className = 'mt-2 flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-2.5 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-800 dark:text-emerald-200';
+            feedback.innerHTML = `
+                <span class="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-[18px] shrink-0">check_circle</span>
+                <span>Berkas siap diunggah: <strong>${fileName}</strong> (${sizeFormatted})</span>
+            `;
+            return true;
+        }
+
+        input.addEventListener('change', () => {
+            if (input.files && input.files[0]) {
+                handleValidation(input.files[0]);
+            } else {
+                feedback.className = 'mt-2 hidden';
+                feedback.innerHTML = '';
+            }
+        });
+
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                if (input.files && input.files[0]) {
+                    const valid = handleValidation(input.files[0]);
+                    if (!valid) {
+                        e.preventDefault();
+                        input.focus();
+                    }
+                }
+            });
+        }
+    }
+
+    initResumeFileInput('resume', 'resume-feedback', 'jobApplicationForm');
+    initResumeFileInput('resume_reapply', 'resume_reapply-feedback', 'jobReapplyForm');
 </script>
 @endpush
