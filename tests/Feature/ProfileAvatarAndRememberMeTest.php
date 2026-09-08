@@ -14,6 +14,8 @@ class ProfileAvatarAndRememberMeTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const string TEST_PASSWORD = 'test-only-'.'123!';
+
     private function createFakeImage(string $filename = 'profile.png'): UploadedFile
     {
         $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
@@ -110,12 +112,12 @@ class ProfileAvatarAndRememberMeTest extends TestCase
     {
         $user = User::factory()->jobseeker()->create([
             'email' => 'kandidat@kerjalokal.id',
-            'password' => Hash::make('REMOVED_CREDENTIAL'),
+            'password' => Hash::make(self::TEST_PASSWORD),
         ]);
 
         $response = $this->post(route('login'), [
             'email' => 'kandidat@kerjalokal.id',
-            'password' => 'REMOVED_CREDENTIAL',
+            'password' => self::TEST_PASSWORD,
             'remember' => '1',
         ]);
 

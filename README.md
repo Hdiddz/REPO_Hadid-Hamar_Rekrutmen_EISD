@@ -38,14 +38,38 @@ Menjelaskan hubungan pengendali, model, dan Form Request yang digunakan dalam ap
 
 ## Menjalankan Project
 
+Persyaratan: PHP 8.3 atau lebih baru, Composer, Node.js, dan npm.
+
 ```bash
+git clone https://github.com/Hdiddz/REPO_Hadid-Hamar_Rekrutmen_EISD.git
+cd REPO_Hadid-Hamar_Rekrutmen_EISD
 composer install
 npm install
 copy .env.example .env
+php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');"
 php artisan key:generate
+```
+
+Buka file `.env`, lalu isi password akun demo dengan nilai buatan sendiri. Jangan commit file `.env`.
+
+```dotenv
+DEMO_USER_PASSWORD=password-yang-anda-tentukan-sendiri
+```
+
+Setelah itu, lanjutkan instalasi:
+
+```bash
 php artisan migrate:fresh --seed
+php artisan storage:link
 npm run build
 php artisan serve
 ```
 
 Buka `http://127.0.0.1:8000` di browser.
+
+Akun hasil seeding:
+
+- Admin: username `Hadid` atau email `Hadid@adm.id`.
+- Mitra UMKM: username `johan1` sampai `johan10`.
+- Password seluruh akun seed mengikuti nilai `DEMO_USER_PASSWORD` pada `.env` masing-masing penguji.
+- Akun pencari kerja dapat dibuat melalui halaman registrasi.

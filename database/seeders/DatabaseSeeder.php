@@ -48,6 +48,12 @@ class DatabaseSeeder extends Seeder
             Skill::updateOrCreate(['name' => $name]);
         });
 
+        $plainTextPassword = config('demo.user_password');
+
+        if (! is_string($plainTextPassword) || $plainTextPassword === '') {
+            throw new \RuntimeException('DEMO_USER_PASSWORD must be set before running DatabaseSeeder.');
+        }
+
         $admin = User::updateOrCreate(
             ['email' => 'Hadid@adm.id'],
             [
@@ -56,7 +62,7 @@ class DatabaseSeeder extends Seeder
                 'role' => 'admin',
                 'phone' => '081234567890',
                 'business_name' => null,
-                'password' => Hash::make('REMOVED_CREDENTIAL'),
+                'password' => Hash::make($plainTextPassword),
             ]
         );
 

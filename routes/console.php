@@ -9,7 +9,15 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Artisan::command('make:admin {name=Hadid@adm.id} {email=Hadid@adm.id} {password=REMOVED_CREDENTIAL}', function (string $name, string $email, string $password) {
+Artisan::command('make:admin {name} {email}', function (string $name, string $email): int {
+    $password = $this->secret('Masukkan password Administrator');
+
+    if (! is_string($password) || $password === '') {
+        $this->error('Password wajib diisi.');
+
+        return 1;
+    }
+
     $user = User::updateOrCreate(
         ['email' => $email],
         [
@@ -24,5 +32,6 @@ Artisan::command('make:admin {name=Hadid@adm.id} {email=Hadid@adm.id} {password=
     $this->info('Akun Administrator berhasil dibuat / diperbarui!');
     $this->line("Nama/Username : {$user->name} / {$user->username}");
     $this->line("Email         : {$user->email}");
-    $this->line("Password      : {$password}");
+
+    return 0;
 })->purpose('Buat atau perbarui akun Administrator');

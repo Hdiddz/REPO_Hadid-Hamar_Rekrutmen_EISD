@@ -12,6 +12,10 @@ class AuthenticationAndRoleTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const string NEW_TEST_PASSWORD = 'new-test-only-'.'456!';
+
+    private const string TEST_PASSWORD = 'test-only-'.'123!';
+
     public function test_employer_registration_requires_business_name_and_shows_field_error(): void
     {
         $response = $this->followingRedirects()->from(route('register'))->post(route('register'), [
@@ -19,8 +23,8 @@ class AuthenticationAndRoleTest extends TestCase
             'email' => 'hendra@example.test',
             'role' => 'employer',
             'phone' => '081234567890',
-            'password' => 'REMOVED_CREDENTIAL',
-            'password_confirmation' => 'REMOVED_CREDENTIAL',
+            'password' => self::TEST_PASSWORD,
+            'password_confirmation' => self::TEST_PASSWORD,
         ]);
 
         $response->assertOk()
@@ -35,8 +39,8 @@ class AuthenticationAndRoleTest extends TestCase
             'role' => 'employer',
             'phone' => '081234567890',
             'business_name' => 'Kedai Uji',
-            'password' => 'REMOVED_CREDENTIAL',
-            'password_confirmation' => 'REMOVED_CREDENTIAL',
+            'password' => self::TEST_PASSWORD,
+            'password_confirmation' => self::TEST_PASSWORD,
         ]);
 
         $response->assertRedirect(route('employer.dashboard'))
@@ -81,17 +85,17 @@ class AuthenticationAndRoleTest extends TestCase
     public function test_user_can_update_password_from_settings_page(): void
     {
         $user = User::factory()->employer()->create([
-            'password' => Hash::make('REMOVED_CREDENTIAL'),
+            'password' => Hash::make(self::TEST_PASSWORD),
         ]);
 
         $response = $this->actingAs($user)->put(route('settings.password.update'), [
-            'current_password' => 'REMOVED_CREDENTIAL',
-            'password' => 'newREMOVED_CREDENTIAL',
-            'password_confirmation' => 'newREMOVED_CREDENTIAL',
+            'current_password' => self::TEST_PASSWORD,
+            'password' => self::NEW_TEST_PASSWORD,
+            'password_confirmation' => self::NEW_TEST_PASSWORD,
         ]);
 
         $response->assertRedirect()->assertSessionHas('success');
-        $this->assertTrue(Hash::check('newREMOVED_CREDENTIAL', $user->fresh()->password));
+        $this->assertTrue(Hash::check(self::NEW_TEST_PASSWORD, $user->fresh()->password));
     }
 
     public function test_banned_user_attempting_login_receives_banned_notice_and_session(): void
@@ -102,12 +106,12 @@ class AuthenticationAndRoleTest extends TestCase
             'banned_at' => now()->subDay(),
             'banned_until' => now()->addDays(3),
             'ban_reason' => 'Melanggar aturan komunitas.',
-            'password' => Hash::make('REMOVED_CREDENTIAL'),
+            'password' => Hash::make(self::TEST_PASSWORD),
         ]);
 
         $response = $this->post(route('login'), [
             'email' => 'banned@example.test',
-            'password' => 'REMOVED_CREDENTIAL',
+            'password' => self::TEST_PASSWORD,
         ]);
 
         $response->assertRedirect(route('login'));
@@ -119,7 +123,7 @@ class AuthenticationAndRoleTest extends TestCase
     {
         $response = $this->post(route('login'), [
             'email' => 'deleted_account@example.test',
-            'password' => 'REMOVED_CREDENTIAL',
+            'password' => self::TEST_PASSWORD,
         ]);
 
         $response->assertRedirect(route('login'));
@@ -152,7 +156,7 @@ class AuthenticationAndRoleTest extends TestCase
         User::factory()->jobseeker()->create([
             'name' => 'Nama Sama',
             'username' => 'akun_pertama',
-            'password' => Hash::make('REMOVED_CREDENTIAL'),
+            'password' => Hash::make(self::TEST_PASSWORD),
         ]);
         User::factory()->jobseeker()->create([
             'name' => 'Nama Sama',
@@ -162,7 +166,7 @@ class AuthenticationAndRoleTest extends TestCase
 
         $response = $this->post(route('login'), [
             'email' => 'Nama Sama',
-            'password' => 'REMOVED_CREDENTIAL',
+            'password' => self::TEST_PASSWORD,
         ]);
 
         $response->assertRedirect(route('login'))
@@ -195,8 +199,8 @@ class AuthenticationAndRoleTest extends TestCase
             'email' => 'budi.santoso@example.test',
             'role' => 'jobseeker',
             'phone' => '08123456789012', // 14 digits
-            'password' => 'REMOVED_CREDENTIAL',
-            'password_confirmation' => 'REMOVED_CREDENTIAL',
+            'password' => self::TEST_PASSWORD,
+            'password_confirmation' => self::TEST_PASSWORD,
         ]);
 
         $response->assertRedirect(route('register'))
@@ -211,8 +215,8 @@ class AuthenticationAndRoleTest extends TestCase
             'email' => 'budi.santoso13@example.test',
             'role' => 'jobseeker',
             'phone' => '0812345678901', // 13 characters
-            'password' => 'REMOVED_CREDENTIAL',
-            'password_confirmation' => 'REMOVED_CREDENTIAL',
+            'password' => self::TEST_PASSWORD,
+            'password_confirmation' => self::TEST_PASSWORD,
         ]);
 
         $response->assertRedirect(route('jobs.index'))
@@ -238,12 +242,12 @@ class AuthenticationAndRoleTest extends TestCase
     {
         $user = User::factory()->jobseeker()->create([
             'email' => 'jobseeker@example.test',
-            'password' => Hash::make('REMOVED_CREDENTIAL'),
+            'password' => Hash::make(self::TEST_PASSWORD),
         ]);
 
         $response = $this->post(route('login'), [
             'email' => 'jobseeker@example.test',
-            'password' => 'REMOVED_CREDENTIAL',
+            'password' => self::TEST_PASSWORD,
             'remember' => '1',
         ]);
 
@@ -268,7 +272,7 @@ class AuthenticationAndRoleTest extends TestCase
         $user = User::factory()->jobseeker()->create([
             'name' => 'Hadid Hamar',
             'email' => 'hadid@example.test',
-            'password' => Hash::make('REMOVED_CREDENTIAL'),
+            'password' => Hash::make(self::TEST_PASSWORD),
         ]);
 
         $payload = json_encode([
@@ -292,7 +296,7 @@ class AuthenticationAndRoleTest extends TestCase
         $user = User::factory()->employer()->create([
             'name' => 'Mitra Berkah',
             'email' => 'mitra@example.test',
-            'password' => Hash::make('REMOVED_CREDENTIAL'),
+            'password' => Hash::make(self::TEST_PASSWORD),
         ]);
 
         $payload = json_encode([
@@ -323,7 +327,7 @@ class AuthenticationAndRoleTest extends TestCase
             'banned_at' => now()->subDay(),
             'banned_until' => now()->addDays(3),
             'ban_reason' => 'Pelanggaran ketentuan.',
-            'password' => Hash::make('REMOVED_CREDENTIAL'),
+            'password' => Hash::make(self::TEST_PASSWORD),
         ]);
 
         $payload = json_encode([

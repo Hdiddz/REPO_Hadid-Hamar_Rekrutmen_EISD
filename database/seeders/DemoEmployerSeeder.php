@@ -20,7 +20,13 @@ class DemoEmployerSeeder extends Seeder
     {
         $categories = Category::query()->pluck('id', 'slug');
         $skills = Skill::query()->pluck('id', 'name');
-        $password = Hash::make('REMOVED_CREDENTIAL');
+        $plainTextPassword = config('demo.user_password');
+
+        if (! is_string($plainTextPassword) || $plainTextPassword === '') {
+            throw new \RuntimeException('DEMO_USER_PASSWORD must be set before running DemoEmployerSeeder.');
+        }
+
+        $password = Hash::make($plainTextPassword);
 
         $employers = [
             [

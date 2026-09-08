@@ -12,6 +12,8 @@ class AdminUserManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const string TEST_PASSWORD = 'test-only-'.'123!';
+
     public function test_admin_can_view_users_list_and_filter(): void
     {
         $admin = User::factory()->admin()->create();
@@ -193,12 +195,12 @@ class AdminUserManagementTest extends TestCase
     {
         $user = User::factory()->jobseeker()->create([
             'username' => 'hadid_creative',
-            'password' => Hash::make('REMOVED_CREDENTIAL'),
+            'password' => Hash::make(self::TEST_PASSWORD),
         ]);
 
         $response = $this->post(route('login'), [
             'email' => 'hadid_creative',
-            'password' => 'REMOVED_CREDENTIAL',
+            'password' => self::TEST_PASSWORD,
         ]);
 
         $response->assertRedirect(route('jobs.index'));
